@@ -8,6 +8,8 @@ import os
 
 from img_proc import ImageProcessor
 
+TABLE_PLACEHOLDER = "TABLE_PLACEHOLDER"
+
 class Main:
     def __init__(self):
         print("Tangram")
@@ -55,30 +57,27 @@ class Main:
                 info["alt"].append(os.path.basename(alt))
             max_columns = 1 + max(max_columns, len(info["alt"]))
 
-        # Generate HTML index
-        html = """<html>
-        <head>
-        <style type="text/css">
-        table, th, td {
-            border: 1px solid black;
-            border-collapse: collapse; }
-        tr.title > td { height: 2em; font-weight: bold; background-color: #ccc; }
-        tr.images > td { text-align: center; }
-        img { max-width: 128px; max-height: 128px; }
-        </style>
-        </head>
-        <body><table>"""
-        for info in img_infos:
-            html += "<tr class='title'>\n"
-            html += f"  <td colspan={max_columns}>{info['basename']}</td>\n"
-            html += "</tr>\n"
+        # Read template
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        template_path = os.path.join(script_dir, "index_template.html")
+        with open(template_path, "r") as f:
+            template = f.read()
 
-            html += "<tr class='images'>\n"
-            html += f"  <td><img src='{info['src']}'></td>\n"
+        # Generate HTML table
+        table = "<table>\n"
+        for info in img_infos:
+            table += "<tr class='title'>\n"
+            table += f"  <td colspan={max_columns}>{info['basename']}</td>\n"
+            table += "</tr>\n"
+
+            table += "<tr class='images'>\n"
+            table += f"  <td><img src='{info['src']}'></td>\n"
             for alt in info["alt"]:
-                html += f"  <td><img src='{alt}'></td>\n"
-            html += "</tr>\n"
-        html += "</table></body></html>\n"
+                table += f"  <td><img src='{alt}'></td>\n"
+            table += "</tr>\n"
+        table += "</table>\n"
+
+        html = template.replace(TABLE_PLACEHOLDER, table)
         index_path = os.path.join(dir_output, "index.html")
         with open(index_path, "w") as f:
             f.write(html)
