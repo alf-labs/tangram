@@ -10,6 +10,8 @@ import os
 from typing import Generator
 from typing import Tuple
 
+N = 6  # YRG coords are in 0..5 range
+BORDER_SIZE = 0.5 # Border is half size of an inner piece
 RESIZE_PX = 1024
 PARAMS = [
     {
@@ -84,6 +86,74 @@ def clamp(value:int, min_value:int, max_value:int) -> int:
     return max(min(value, max_value), min_value)
 
 
+class Axis:
+    """
+    Represents one of the coordinate axis of the hexagon.
+    The coordinates are in the range -N/2-0.5 .. N/2+0.5.
+    These are "piece" units (and not pixel units).
+    The hexagon has 3 coordinates: X (top to bottom), Y (left to right going down), Z (left to right going up).
+
+    The puzzle has N=6 pieces on each coordinate.
+    The border is half the size of an inner piece.
+    Since the segments may not be absolutely parallel due to image paralax, we use the start/end segments to form a box.
+    Along the axis, start is at coordinate -N/2-0.5 in piece units.
+    Along the axis, end is at coordinate N/2+0.5 in piece units.
+    """
+    def __init__(self, segment_start:list, segment_end:list):
+        self.segment_start = segment_start
+        self.segment_end = segment_end
+        self.center_start = segment_center(segment_start)
+        self.center_end = segment_center(segment_end)
+        print(f"Axis start: {self.center_start}, end: {self.center_end}")
+        dx = self.center_end[0] - self.center_start[0]
+        dy = self.center_end[1] - self.center_start[1]
+        self.step_size_px = math.sqrt(dx * dx + dy * dy) / (N+1)
+        self.angle_deg = 0
+        self._rot_matrix = None
+
+    def to_relative_px(self, offset_piece:float) -> Tuple[float, float]:
+        """
+        Converts a piece offset to a center-relative pixel coordinate.
+        offset_piece is in the range -N/2-0.5 .. N/2+0.5.
+        """
+        if self._rot_matrix is None:
+            # Compute the rotation matrix once
+            angle_rad = math.radians(self.angle_deg)
+            self._rot_matrix = np.array([
+                [math.cos(angle_rad), -math.sin(angle_rad)],
+                [math.sin(angle_rad), math.cos(angle_rad)]
+            ])
+        original_px = np.array([0, offset_piece * self.step_size_px])
+        rotated_px = np.dot(self._rot_matrix, original_px)
+        return ( float(rotated_px[0]), float(rotated_px[1]) )
+
+
+class YRGCoord:
+    def __init__(self, center_px:Tuple[float, float], y_axis:Axis, r_axis:Axis, g_axis:Axis):
+        """
+        (cx,cy) are the pixel coordinates of the center of the hexagon
+        (y,r,g) are the inner pieces coordinates of the hexagon.
+        """
+        self.cx = center_px[0]
+        self.cy = center_px[1]
+        print(f"YRG center: ({self.cx}, {self.cy})")
+        self.y_axis = y_axis
+        self.r_axis = r_axis
+        self.r_axis.angle_deg = -60
+        self.g_axis = g_axis
+        self.g_axis.angle_deg = -120
+
+    def to_relative_px(self, y_piece:float, r_piece:float, g_piece:float) -> Tuple[float, float]:
+        xy, yy = self.y_axis.to_relative_px(y_piece)
+        xr, yr = self.r_axis.to_relative_px(r_piece)
+        xg, yg = self.g_axis.to_relative_px(g_piece)
+        return (xy + xr + xg, yy + yr + yg)
+
+    def to_absolute_px(self, y_piece:float, r_piece:float, g_piece:float) -> Tuple[float, float]:
+        x, y = self.to_relative_px(y_piece, r_piece, g_piece)
+        return (x + self.cx, y + self.cy)
+
+
 class ImageProcessor:
     def __init__(self, input_img_path:str, output_dir_path:str):
         self.input_img_path = input_img_path
@@ -133,9 +203,14 @@ class ImageProcessor:
 
             if hexagon is not None:
                 rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
-                rot_img = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
+                rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
                 cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
                 cv2.imwrite(self.dest_name("_5_rot"), rot_img)
+
+                yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
+                self.draw_yrg_coords(yrg_coords, rot_img)
+                cv2.imwrite(self.dest_name("_6_yrg"), rot_img)
+
                 break
 
         cv2.imwrite(src_img_path, resized)
@@ -300,7 +375,7 @@ class ImageProcessor:
 
         return (angle_deg, (cx, cy))
 
-    def rotate_image(self, image:np.array, polygon:list, angle_deg:float, center:tuple) -> np.array:
+    def rotate_image(self, image:np.array, polygon:list, angle_deg:float, center:tuple) -> Tuple[np.array, list, Tuple]:
         cx, cy = center
         x, y, w, h = cv2.boundingRect(np.array(polygon))
         wh = max(w, h)
@@ -334,7 +409,94 @@ class ImageProcessor:
             clamp(cy - wh2, 0, h) : clamp(cy + wh2, 0, h),
             clamp(cx - wh2, 0, w) : clamp(cx + wh2, 0, w)]
         print(f"Square image size: {rotated_img.shape}")
-        return rotated_img
+
+        offsetx = cx - wh2
+        offsety = cy - wh2
+        # Adjust the polygon points to the cropped image size
+        rotated_polygon = [(point[0] - offsetx, point[1] - offsety) for point in rotated_polygon]
+        # Adjust the center by the offset
+        hex_center = (cx - offsetx, cy - offsety)
+
+        return rotated_img, rotated_polygon, hex_center
+
+    def compute_yrg_coords(self, polygon:list, center:tuple) -> YRGCoord:
+        # Note that everything here assumse the polygon is an hexagon.
+        segs = list(segments(polygon))
+        len_seg = len(segs)
+        def wrap(index:int) -> int:
+            return index % len_seg
+
+        # Find the segment with the highest y-coordinate center
+        bottom_segment = max(segs, key=lambda segment: segment_center(segment)[1])
+        # Fin the index of "bottom_segment" in the segments list
+        bottom_index = segs.index(bottom_segment)
+
+        y_end_segment_index = bottom_index
+
+        # I don't know if the polygon is define clockwise or counter-clockwise,
+        # so let's detect that and handle both cases.
+        # It is clockwise if the next segment (after bottom_segment) has a X center which is lower than bottom's X center.
+        bottom_center = segment_center(bottom_segment)
+        next_segment_index = wrap(bottom_index + 1)
+        next_segment = segs[next_segment_index]
+        next_center = segment_center(next_segment)
+        is_clockwise = next_center[0] < bottom_center[0]
+        print(f"Is clockwise: {is_clockwise}")
+
+        if is_clockwise:
+            # the next segment represents the start of the G axis, then the start of the R axis
+            g_start_segment_index = next_segment_index
+            r_start_segment_index = wrap(next_segment_index + 1)
+        else:
+            # the previous segment presents the start of the G axis, then the start of the R axis
+            g_start_segment_index = wrap(bottom_index - 1)
+            r_start_segment_index = wrap(bottom_index - 2)
+
+        y_start_segment_index = wrap(y_end_segment_index + 3)
+        g_end_segment_index = wrap(g_start_segment_index + 3)
+        r_end_segment_index = wrap(r_start_segment_index + 3)
+
+        # Define the axes
+        y_axis = Axis(segs[y_start_segment_index], segs[y_end_segment_index])
+        r_axis = Axis(segs[r_start_segment_index], segs[r_end_segment_index])
+        g_axis = Axis(segs[g_start_segment_index], segs[g_end_segment_index])
+        yrg_coords = YRGCoord(center, y_axis, r_axis, g_axis)
+        return yrg_coords
+
+    def draw_yrg_coords(self, yrg_coords:YRGCoord, out_img:np.array) -> None:
+        # Draw the YRG coordinates on the image
+        n2 = N//2
+        # for y in range(-n2, n2):
+        #     y_piece = y + 0.5
+        #     for r in range(-n2, n2):
+        #         r_piece = r + 0.5
+        #         for g in range(-n2, n2):
+        #             g_piece = g + 0.5
+
+        y = 3.5
+        r = 3.5
+        g = 3.5
+        y_piece = y - n2 + 0
+        r_piece = r - n2 + 0
+        g_piece = g - n2 + 0
+        px, py = yrg_coords.to_absolute_px(y_piece, r_piece, g_piece)
+        print(f"YRG: ({y},{r},{g}) -> ({px},{py})")
+        cv2.circle(out_img, (int(px), int(py)), 5, (255, 255, 255), -1)
+        cv2.putText(out_img, f"({y}{r}{g})", (int(px) - 24, int(py) + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        for y in range(-n2, n2 + 1):
+            px, py = yrg_coords.to_absolute_px(y, 0, 0)
+            # print(f"YRG: ({y},0,0) -> ({px},{py})")
+            cv2.circle(out_img, (int(px), int(py)), 8, (0, 255, 255), -1)
+        for r in range(-n2, n2 + 1):
+            px, py = yrg_coords.to_absolute_px(0, r, 0)
+            # print(f"YRG: (0,{r},0) -> ({px},{py})")
+            cv2.circle(out_img, (int(px), int(py)), 5, (0, 0, 255), -1)
+        for g in range(-n2, n2 + 1):
+            px, py = yrg_coords.to_absolute_px(0, 0, g)
+            # print(f"YRG: (0,0,{g}) -> ({px},{py})")
+            cv2.circle(out_img, (int(px), int(py)), 5, (0, 255, 0), -1)
+
 
 
 
