@@ -27,6 +27,11 @@ def segment_center(segment:tuple) -> tuple:
     return (x, y)
 
 
+def clamp(value:int, min_value:int, max_value:int) -> int:
+    """Clamps a value to the given range."""
+    return max(min(value, max_value), min_value)
+
+
 class ImageProcessor:
     def __init__(self, input_img_path:str, output_dir_path:str):
         self.input_img_path = input_img_path
@@ -42,16 +47,18 @@ class ImageProcessor:
         return os.path.join(self.output_dir_path, f"{name}{suffix}{ext}")
 
     def process_image(self, overwrite:bool) -> None:
+        print("------")
         print(f"Processing Image: {self.input_img_path}")
+        print("------")
         self.find_hexagon(self.input_img_path, overwrite)
+        print("")
 
     def find_hexagon(self, input_img_path:str, overwrite:bool) -> None:
         src_img_path = self.dest_name("_src")
-        hex_img_path = self.dest_name("_9_hex")
 
         # Check if the hexagon image already exists
-        if os.path.exists(hex_img_path) and not overwrite:
-            print(f"Hexagon image already exists: {hex_img_path}")
+        if os.path.exists(src_img_path) and not overwrite:
+            print(f"Hexagon image already exists: {src_img_path}")
             return
 
         resized = self.load_resized_image(input_img_path)
@@ -66,9 +73,10 @@ class ImageProcessor:
         if hexagon is not None:
             rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
             rot_img = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
+            cv2.imwrite(self.dest_name("_3_hexagon"), hex_img)
+            cv2.imwrite(self.dest_name("_4_rot"), rot_img)
 
-        cv2.imwrite(self.dest_name("_3_hexagon"), hex_img)
-        cv2.imwrite(self.dest_name("_4_rot"), rot_img)
+        cv2.imwrite(src_img_path, resized)
 
 
     def load_resized_image(self, input_img_path:str) -> np.array:
@@ -220,13 +228,15 @@ class ImageProcessor:
 
         # # Draw the segments on the rotated image
         for segment in segments(rotated_polygon):
-            print(f"Segment: {segment}")
             cv2.line(rotated_img, pt1=segment[0], pt2=segment[1], color=(0, 255, 0), thickness=3)
 
         # Crop the image to the squared bounding box with some padding
         wh2 = wh // 2 + 10
         cv2.rectangle(rotated_img, (cx - wh2, cy - wh2), (cx + wh2, cy + wh2), (255, 0, 0), 2)
-        rotated_img = rotated_img[cy - wh2:cy + wh2, cx - wh2:cx + wh2]
+        rotated_img = rotated_img[
+            clamp(cy - wh2, 0, h) : clamp(cy + wh2, 0, h),
+            clamp(cx - wh2, 0, w) : clamp(cx + wh2, 0, w)]
+        print(f"Square image size: {rotated_img.shape}")
         return rotated_img
 
 
