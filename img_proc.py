@@ -10,6 +10,58 @@ import os
 from typing import Generator
 from typing import Tuple
 
+RESIZE_PX = 1024
+PARAMS = [
+    {
+        "blur_ksize": (11, 11),
+        "blur_sigmaX": 0,
+        "brightness_scale": 3,
+        "brightness_offset": 0,
+        "bw_threshold": 16,
+        "use_edges": False,
+        "polygon_eps_width_ratio": 1/20,
+    },
+    {
+        "blur_ksize": (11, 11),
+        "blur_sigmaX": 0,
+        "brightness_scale": 3,
+        "brightness_offset": 0,
+        "bw_threshold": 32,
+        "use_edges": False,
+        "polygon_eps_width_ratio": 1/20,
+    },
+    {
+        "blur_ksize": (11, 11),
+        "blur_sigmaX": 0,
+        "brightness_scale": 3,
+        "brightness_offset": 0,
+        "bw_threshold": 32,
+        "use_edges": False,
+        "polygon_eps_width_ratio": 1/12,
+    },
+    {
+        "blur_ksize": (11, 11),
+        "blur_sigmaX": 0,
+        "brightness_scale": 3,
+        "brightness_offset": 0,
+        "bw_threshold": 32,
+        "use_edges": False,
+        "polygon_eps_width_ratio": 1/10,
+    },
+    # this one does not give good results
+    # {
+    #     "blur_ksize": (11, 11),
+    #     "blur_sigmaX": 0,
+    #     "brightness_scale": 2.35,
+    #     "brightness_offset": 0,
+    #     "quantize_levels": 8,
+    #     "canny_thresh1": 125,
+    #     "canny_thresh2": 210,
+    #     "use_edges": True,
+    #     "polygon_eps_width_ratio": 1/10,
+    # },
+]
+
 def segments(polygon_points:list) -> Generator:
     np = len(polygon_points)
     for i in range(np):
@@ -62,19 +114,29 @@ class ImageProcessor:
             return
 
         resized = self.load_resized_image(input_img_path)
-        lab = self.convert_to_lab(resized)
-        cv2.imwrite(self.dest_name("_1_lab"), lab)
-        contrasted = self.enhance_image(lab)
-        cv2.imwrite(self.dest_name("_2_contrast"), contrasted)
-
+        lab_img = self.convert_to_lab(resized)
+        cv2.imwrite(self.dest_name("_1_lab"), lab_img)
         hex_img = resized.copy()
-        hexagon = self.find_hexagon_contour(contrasted, hex_img)
 
-        if hexagon is not None:
-            rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
-            rot_img = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
-            cv2.imwrite(self.dest_name("_3_hexagon"), hex_img)
-            cv2.imwrite(self.dest_name("_4_rot"), rot_img)
+        for params in PARAMS:
+            # Convert the image to LAB color space to enhance contrast
+            contrasted = self.enhance_image(lab_img, params)
+            cv2.imwrite(self.dest_name("_2_contrast"), contrasted)
+
+            edges = self.edge_detect(contrasted, params)
+            cv2.imwrite(self.dest_name("_3_edges"), edges)
+
+            if not params.get("use_edges", False):
+                edges = contrasted
+            hexagon = self.find_hexagon_contour(edges, hex_img, params)
+            cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
+
+            if hexagon is not None:
+                rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
+                rot_img = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
+                cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
+                cv2.imwrite(self.dest_name("_5_rot"), rot_img)
+                break
 
         cv2.imwrite(src_img_path, resized)
 
@@ -89,7 +151,7 @@ class ImageProcessor:
 
         # Resize the image to a width of 1024 while maintaining aspect ratio
         height, width = image.shape[:2]
-        new_width = 1024
+        new_width = RESIZE_PX
         new_height = int((new_width / width) * height)
         image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
         print(f"Image resized to: {new_width}x{new_height}")
@@ -106,7 +168,7 @@ class ImageProcessor:
         rgb_img = cv2.cvtColor(lab_img, cv2.COLOR_LAB2BGR)
         return rgb_img
 
-    def enhance_image(self, lab:np.array) -> np.array:
+    def enhance_image(self, lab:np.array, params:dict={}) -> np.array:
         # # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to the L channel
         # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         # a = clahe.apply(a)
@@ -121,31 +183,65 @@ class ImageProcessor:
         gray = cv2.cvtColor(lab, cv2.COLOR_BGR2GRAY)
 
         # Apply GaussianBlur to reduce noise
-        blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+        ksize = params.get("blur_ksize", (11, 11))
+        sigmaX = params.get("blur_sigmaX", 0)
+        blurred = cv2.GaussianBlur(gray, ksize, sigmaX)
 
         # Enhance the brightness of the image
         # alpha is a scale factor, and beta is an offset.
         # e.g. dest (8-bit) = alpha * src (8-bit) + beta, clamps to 0..255
-        blurred = cv2.convertScaleAbs(blurred, alpha=3, beta=0)
+        scale = params.get("brightness_scale", 3)
+        offset = params.get("brightness_offset", 0)
+        blurred = cv2.convertScaleAbs(blurred, alpha=scale, beta=offset)
 
         # # Enhance the contrast of the image using histogram equalization (for gray img)
         # blurred = cv2.equalizeHist(blurred)
 
-        # Convert the image to black and white using a gray level threshold
-        _, bw = cv2.threshold(blurred, thresh=16, maxval=255, type=cv2.THRESH_BINARY)
-        return bw
+        # Find the minimum and maximum gray levels in the image
+        min_gray = np.min(blurred)
+        max_gray = np.max(blurred)
+        print(f"Min gray level: {min_gray}, Max gray level: {max_gray}")
 
-    def find_edges(self, blurred:np.array) -> np.array:
+        quantize_levels = params.get("quantize_levels", 2)
+        bw_thresh = params.get("bw_threshold", 16)
+
+        if quantize_levels > 2:
+            # Convert the image into N shades of grayscale
+            max_val = max_gray
+            step = max_val // (quantize_levels - 1)
+            quantized = (blurred // step)
+            quantized = np.clip(quantized, 0, 255)
+            # Rescale the quantized image to the 0..255 range
+            quantized = cv2.normalize(quantized, None, 0, 255, cv2.NORM_MINMAX)
+            return quantized
+        else:
+            # Convert the image to black and white using a gray level threshold
+            _, bw = cv2.threshold(blurred, thresh=bw_thresh, maxval=255, type=cv2.THRESH_BINARY)
+            return bw
+
+    def edge_detect(self, blurred:np.array, params:dict) -> np.array:
         # Use Canny edge detection
-        edges = cv2.Canny(blurred, 
-            threshold1=20, threshold2=30,
+        canny_thresh1 = params.get("canny_thresh1", 20)
+        canny_thresh2 = params.get("canny_thresh2", 30)
+        edges = cv2.Canny(blurred,
+            threshold1=canny_thresh1, threshold2=canny_thresh2,
             apertureSize=3,
             L2gradient=False)
-        cv2.imwrite(self.dest_name("_3_edges"), edges)
 
-    def find_hexagon_contour(self, bw_image:np.array, draw_img:np.array=None) -> list:
+        # Dilate the edges to make them more pronounced
+        kernel = np.ones((3, 3), np.uint8)
+        edges = cv2.dilate(edges, kernel, iterations=3)
+        # # Erode the edges to remove noise
+        # edges = cv2.erode(edges, kernel, iterations=1)
+
+        return edges
+
+    def find_hexagon_contour(self, bw_image:np.array, draw_img:np.array=None, params:dict={}) -> list:
         # Find the largest contour in the threshold image
-        cnts, _ = cv2.findContours(bw_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts, _ = cv2.findContours(bw_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if len(cnts) == 0:
+            print("No contours found.")
+            return None
         # get the contour based on max contour area.
         c = max(cnts, key=cv2.contourArea)
 
@@ -156,7 +252,8 @@ class ImageProcessor:
             cv2.rectangle(draw_img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
         # Note that [c] is not an hexagon. It may have thousands of points or more.
-        eps = w / 20
+        eps_w_ratio = params.get("polygon_eps_width_ratio", 1 / 20)
+        eps = w * eps_w_ratio
         approx = cv2.approxPolyDP(curve=c, epsilon=eps, closed=True)
 
         if draw_img is not None:
