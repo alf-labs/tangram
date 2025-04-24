@@ -129,6 +129,9 @@ class Xy:
         """Converts the Xy object to a numpy array."""
         return np.array([self.x, self.y])
 
+    def to_int(self) -> Tuple[int, int]:
+        return (int(self.x), int(self.y))
+
 class Triangle:
     def __init__(self, y_piece:int, r_piece: int, g_piece:int, p0:Xy, p1:Xy, p2:Xy):
         self.y_piece = y_piece
@@ -650,17 +653,22 @@ class ImageProcessor:
             cv2.fillPoly(mask, [poly], (255, 255, 255))
             # Get the mean color of the polygon
             # Note that cv2.mean() always returns a scalar with 4 components.
-            mean_color = cv2.mean(hsv_img, mask=mask)
-            print(f"Mean color: {mean_color}")
-            color = self.select_color(int(mean_color[0]), int(mean_color[1]), int(mean_color[2]))
+            mean_hsv = cv2.mean(hsv_img, mask=mask)
+            print(f"Mean color HSV: {mean_hsv}")
+            color = self.select_color(int(mean_hsv[0]), int(mean_hsv[1]), int(mean_hsv[2]))
             cells.append({
                 "color": color,
                 "triangle": triangle,
             })
 
+            # Conver the mean HSV to BGR
+            mean_bgr = cv2.cvtColor(np.uint8([[mean_hsv[:3]]]), cv2.COLOR_HSV2BGR)[0][0]
+            mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
+
             # Draw the mean color on the triangle, using the full triangle size
             poly = np.int32(triangle.to_np_array())
-            cv2.fillPoly(out_img, [poly], color["bgr"])
+            cv2.fillPoly(out_img, [poly], mean_bgr)
+            cv2.circle(out_img, triangle.center().to_int(), radius, color["bgr"], -1)
 
         for triangle in self.triangles(yrg_coords):
             poly = np.int32(triangle.to_np_array())
