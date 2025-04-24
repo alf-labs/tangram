@@ -13,6 +13,7 @@ from typing import Tuple
 N = 6  # YRG coords are in 0..5 range
 BORDER_SIZE = 0.5 # Border is half size of an inner piece
 RESIZE_PX = 1024
+
 PARAMS = [
     {
         "blur_ksize": (11, 11),
@@ -63,6 +64,7 @@ PARAMS = [
     #     "polygon_eps_width_ratio": 1/10,
     # },
 ]
+
 # Valid (Y, R, G) that fit in the puzzle boundaries.
 # To convert to triangle centers, substruct N/2 and add 0.5.
 # Note that the bottom half of Y has a symmetry : YRG on top becomes YGR on the bottom.
@@ -73,6 +75,36 @@ VALID_YRG = [
     (3, 0, 1), (3, 1, 0), (3, 1, 1), (3, 2, 0), (3, 2, 1), (3, 3, 0), (3, 3, 1), (3, 4, 0), (3, 4, 1), (3, 5, 0), (3, 5, 1),
                (4, 1, 1), (4, 2, 0), (4, 2, 1), (4, 3, 0), (4, 3, 1), (4, 4, 0), (4, 4, 1), (4, 5, 0), (4, 5, 1),
                           (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
+]
+
+COLORS = [
+    {
+        "name": "Red",
+        "rgb": (192, 0, 0),
+        "bgr": (0, 0, 192),
+        "h": { "min": 7, "max": 9 },
+        "s": { "min": 128, "max": 255 },
+        "v": { "min": 60, "max": 255 },
+    },
+    {
+        "name": "White",
+        "rgb": (192, 192, 192),
+        "bgr": (192, 192, 192),
+        "h": { "min": 12, "max": 35 },
+        "s": { "min": 0, "max": 100 },
+        "v": { "min": 150, "max": 255 },
+    },
+    {
+        "name": "Black",
+        "rgb": (64, 64, 64),
+        "bgr": (64, 64, 64),
+        "v": { "min": 0, "max": 100 },
+    },
+    {
+        "name": "Yellow",
+        "rgb": (192, 192, 0),
+        "bgr": (0, 192, 192),
+    },
 ]
 
 
@@ -91,7 +123,46 @@ class Xy:
         """Converts the Xy object to a numpy array."""
         return np.array([self.x, self.y])
 
+class Triangle:
+    def __init__(self, y_piece:int, r_piece: int, g_piece:int, p0:Xy, p1:Xy, p2:Xy):
+        self.y_piece = y_piece
+        self.r_piece = r_piece
+        self.g_piece = g_piece
+        self.xy_list = [p0, p1, p2]
 
+    def to_np_array(self) -> np.array:
+        return np.array([ xy.to_np() for xy in self.xy_list ])
+
+    def center(self) -> Xy:
+        x = sum(xy.x for xy in self.xy_list) / len(self.xy_list)
+        y = sum(xy.y for xy in self.xy_list) / len(self.xy_list)
+        return Xy((x, y))
+
+    def inscribed_circle_radius(self) -> float:
+        # Size of the first side
+        # We guestimate that the triangle is equilateral.
+        a = math.sqrt(
+            (self.xy_list[0].x - self.xy_list[1].x) ** 2 +
+            (self.xy_list[0].y - self.xy_list[1].y) ** 2)
+
+        # Semi-perimeter of the triangle
+        s = (a + a + a) / 2
+        # Area of the triangle using Heron's formula
+        area = math.sqrt(s * (s - a) * (s - a) * (s - a))
+        # Radius of the inscribed circle
+        radius = area / s
+        return radius
+
+    def shrink(self, ratio:float) -> "Triangle":
+        """Returns a new triangle with the same center and a smaller size."""
+        center = self.center()
+        new_xy_list = []
+        for xy in self.xy_list:
+            dx = xy.x - center.x
+            dy = xy.y - center.y
+            new_xy = Xy((center.x + dx * ratio, center.y + dy * ratio))
+            new_xy_list.append(new_xy)
+        return Triangle(self.y_piece, self.r_piece, self.g_piece, *new_xy_list)
 
 def segments(polygon_points:list) -> Generator:
     np = len(polygon_points)
@@ -114,30 +185,6 @@ def clamp(value:int, min_value:int, max_value:int) -> int:
     """Clamps a value to the given range."""
     return max(min(value, max_value), min_value)
 
-
-def xy_list_to_np_array(xy_list:list[Xy]) -> np.array:
-    """Converts a list of (x, y) tuples to a numpy array."""
-    return np.array([ xy.to_np() for xy in xy_list ])
-
-
-def triangle_center(xy_list:list[Xy]) -> Xy:
-    x = sum(xy.x for xy in xy_list) / len(xy_list)
-    y = sum(xy.y for xy in xy_list) / len(xy_list)
-    return Xy((x, y))
-
-
-def inscribed_circle_radius(xy_list:list) -> float:
-    # Size of the first side
-    # We guestimate that the triangle is equilateral.
-    a = math.sqrt((xy_list[0].x - xy_list[1].x) ** 2 + (xy_list[0].y - xy_list[1].y) ** 2)
-
-    # Semi-perimeter of the triangle
-    s = (a + a + a) / 2
-    # Area of the triangle using Heron's formula
-    area = math.sqrt(s * (s - a) * (s - a) * (s - a))
-    # Radius of the inscribed circle
-    radius = area / s
-    return radius
 
 
 class Axis:
@@ -196,7 +243,7 @@ class YRGCoord:
         self.r_axis.set_rotation(0)
         self.g_axis.set_rotation(0)
 
-    def point_yr(self, y_piece:float, r_piece:float, offset:Xy=None) -> Xy:
+    def point_yr(self, y_piece:int, r_piece:int, offset:Xy=None) -> Xy:
         Y = self.y_axis
         R = self.r_axis
         x = (y_piece * Y.v.x + r_piece * R.v.x)
@@ -206,7 +253,7 @@ class YRGCoord:
             y += offset.y
         return Xy((x, y))
 
-    def rhombus(self, y_piece:float, r_piece:float, offset:Xy=None) -> list[Xy]:
+    def rhombus(self, y_piece:int, r_piece:int, offset:Xy=None) -> list[Xy]:
         Y = self.y_axis
         R = self.r_axis
 
@@ -217,12 +264,12 @@ class YRGCoord:
         p3 = self.point_yr(y_piece    , r_piece + 1, offset)
         return [ p0, p1, p2, p3 ]
 
-    def triangle(self, y_piece:float, r_piece:float, g_piece:float, offset:Xy=None) -> list[Xy]:
+    def triangle(self, y_piece:int, r_piece:int, g_piece:int, offset:Xy=None) -> Triangle:
         rhombus = self.rhombus(y_piece, r_piece, offset)
         if g_piece == 0:
-            return [ rhombus[0], rhombus[1], rhombus[2] ]
+            return Triangle(y_piece, r_piece, g_piece, rhombus[0], rhombus[1], rhombus[2] )
         else:
-            return [ rhombus[0], rhombus[2], rhombus[3] ]
+            return Triangle(y_piece, r_piece, g_piece,  rhombus[0], rhombus[2], rhombus[3] )
 
 
 class ImageProcessor:
@@ -279,8 +326,11 @@ class ImageProcessor:
                 cv2.imwrite(self.dest_name("_5_rot"), rot_img)
 
                 yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
-                self.draw_yrg_coords(yrg_coords, rot_img)
-                cv2.imwrite(self.dest_name("_6_yrg"), rot_img)
+                coords_img = rot_img.copy()
+                self.draw_yrg_coords(yrg_coords, coords_img)
+                cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
+                colors_img = self.extract_triangle_colors(yrg_coords, rot_img, params)
+                cv2.imwrite(self.dest_name("_7_colors"), colors_img)
 
                 break
 
@@ -535,25 +585,86 @@ class ImageProcessor:
         return yrg_coords
 
     def draw_yrg_coords(self, yrg_coords:YRGCoord, out_img:np.array) -> None:
-
-        center = yrg_coords.center_px
-
         t = yrg_coords.triangle(0, 0, 0)
-        radius = int(inscribed_circle_radius(t) *.5 )
+        radius = int(t.inscribed_circle_radius() *.5 )
 
+        for triangle in self.triangles(yrg_coords):
+            poly = np.int32(triangle.to_np_array())
+            cv2.polylines(out_img, [poly], isClosed=True, color=(255, 255, 255), thickness=2)
+            tc = triangle.center()
+            px = int(tc.x)
+            py = int(tc.y)
+            cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
+            y = triangle.y_piece + N//2
+            r = triangle.r_piece + N//2
+            g = triangle.g_piece
+            cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+    def triangles(self, yrg_coords:YRGCoord) -> Generator:
+        center = yrg_coords.center_px
         n2 = N//2
         for (y, r, g) in VALID_YRG:
             y_piece = y - n2
             r_piece = r - n2
-            triangle = yrg_coords.triangle(y_piece, r_piece, g, offset=center)
-            poly = np.int32(xy_list_to_np_array(triangle))
-            cv2.polylines(out_img, [poly], isClosed=True, color=(255, 255, 255), thickness=2)
-            tc = triangle_center(triangle)
-            px = int(tc.x)
-            py = int(tc.y)
-            cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
-            cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            yield yrg_coords.triangle(y_piece, r_piece, g, offset=center)
 
+    def extract_triangle_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> np.array:
+        t = yrg_coords.triangle(0, 0, 0)
+        radius = int(t.inscribed_circle_radius() *.5 )
+
+        # Apply GaussianBlur to reduce noise
+        ksize = params.get("blur_ksize", (11, 11))
+        sigmaX = params.get("blur_sigmaX", 0)
+        out_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
+
+        hsv_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv_img)
+        # # Clip the hue channel -- we only care about the redish hue
+        h_min = np.min(h)
+        h_max = np.max(h)
+        print(f"Min hue: {h_min}, Max hue: {h_max}")
+        np.clip(h, 8, 16, out=h)
+        h = (h // 4) * 4
+        s = (s // 16) * 16
+        v = (v // 32) * 32
+        hsv_img = cv2.merge((h, s, v))
+
+        # Fill out_img with black
+        out_img.fill(0)
+
+        shrink_ratio = 0.5
+
+        for triangle in self.triangles(yrg_coords):
+            # Create a mask based on a shrunk triangle to filter on the HSB
+            poly = np.int32(triangle.shrink(shrink_ratio).to_np_array())
+            mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
+            cv2.fillPoly(mask, [poly], (255, 255, 255))
+            # Get the mean color of the polygon
+            # Note that cv2.mean() always returns a scalar with 4 components.
+            mean_color = cv2.mean(hsv_img, mask=mask)
+            print(f"Mean color: {mean_color}")
+            color = self.select_color(int(mean_color[0]), int(mean_color[1]), int(mean_color[2]))
+
+            # Draw the mean color on the triangle, using the full triangle size
+            poly = np.int32(triangle.to_np_array())
+            cv2.fillPoly(out_img, [poly], color["bgr"])
+
+        for triangle in self.triangles(yrg_coords):
+            poly = np.int32(triangle.to_np_array())
+            cv2.polylines(out_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
+
+        return out_img
+
+    def select_color(self, h:int, s:int, v:int) -> dict:
+        for color in COLORS:
+            if "h" in color and (h < color["h"]["min"] or h > color["h"]["max"]):
+                continue
+            if "s" in color and (s < color["s"]["min"] or s > color["s"]["max"]):
+                continue
+            if "v" in color and (v < color["v"]["min"] or v > color["v"]["max"]):
+                continue
+            print(f"Color found: h={h}, s={s}, v={v} --> {color['name']}")
+            return color
 
 
 # ~~
