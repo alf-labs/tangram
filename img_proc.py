@@ -67,13 +67,31 @@ PARAMS = [
 # To convert to triangle centers, substruct N/2 and add 0.5.
 # Note that the bottom half of Y has a symmetry : YRG on top becomes YGR on the bottom.
 VALID_YRG = [
-                          (0, 0, 2), (0, 0, 3), (0, 1, 3), (0, 1, 4), (0, 2, 4), (0, 2, 5), (0, 3, 5),
-               (1, 0, 1), (1, 0, 2), (1, 1, 2), (1, 1, 3), (1, 2, 3), (1, 2, 4), (1, 3, 4), (1, 3, 5), (1, 4, 5), 
-    (2, 0, 0), (2, 0, 1), (2, 1, 1), (2, 1, 2), (2, 2, 2), (2, 2, 3), (2, 3, 3), (2, 3, 4), (2, 4, 4), (2, 4, 5), (2, 5, 5), 
-    (3, 0, 0), (3, 1, 0), (3, 1, 1), (3, 2, 1), (3, 2, 2), (3, 3, 2), (3, 3, 3), (3, 4, 3), (3, 4, 4), (3, 5, 4), (3, 5, 5), 
-               (4, 1, 0), (4, 2, 0), (4, 2, 1), (4, 3, 1), (4, 3, 2), (4, 4, 2), (4, 4, 3), (4, 5, 3), (4, 5, 4), 
-                          (5, 2, 0), (5, 3, 0), (5, 3, 1), (5, 4, 1), (5, 4, 2), (5, 5, 2), (5, 5, 3),
+                          (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (0, 3, 0),
+               (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1), (1, 2, 0), (1, 2, 1), (1, 3, 0), (1, 3, 1), (1, 4, 0),
+    (2, 0, 0), (2, 0, 1), (2, 1, 0), (2, 1, 1), (2, 2, 0), (2, 2, 1), (2, 3, 0), (2, 3, 1), (2, 4, 0), (2, 4, 1), (2, 5, 0),
+    (3, 0, 1), (3, 1, 0), (3, 1, 1), (3, 2, 0), (3, 2, 1), (3, 3, 0), (3, 3, 1), (3, 4, 0), (3, 4, 1), (3, 5, 0), (3, 5, 1),
+               (4, 1, 1), (4, 2, 0), (4, 2, 1), (4, 3, 0), (4, 3, 1), (4, 4, 0), (4, 4, 1), (4, 5, 0), (4, 5, 1),
+                          (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
 ]
+
+
+class Xy:
+    def __init__(self, a:np.array):
+        self.x = a[0]
+        self.y = a[1]
+
+    def __str__(self) -> str:
+        return f"({self.x}, {self.y})"
+
+    def __repr__(self) -> str:
+        return f"Xy({self.x}, {self.y})"
+
+    def to_np(self) -> np.array:
+        """Converts the Xy object to a numpy array."""
+        return np.array([self.x, self.y])
+
+
 
 def segments(polygon_points:list) -> Generator:
     np = len(polygon_points)
@@ -97,16 +115,30 @@ def clamp(value:int, min_value:int, max_value:int) -> int:
     return max(min(value, max_value), min_value)
 
 
-class Xy:
-    def __init__(self, a:np.array):
-        self.x = a[0]
-        self.y = a[1]
+def xy_list_to_np_array(xy_list:list[Xy]) -> np.array:
+    """Converts a list of (x, y) tuples to a numpy array."""
+    return np.array([ xy.to_np() for xy in xy_list ])
 
-    def __str__(self) -> str:
-        return f"({self.x}, {self.y})"
 
-    def __repr__(self) -> str:
-        return f"Xy({self.x}, {self.y})"
+def triangle_center(xy_list:list[Xy]) -> Xy:
+    x = sum(xy.x for xy in xy_list) / len(xy_list)
+    y = sum(xy.y for xy in xy_list) / len(xy_list)
+    return Xy((x, y))
+
+
+def inscribed_circle_radius(xy_list:list) -> float:
+    # Size of the first side
+    # We guestimate that the triangle is equilateral.
+    a = math.sqrt((xy_list[0].x - xy_list[1].x) ** 2 + (xy_list[0].y - xy_list[1].y) ** 2)
+
+    # Semi-perimeter of the triangle
+    s = (a + a + a) / 2
+    # Area of the triangle using Heron's formula
+    area = math.sqrt(s * (s - a) * (s - a) * (s - a))
+    # Radius of the inscribed circle
+    radius = area / s
+    return radius
+
 
 class Axis:
     """
@@ -129,38 +161,25 @@ class Axis:
         print(f"Axis start: {self.center_start}, end: {self.center_end}")
         dx = self.center_end[0] - self.center_start[0]
         dy = self.center_end[1] - self.center_start[1]
-        self.step_size_px = math.sqrt(dx * dx + dy * dy) / (N+1)
-        self._u = np.array([0, self.step_size_px])
+        self.step_size_px = math.sqrt(dx * dx + dy * dy) / N
         self._v = np.array([self.step_size_px, 0])
         self.angle_deg = 0
-        self.u = None
         self.v = None
-        self._rot_matrix = None
 
     def set_rotation(self, angle_deg:float) -> None:
         self.angle_deg = angle_deg
-        # Compute the rotation matrix once
+
+        # Compute the rotation matrix
         angle_rad = math.radians(angle_deg)
         self._rot_matrix = np.array([
             [math.cos(angle_rad), -math.sin(angle_rad)],
             [math.sin(angle_rad), math.cos(angle_rad)]
         ])
 
-        # compute the unit vectors
-        self._u = np.dot(self._rot_matrix, self._u)
+        # compute the unit vector
         self._v = np.dot(self._rot_matrix, self._v)
-        self.u = Xy(self._u)
         self.v = Xy(self._v)
-        print(f"Axis unit vectors: u={self.u}, v={self.v}")
-
-    # def to_relative_px(self, offset_piece:float) -> Tuple[float, float]:
-    #     """
-    #     Converts a piece offset to a center-relative pixel coordinate.
-    #     offset_piece is in the range -N/2-0.5 .. N/2+0.5.
-    #     """
-    #     original_px = np.array([0, offset_piece * self.step_size_px])
-    #     rotated_px = np.dot(self._rot_matrix, original_px)
-    #     return ( float(rotated_px[0]), float(rotated_px[1]) )
+        print(f"Axis unit vectors: v={self.v}")
 
 
 class YRGCoord:
@@ -169,49 +188,41 @@ class YRGCoord:
         (cx,cy) are the pixel coordinates of the center of the hexagon
         (y,r,g) are the inner pieces coordinates of the hexagon.
         """
-        self.cx = center_px[0]
-        self.cy = center_px[1]
-        print(f"YRG center: ({self.cx}, {self.cy})")
+        self.center_px = Xy(center_px)
         self.y_axis = y_axis
         self.r_axis = r_axis
         self.g_axis = g_axis
-        self.y_axis.set_rotation(0)
-        self.r_axis.set_rotation(-60)
-        self.g_axis.set_rotation(-120)
+        self.y_axis.set_rotation(120)
+        self.r_axis.set_rotation(0)
+        self.g_axis.set_rotation(0)
 
-    def to_relative_px(self, y_piece:float, r_piece:float, g_piece:float) -> Tuple[float, float]:
+    def point_yr(self, y_piece:float, r_piece:float, offset:Xy=None) -> Xy:
         Y = self.y_axis
         R = self.r_axis
-        G = self.g_axis
+        x = (y_piece * Y.v.x + r_piece * R.v.x)
+        y = (y_piece * Y.v.y + r_piece * R.v.y)
+        if offset is not None:
+            x += offset.x
+            y += offset.y
+        return Xy((x, y))
 
-        alpha_r = (y_piece * Y.u.y - r_piece * R.u.y) / R.v.y
-        # alpha_g = (y_piece * Y.u.y - g_piece * G.u.y) / G.v.y
+    def rhombus(self, y_piece:float, r_piece:float, offset:Xy=None) -> list[Xy]:
+        Y = self.y_axis
+        R = self.r_axis
 
-        x = alpha_r * R.v.x + r_piece * R.u.x
-        # xg = alpha_g * G.v.x + g_piece * G.u.x
-        y = y_piece * Y.u.y
+        # Compute the rhombus points
+        p0 = self.point_yr(y_piece    , r_piece    , offset)
+        p1 = self.point_yr(y_piece + 1, r_piece    , offset)
+        p2 = self.point_yr(y_piece + 1, r_piece + 1, offset)
+        p3 = self.point_yr(y_piece    , r_piece + 1, offset)
+        return [ p0, p1, p2, p3 ]
 
-        # keep the fractional value of g_piece
-        g_frac = g_piece - int(g_piece)
-
-        if y_piece == 0 and r_piece == 0 and g_frac == 0:
-            x += g_piece * G.u.x
-            y += g_piece * G.u.y
+    def triangle(self, y_piece:float, r_piece:float, g_piece:float, offset:Xy=None) -> list[Xy]:
+        rhombus = self.rhombus(y_piece, r_piece, offset)
+        if g_piece == 0:
+            return [ rhombus[0], rhombus[1], rhombus[2] ]
         else:
-            g_parity = (g_piece - 0.5) % 2
-            parity = int(y_piece - 0.5 + r_piece - 0.5) % 2
-            # if parity == g_parity:
-                # x += 0.5 * G.u.x
-                # y += 0.5 * G.u.y
-            print(f"g_frac: {y_piece} {r_piece} {g_piece} -> {g_frac}")
-            x += g_frac * G.u.x
-            y += g_frac * G.u.y
-        # print(f"YRG: ({y_piece}, {r_piece}, {g_piece}) -> ({x}, {yy})")
-        return (x, y)
-
-    def to_absolute_px(self, y_piece:float, r_piece:float, g_piece:float) -> Tuple[float, float]:
-        x, y = self.to_relative_px(y_piece, r_piece, g_piece)
-        return (x + self.cx, y + self.cy)
+            return [ rhombus[0], rhombus[2], rhombus[3] ]
 
 
 class ImageProcessor:
@@ -525,34 +536,23 @@ class ImageProcessor:
 
     def draw_yrg_coords(self, yrg_coords:YRGCoord, out_img:np.array) -> None:
 
-        rx, ry = yrg_coords.to_relative_px(1, 1, 0)
-        rr = int(min(rx, ry) / 2)
+        center = yrg_coords.center_px
 
-        # Draw the YRG coordinates on the image
+        t = yrg_coords.triangle(0, 0, 0)
+        radius = int(inscribed_circle_radius(t) *.5 )
+
         n2 = N//2
         for (y, r, g) in VALID_YRG:
-            y_piece = y - n2 + 0.5
-            r_piece = r - n2 + 0.5
-            g_piece = g - n2 + 0.5
-            px, py = yrg_coords.to_absolute_px(y_piece, r_piece, g_piece)
-            cv2.circle(out_img, (int(px), int(py)), rr, (255, 255, 255), 2)
-            cv2.putText(out_img, f"{y}{r}{g}", (int(px) - 24, int(py) + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
-        for y in range(-n2, n2 + 1):
-            px, py = yrg_coords.to_absolute_px(y, y/2, 0)
-            # print(f"YRG: ({y},0,0) -> ({px},{py})")
-            cv2.circle(out_img, (int(px), int(py)), 8, (0, 255, 255), -1)
-        for r in range(-n2, n2 + 1):
-            px, py = yrg_coords.to_absolute_px(r/2, r, 0)
-            # print(f"YRG: (0,{r},0) -> ({px},{py})")
-            cv2.circle(out_img, (int(px), int(py)), 8, (0, 0, 255), -1)
-        for g in range(-n2, n2 + 1):
-            px, py = yrg_coords.to_absolute_px(0, 0, g)
-            # print(f"YRG: (0,0,{g}) -> ({px},{py})")
-            cv2.circle(out_img, (int(px), int(py)), 8, (0, 255, 0), -1)
-
-
-
+            y_piece = y - n2
+            r_piece = r - n2
+            triangle = yrg_coords.triangle(y_piece, r_piece, g, offset=center)
+            poly = np.int32(xy_list_to_np_array(triangle))
+            cv2.polylines(out_img, [poly], isClosed=True, color=(255, 255, 255), thickness=2)
+            tc = triangle_center(triangle)
+            px = int(tc.x)
+            py = int(tc.y)
+            cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
+            cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
 
 
