@@ -329,8 +329,10 @@ class ImageProcessor:
                 coords_img = rot_img.copy()
                 self.draw_yrg_coords(yrg_coords, coords_img)
                 cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
-                colors_img = self.extract_triangle_colors(yrg_coords, rot_img, params)
+                cells, colors_img = self.extract_cells_colors(yrg_coords, rot_img, params)
                 cv2.imwrite(self.dest_name("_7_colors"), colors_img)
+
+                self.orient_white_cells(cells)
 
                 break
 
@@ -608,7 +610,7 @@ class ImageProcessor:
             r_piece = r - n2
             yield yrg_coords.triangle(y_piece, r_piece, g, offset=center)
 
-    def extract_triangle_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> np.array:
+    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> Tuple[list,np.array]:
         t = yrg_coords.triangle(0, 0, 0)
         radius = int(t.inscribed_circle_radius() *.5 )
 
@@ -634,6 +636,7 @@ class ImageProcessor:
 
         shrink_ratio = 0.5
 
+        cells = []
         for triangle in self.triangles(yrg_coords):
             # Create a mask based on a shrunk triangle to filter on the HSB
             poly = np.int32(triangle.shrink(shrink_ratio).to_np_array())
@@ -644,6 +647,10 @@ class ImageProcessor:
             mean_color = cv2.mean(hsv_img, mask=mask)
             print(f"Mean color: {mean_color}")
             color = self.select_color(int(mean_color[0]), int(mean_color[1]), int(mean_color[2]))
+            cells.append({
+                "color": color,
+                "triangle": triangle,
+            })
 
             # Draw the mean color on the triangle, using the full triangle size
             poly = np.int32(triangle.to_np_array())
@@ -653,7 +660,7 @@ class ImageProcessor:
             poly = np.int32(triangle.to_np_array())
             cv2.polylines(out_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
-        return out_img
+        return (cells, out_img)
 
     def select_color(self, h:int, s:int, v:int) -> dict:
         for color in COLORS:
@@ -666,5 +673,22 @@ class ImageProcessor:
             print(f"Color found: h={h}, s={s}, v={v} --> {color['name']}")
             return color
 
+    def orient_white_cells(self, cells:list) -> None:
+        # We expect to find 3 white cells in the puzzle.
+        # Two of them must have the same "g" piece coordinate.
+        whites = [ cell for cell in cells if cell["color"]["name"] == "White" ]
+        if len(whites) != 3:
+            print(f"Found {len(whites)} white cells, expected 3.")
+            return None
+        # Check if two of them have the same "g" piece coordinate
+        g = {}
+        g[0] = [ cell for cell in whites if cell["triangle"].g_piece == 0 ]
+        g[1] = [ cell for cell in whites if cell["triangle"].g_piece == 1 ]
+        pair = [ v for k, v in g.items() if len(v) == 2 ]
+        if len(pair) != 1:
+            print(f"Found {len(pair)} pairs of white cells with the same g piece coordinate.")
+            return None
+        pair = pair[0]
+        print(f"White pair: {pair}")
 
 # ~~
