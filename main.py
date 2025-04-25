@@ -65,9 +65,11 @@ class Main:
 
         # Generate HTML table
         table = "<table>\n"
+        n = 0
         for info in img_infos:
             table += "<tr class='title'>\n"
-            table += f"  <td colspan={max_columns}>{info['basename']}</td>\n"
+            n += 1
+            table += f"  <td colspan={max_columns}>{n} - {info['basename']}</td>\n"
             table += "</tr>\n"
 
             table += "<tr class='images'>\n"

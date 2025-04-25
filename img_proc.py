@@ -2,16 +2,17 @@
 #
 # (c) 2025 ralfoide at gmail
 
+import colors
+import coord
 import cv2
 import math
 import numpy as np
 import os
 
+from coord import Axis, YRGCoord, segments, segment_center
 from typing import Generator
 from typing import Tuple
 
-N = 6  # YRG coords are in 0..5 range
-BORDER_SIZE = 0.5 # Border is half size of an inner piece
 RESIZE_PX = 1024
 
 PARAMS = [
@@ -65,220 +66,10 @@ PARAMS = [
     # },
 ]
 
-# Valid (Y, R, G) that fit in the puzzle boundaries.
-# To convert to triangle centers, substruct N/2 and add 0.5.
-# Note that the bottom half of Y has a symmetry : YRG on top becomes YGR on the bottom.
-VALID_YRG = [
-                          (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (0, 3, 0),
-               (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1), (1, 2, 0), (1, 2, 1), (1, 3, 0), (1, 3, 1), (1, 4, 0),
-    (2, 0, 0), (2, 0, 1), (2, 1, 0), (2, 1, 1), (2, 2, 0), (2, 2, 1), (2, 3, 0), (2, 3, 1), (2, 4, 0), (2, 4, 1), (2, 5, 0),
-    (3, 0, 1), (3, 1, 0), (3, 1, 1), (3, 2, 0), (3, 2, 1), (3, 3, 0), (3, 3, 1), (3, 4, 0), (3, 4, 1), (3, 5, 0), (3, 5, 1),
-               (4, 1, 1), (4, 2, 0), (4, 2, 1), (4, 3, 0), (4, 3, 1), (4, 4, 0), (4, 4, 1), (4, 5, 0), (4, 5, 1),
-                          (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
-]
-
-COLORS = [
-    {
-        "name": "Red",
-        "rgb": (192, 0, 0),
-        "bgr": (0, 0, 192),
-        "h": { "min": 7, "max": 9 },
-        "s": { "min": 128, "max": 255 },
-        "v": { "min": 60, "max": 255 },
-    },
-    {
-        "name": "White",
-        "rgb": (192, 192, 192),
-        "bgr": (192, 192, 192),
-        "h": { "min": 12, "max": 35 },
-        "s": { "min": 0, "max": 100 },
-        "v": { "min": 150, "max": 255 },
-    },
-    {
-        "name": "Black",
-        "rgb": (64, 64, 64),
-        "bgr": (64, 64, 64),
-        "v": { "min": 0, "max": 100 },
-    },
-    {
-        "name": "Orange",
-        "h": { "min": 10, "max": 12 },
-        "rgb": (192, 128, 0),
-        "bgr": (0, 128, 192),
-    },
-    {
-        "name": "Yellow",
-        "rgb": (192, 192, 0),
-        "bgr": (0, 192, 192),
-    },
-]
-
-
-class Xy:
-    def __init__(self, a:np.array):
-        self.x = a[0]
-        self.y = a[1]
-
-    def __str__(self) -> str:
-        return f"({self.x}, {self.y})"
-
-    def __repr__(self) -> str:
-        return f"Xy({self.x}, {self.y})"
-
-    def to_np(self) -> np.array:
-        """Converts the Xy object to a numpy array."""
-        return np.array([self.x, self.y])
-
-    def to_int(self) -> Tuple[int, int]:
-        return (int(self.x), int(self.y))
-
-class Triangle:
-    def __init__(self, y_piece:int, r_piece: int, g_piece:int, p0:Xy, p1:Xy, p2:Xy):
-        self.y_piece = y_piece
-        self.r_piece = r_piece
-        self.g_piece = g_piece
-        self.xy_list = [p0, p1, p2]
-
-    def to_np_array(self) -> np.array:
-        return np.array([ xy.to_np() for xy in self.xy_list ])
-
-    def center(self) -> Xy:
-        x = sum(xy.x for xy in self.xy_list) / len(self.xy_list)
-        y = sum(xy.y for xy in self.xy_list) / len(self.xy_list)
-        return Xy((x, y))
-
-    def inscribed_circle_radius(self) -> float:
-        # Size of the first side
-        # We guestimate that the triangle is equilateral.
-        a = math.sqrt(
-            (self.xy_list[0].x - self.xy_list[1].x) ** 2 +
-            (self.xy_list[0].y - self.xy_list[1].y) ** 2)
-
-        # Semi-perimeter of the triangle
-        s = (a + a + a) / 2
-        # Area of the triangle using Heron's formula
-        area = math.sqrt(s * (s - a) * (s - a) * (s - a))
-        # Radius of the inscribed circle
-        radius = area / s
-        return radius
-
-    def shrink(self, ratio:float) -> "Triangle":
-        """Returns a new triangle with the same center and a smaller size."""
-        center = self.center()
-        new_xy_list = []
-        for xy in self.xy_list:
-            dx = xy.x - center.x
-            dy = xy.y - center.y
-            new_xy = Xy((center.x + dx * ratio, center.y + dy * ratio))
-            new_xy_list.append(new_xy)
-        return Triangle(self.y_piece, self.r_piece, self.g_piece, *new_xy_list)
-
-def segments(polygon_points:list) -> Generator:
-    np = len(polygon_points)
-    for i in range(np):
-        start = polygon_points[i]
-        end = polygon_points[(i + 1) % np]
-        yield (start, end)
-
-
-def segment_center(segment:tuple) -> tuple:
-    """Returns the center of a segment."""
-    start = segment[0]
-    end = segment[1]
-    x = (start[0] + end[0]) / 2
-    y = (start[1] + end[1]) / 2
-    return (x, y)
-
 
 def clamp(value:int, min_value:int, max_value:int) -> int:
     """Clamps a value to the given range."""
     return max(min(value, max_value), min_value)
-
-
-
-class Axis:
-    """
-    Represents one of the coordinate axis of the hexagon.
-    The coordinates are in the range -N/2-0.5 .. N/2+0.5.
-    These are "piece" units (and not pixel units).
-    The hexagon has 3 coordinates: X (top to bottom), Y (left to right going down), Z (left to right going up).
-
-    The puzzle has N=6 pieces on each coordinate.
-    The border is half the size of an inner piece.
-    Since the segments may not be absolutely parallel due to image paralax, we use the start/end segments to form a box.
-    Along the axis, start is at coordinate -N/2-0.5 in piece units.
-    Along the axis, end is at coordinate N/2+0.5 in piece units.
-    """
-    def __init__(self, segment_start:list, segment_end:list):
-        self.segment_start = segment_start
-        self.segment_end = segment_end
-        self.center_start = segment_center(segment_start)
-        self.center_end = segment_center(segment_end)
-        print(f"Axis start: {self.center_start}, end: {self.center_end}")
-        dx = self.center_end[0] - self.center_start[0]
-        dy = self.center_end[1] - self.center_start[1]
-        self.step_size_px = math.sqrt(dx * dx + dy * dy) / N
-        self._v = np.array([self.step_size_px, 0])
-        self.angle_deg = 0
-        self.v = None
-
-    def set_rotation(self, angle_deg:float) -> None:
-        self.angle_deg = angle_deg
-
-        # Compute the rotation matrix
-        angle_rad = math.radians(angle_deg)
-        self._rot_matrix = np.array([
-            [math.cos(angle_rad), -math.sin(angle_rad)],
-            [math.sin(angle_rad), math.cos(angle_rad)]
-        ])
-
-        # compute the unit vector
-        self._v = np.dot(self._rot_matrix, self._v)
-        self.v = Xy(self._v)
-        print(f"Axis unit vectors: v={self.v}")
-
-
-class YRGCoord:
-    def __init__(self, center_px:Tuple[float, float], y_axis:Axis, r_axis:Axis, g_axis:Axis):
-        """
-        (cx,cy) are the pixel coordinates of the center of the hexagon
-        (y,r,g) are the inner pieces coordinates of the hexagon.
-        """
-        self.center_px = Xy(center_px)
-        self.y_axis = y_axis
-        self.r_axis = r_axis
-        self.g_axis = g_axis
-        self.y_axis.set_rotation(120)
-        self.r_axis.set_rotation(0)
-        self.g_axis.set_rotation(0)
-
-    def point_yr(self, y_piece:int, r_piece:int, offset:Xy=None) -> Xy:
-        Y = self.y_axis
-        R = self.r_axis
-        x = (y_piece * Y.v.x + r_piece * R.v.x)
-        y = (y_piece * Y.v.y + r_piece * R.v.y)
-        if offset is not None:
-            x += offset.x
-            y += offset.y
-        return Xy((x, y))
-
-    def rhombus(self, y_piece:int, r_piece:int, offset:Xy=None) -> list[Xy]:
-        Y = self.y_axis
-        R = self.r_axis
-
-        # Compute the rhombus points
-        p0 = self.point_yr(y_piece    , r_piece    , offset)
-        p1 = self.point_yr(y_piece + 1, r_piece    , offset)
-        p2 = self.point_yr(y_piece + 1, r_piece + 1, offset)
-        p3 = self.point_yr(y_piece    , r_piece + 1, offset)
-        return [ p0, p1, p2, p3 ]
-
-    def triangle(self, y_piece:int, r_piece:int, g_piece:int, offset:Xy=None) -> Triangle:
-        rhombus = self.rhombus(y_piece, r_piece, offset)
-        if g_piece == 0:
-            return Triangle(y_piece, r_piece, g_piece, rhombus[0], rhombus[1], rhombus[2] )
-        else:
-            return Triangle(y_piece, r_piece, g_piece,  rhombus[0], rhombus[2], rhombus[3] )
 
 
 class ImageProcessor:
@@ -606,15 +397,15 @@ class ImageProcessor:
             px = int(tc.x)
             py = int(tc.y)
             cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
-            y = triangle.y_piece + N//2
-            r = triangle.r_piece + N//2
+            y = triangle.y_piece + coord.N//2
+            r = triangle.r_piece + coord.N//2
             g = triangle.g_piece
             cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
         center = yrg_coords.center_px
-        n2 = N//2
-        for (y, r, g) in VALID_YRG:
+        n2 = coord.N//2
+        for (y, r, g) in coord.VALID_YRG:
             y_piece = y - n2
             r_piece = r - n2
             yield yrg_coords.triangle(y_piece, r_piece, g, offset=center)
@@ -629,16 +420,15 @@ class ImageProcessor:
         out_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
 
         hsv_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2HSV)
-        h, s, v = cv2.split(hsv_img)
+        lab_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2Lab)
+        # # Clip and quantize the HSV
         # # Clip the hue channel -- we only care about the redish hue
-        h_min = np.min(h)
-        h_max = np.max(h)
-        print(f"Min hue: {h_min}, Max hue: {h_max}")
-        np.clip(h, 8, 16, out=h)
-        h = (h // 4) * 4
-        s = (s // 16) * 16
-        v = (v // 32) * 32
-        hsv_img = cv2.merge((h, s, v))
+        # h, s, v = cv2.split(hsv_img)
+        # np.clip(h, 0, 20, out=h)
+        # h = (h // 4) * 4
+        # s = (s // 16) * 16
+        # v = (v // 32) * 32
+        # hsv_img = cv2.merge((h, s, v))
 
         # Fill out_img with black
         out_img.fill(0)
@@ -654,38 +444,32 @@ class ImageProcessor:
             # Get the mean color of the polygon
             # Note that cv2.mean() always returns a scalar with 4 components.
             mean_hsv = cv2.mean(hsv_img, mask=mask)
-            print(f"Mean color HSV: {mean_hsv}")
-            color = self.select_color(int(mean_hsv[0]), int(mean_hsv[1]), int(mean_hsv[2]))
+            mean_lab = cv2.mean(lab_img, mask=mask)
+            print(f"Mean color HSV@@{','.join([ str(x) for x in mean_hsv[0:3] ])}")
+            # print(f"Mean color Lab@@{','.join([ str(x) for x in mean_lab[0:3] ])}")
+            color = colors.select(
+                mean_hsv[0], mean_hsv[1], mean_hsv[2],
+                mean_lab[0], mean_lab[1], mean_lab[2])
             cells.append({
                 "color": color,
                 "triangle": triangle,
             })
 
-            # Conver the mean HSV to BGR
+            # Convert the mean HSV to BGR
             mean_bgr = cv2.cvtColor(np.uint8([[mean_hsv[:3]]]), cv2.COLOR_HSV2BGR)[0][0]
             mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
+
+            # # Convert the mean Lab to BGR
+            # mean_bgr = cv2.cvtColor(np.uint8([[mean_lab[:3]]]), cv2.COLOR_LAB2BGR)[0][0]
+            # mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
 
             # Draw the mean color on the triangle, using the full triangle size
             poly = np.int32(triangle.to_np_array())
             cv2.fillPoly(out_img, [poly], mean_bgr)
             cv2.circle(out_img, triangle.center().to_int(), radius, color["bgr"], -1)
-
-        for triangle in self.triangles(yrg_coords):
-            poly = np.int32(triangle.to_np_array())
             cv2.polylines(out_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
         return (cells, out_img)
-
-    def select_color(self, h:int, s:int, v:int) -> dict:
-        for color in COLORS:
-            if "h" in color and (h < color["h"]["min"] or h > color["h"]["max"]):
-                continue
-            if "s" in color and (s < color["s"]["min"] or s > color["s"]["max"]):
-                continue
-            if "v" in color and (v < color["v"]["min"] or v > color["v"]["max"]):
-                continue
-            print(f"Color found: h={h}, s={s}, v={v} --> {color['name']}")
-            return color
 
     def orient_white_cells(self, cells:list) -> None:
         # We expect to find 3 white cells in the puzzle.
