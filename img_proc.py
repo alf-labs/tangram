@@ -121,6 +121,7 @@ class ImageProcessor:
             return
 
         resized = self.load_resized_image(input_img_path)
+        resized = self.auto_level(resized)
         lab_img = self.convert_to_lab(resized)
         cv2.imwrite(self.dest_name("_1_lab"), lab_img)
         hex_img = resized.copy()
@@ -169,7 +170,6 @@ class ImageProcessor:
         cv2.imwrite(src_img_path, resized)
         return
 
-
     def load_resized_image(self, input_img_path:str) -> np.array:
         # Load the image using OpenCV
         image = cv2.imread(self.input_img_path, cv2.IMREAD_COLOR)
@@ -185,6 +185,79 @@ class ImageProcessor:
         image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
         print(f"Image resized to: {new_width}x{new_height}")
         return image
+
+    def auto_level(self, rgb_img:np.array) -> np.array:
+        # Different attempts at auto-leveling the image.
+        # Mixed success with these methods.
+
+        # ----------
+        # Attempt 1: adjust contrast in the Lab color space.
+        # Normaly one would only be done for Luminance.
+        # Try adjusting a*b* channels too to see what it gives
+        # (normally one does not normalize A/B or U/V separately as this "distords"
+        # the colors, but since most of the colors we want here are in a very narrow
+        # band in the red-orange spectra, that may work, at the expense of distorting
+        # the white and black pieces colors.)
+
+        # Convert the image to LAB color space
+        lab_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab_img)
+        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        S=4
+        clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
+        l = clahe.apply(l)
+        a = clahe.apply(a)
+        b = clahe.apply(b)
+        lab_img = cv2.merge((l, a, b))
+        rgb_img = cv2.cvtColor(lab_img, cv2.COLOR_LAB2BGR)
+
+        # ----------
+        # Attempt 2: adjust contrast in the YUV color space.
+        # This one only adjusts the Y channel.
+
+        # # Convert the image to YUV color space
+        # yuv_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2YUV)
+        # # Split the LAB image into its channels
+        # l, a, b = cv2.split(yuv_img)
+        # # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to the L channel
+        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        # cl = clahe.apply(l)
+        # # Merge the enhanced L channel back with the A and B channels
+        # lab_img = cv2.merge((cl, a, b))
+        # # Convert the LAB image back to BGR color space
+        # rgb_img = cv2.cvtColor(lab_img, cv2.COLOR_YUV2BGR)
+
+        # ----------
+        # Attempt 3: Apply Grayworld (Automatic White Balance) algorithm
+        # Source: https://pippin.gimp.org/image-processing/chapter-automaticadjustments.html
+
+        # avg_b = np.mean(rgb_img[:, :, 0])
+        # avg_g = np.mean(rgb_img[:, :, 1])
+        # avg_r = np.mean(rgb_img[:, :, 2])
+        #
+        # avg_gray = (avg_b + avg_g + avg_r) / 3
+        #
+        # scale_b = avg_gray / avg_b
+        # scale_g = avg_gray / avg_g
+        # scale_r = avg_gray / avg_r
+        #
+        # rgb_img[:, :, 0] = np.clip(rgb_img[:, :, 0] * scale_b, 0, 255)
+        # rgb_img[:, :, 1] = np.clip(rgb_img[:, :, 1] * scale_g, 0, 255)
+        # rgb_img[:, :, 2] = np.clip(rgb_img[:, :, 2] * scale_r, 0, 255)
+
+        # ----------
+        # Attempt 4: Apply contrast stretching algorithm
+        # Source: https://pippin.gimp.org/image-processing/chapter-automaticadjustments.html
+
+        # # Find the minimum and maximum pixel values in the image
+        # min_val = np.min(rgb_img)
+        # max_val = np.max(rgb_img)
+        #
+        # # Stretch the pixel values to the full range [0, 255]
+        # stretched = ((rgb_img - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+        # rgb_img = stretched
+
+        return rgb_img
 
     def convert_to_lab(self, rgb_img:np.array) -> np.array:
         # Convert the image to LAB color space to enhance contrast
@@ -282,7 +355,10 @@ class ImageProcessor:
 
         # Note that [c] is not an hexagon. It may have thousands of points or more.
         eps_w_ratio = params.get("polygon_eps_width_ratio", 1 / 20)
-        eps = w * eps_w_ratio
+        if eps_w_ratio > 0:
+            eps = w * eps_w_ratio
+        else:
+            eps = -1 * eps_w_ratio * cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(curve=c, epsilon=eps, closed=True)
 
         if draw_img is not None:
