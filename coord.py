@@ -23,8 +23,19 @@ VALID_YRG = [
                           (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
 ]
 
+# We can rotate the puzzle cells 60 degrees clockwise by mapping any cell from ROT_60_CCW_SRC (source) to VALID_YRG (destination).
+# Example: SRC[0](0,2,1) --> That means that cell (0,2,1) becomes cell (0,0,0) because VALID_YRG[0] = (0,0,0).
+ROT_60_CCW_SRC = [
+                          (0, 2, 1), (0, 3, 0), (1, 3, 1), (1, 4, 0), (2, 4, 1), (2, 5, 0), (3, 5, 1),
+               (0, 1, 1), (0, 2, 0), (1, 2, 1), (1, 3, 0), (2, 3, 1), (2, 4, 0), (3, 4, 1), (3, 5, 0), (4, 5, 1),
+    (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 2, 0), (2, 2, 1), (2, 3, 0), (3, 3, 1), (3, 4, 0), (4, 4, 1), (4, 5, 0), (5, 5, 1),
+    (0, 0, 0), (1, 0, 1), (1, 1, 0), (2, 1, 1), (2, 2, 0), (3, 2, 1), (3, 3, 0), (4, 3, 1), (4, 4, 0), (5, 4, 1), (5, 5, 0),
+               (1, 0, 0), (2, 0, 1), (2, 1, 0), (3, 1, 1), (3, 2, 0), (4, 2, 1), (4, 3, 0), (5, 3, 1), (5, 4, 0),
+                          (2, 0, 0), (3, 0, 1), (3, 1, 0), (4, 1, 1), (4, 2, 0), (5, 2, 1), (5, 3, 0),
+]
 
-class Xy:
+
+class XY:
     def __init__(self, a:np.array):
         self.x = a[0]
         self.y = a[1]
@@ -33,29 +44,43 @@ class Xy:
         return f"({self.x}, {self.y})"
 
     def __repr__(self) -> str:
-        return f"Xy({self.x}, {self.y})"
+        return f"XY({self.x}, {self.y})"
 
     def to_np(self) -> np.array:
-        """Converts the Xy object to a numpy array."""
+        """Converts the XY object to a numpy array."""
         return np.array([self.x, self.y])
 
     def to_int(self) -> Tuple[int, int]:
         return (int(self.x), int(self.y))
 
+class YRG:
+    def __init__(self, y_piece:int, r_piece:int, g_piece:int):
+        self.y = y_piece
+        self.r = r_piece
+        self.g = g_piece
+        assert -N//2 <= y_piece < N//2, f"Invalid Y piece: {y_piece}"
+        assert -N//2 <= r_piece < N//2, f"Invalid R piece: {r_piece}"
+        assert g_piece == 0 or g_piece == 1, f"Invalid g_piece: {g_piece}"
+
+    def __str__(self) -> str:
+        return f"({self.y}, {self.r}, {self.g})"
+
+    def __repr__(self) -> str:
+        return f"YRG({self.y}, {self.r}, {self.g})"
+
 class Triangle:
-    def __init__(self, y_piece:int, r_piece: int, g_piece:int, p0:Xy, p1:Xy, p2:Xy):
-        self.y_piece = y_piece
-        self.r_piece = r_piece
-        self.g_piece = g_piece
+    def __init__(self, yrg_piece:YRG, p0:XY, p1:XY, p2:XY, offset:XY=None):
+        self.yrg = yrg_piece
         self.xy_list = [p0, p1, p2]
+        self.offset = offset
 
     def to_np_array(self) -> np.array:
         return np.array([ xy.to_np() for xy in self.xy_list ])
 
-    def center(self) -> Xy:
+    def center(self) -> XY:
         x = sum(xy.x for xy in self.xy_list) / len(self.xy_list)
         y = sum(xy.y for xy in self.xy_list) / len(self.xy_list)
-        return Xy((x, y))
+        return XY((x, y))
 
     def inscribed_circle_radius(self) -> float:
         # Size of the first side
@@ -79,9 +104,10 @@ class Triangle:
         for xy in self.xy_list:
             dx = xy.x - center.x
             dy = xy.y - center.y
-            new_xy = Xy((center.x + dx * ratio, center.y + dy * ratio))
+            new_xy = XY((center.x + dx * ratio, center.y + dy * ratio))
             new_xy_list.append(new_xy)
-        return Triangle(self.y_piece, self.r_piece, self.g_piece, *new_xy_list)
+        return Triangle(self.yrg, *new_xy_list, offset=self.offset)
+
 
 def segments(polygon_points:list) -> Generator:
     np = len(polygon_points)
@@ -138,7 +164,7 @@ class Axis:
 
         # compute the unit vector
         self._v = np.dot(self._rot_matrix, self._v)
-        self.v = Xy(self._v)
+        self.v = XY(self._v)
         print(f"Axis unit vectors: v={self.v}")
 
 
@@ -148,7 +174,7 @@ class YRGCoord:
         (cx,cy) are the pixel coordinates of the center of the hexagon
         (y,r,g) are the inner pieces coordinates of the hexagon.
         """
-        self.center_px = Xy(center_px)
+        self.center_px = XY(center_px)
         self.y_axis = y_axis
         self.r_axis = r_axis
         self.g_axis = g_axis
@@ -156,7 +182,7 @@ class YRGCoord:
         self.r_axis.set_rotation(0)
         self.g_axis.set_rotation(0)
 
-    def point_yr(self, y_piece:int, r_piece:int, offset:Xy=None) -> Xy:
+    def point_yr(self, y_piece:int, r_piece:int, offset:XY=None) -> XY:
         Y = self.y_axis
         R = self.r_axis
         x = (y_piece * Y.v.x + r_piece * R.v.x)
@@ -164,9 +190,9 @@ class YRGCoord:
         if offset is not None:
             x += offset.x
             y += offset.y
-        return Xy((x, y))
+        return XY((x, y))
 
-    def rhombus(self, y_piece:int, r_piece:int, offset:Xy=None) -> list[Xy]:
+    def rhombus(self, y_piece:int, r_piece:int, offset:XY=None) -> list[XY]:
         Y = self.y_axis
         R = self.r_axis
 
@@ -177,12 +203,61 @@ class YRGCoord:
         p3 = self.point_yr(y_piece    , r_piece + 1, offset)
         return [ p0, p1, p2, p3 ]
 
-    def triangle(self, y_piece:int, r_piece:int, g_piece:int, offset:Xy=None) -> Triangle:
-        rhombus = self.rhombus(y_piece, r_piece, offset)
-        if g_piece == 0:
-            return Triangle(y_piece, r_piece, g_piece, rhombus[0], rhombus[1], rhombus[2] )
+    def triangle(self, yrg_piece:YRG, offset:XY=None) -> Triangle:
+        rhombus = self.rhombus(yrg_piece.y, yrg_piece.r, offset)
+        if yrg_piece.g == 0:
+            return Triangle(yrg_piece, rhombus[0], rhombus[1], rhombus[2], offset)
         else:
-            return Triangle(y_piece, r_piece, g_piece,  rhombus[0], rhombus[2], rhombus[3] )
+            return Triangle(yrg_piece,  rhombus[0], rhombus[2], rhombus[3], offset)
 
+    # def find_cell(self, cells:list, yrg_piece:YRG) -> Triangle:
+    #     for cell in cells:
+    #         if cell.yrg == yrg_piece:
+    #             return cell
+    #     return None
+
+    # def find_cell_pos(self, cells:list, yrg_piece:YRG) -> int:
+    #     for idx_cell, cell in enumerate(cells):
+    #         if cell.yrg == yrg_piece:
+    #             return idx_cell
+    #     return -1
+
+    def rot_60_ccw(self, triangle:Triangle) -> Triangle:
+        """
+        "Rotates" a Triangle by modifying its y,r,g coordinates and returns the new Triangle.
+        This uses the YRGCoord to recompute the rhombus pixel coordinates.
+        """
+        n2 = N//2
+        yrg_src = triangle.yrg
+        index = ROT_60_CCW_SRC.index((yrg_src.y + n2, yrg_src.r + n2, yrg_src.g))
+        yrg_dst = VALID_YRG[index]
+        return self.triangle(YRG(yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2]), triangle.offset)
+
+
+    #     """Rotates the cells 60 degrees counter-clockwise. This just modifies the y,r,g coordinates
+    #     in the underlying Triangle objects."""
+    #     new_cells = []
+    #     old_cells = cells.copy()
+
+    #     num_cells = len(VALID_YRG)
+    #     assert num_cells == len(ROT_60_CCW_SRC), f"Invalid number of cells: {num_cells} != {len(ROT_60_CCW_SRC)}"
+
+    #     for idx_cell in range(num_cells):
+    #         yrg_src = ROT_60_CCW_SRC[idx_cell]
+    #         yrg_dst = VALID_YRG[idx_cell]
+
+    #         pos = self.find_cell_pos(old_cells, yrg_src[0], yrg_src[1], yrg_src[2])
+    #         if pos == -1:
+    #             print(f"Warning: Cell {yrg_src} not found in old_cells")
+    #         else:
+    #             cell = old_cells.pop(pos)
+    #             new_cell = Triangle(yrg_dst[0], yrg_dst[1], yrg_dst[2], cell.xy_list[0], cell.xy_list[1], cell.xy_list[2])
+
+
+    #     for cell in cells:
+    #         y_piece, r_piece, g_piece = cell
+    #         new_cell = ROT_60_CCW_SRC[y_piece * N * N + r_piece * N + g_piece]
+    #         new_cells.append(new_cell)
+    #     return new_cells
 
 # ~~

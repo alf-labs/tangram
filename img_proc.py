@@ -9,7 +9,7 @@ import math
 import numpy as np
 import os
 
-from coord import Axis, YRGCoord, segments, segment_center
+from coord import Axis, YRG, YRGCoord, Triangle, segments, segment_center
 from typing import Generator
 from typing import Tuple
 
@@ -72,6 +72,23 @@ def clamp(value:int, min_value:int, max_value:int) -> int:
     return max(min(value, max_value), min_value)
 
 
+class Cell:
+    def __init__(self, triangle:Triangle, color:dict, mean_hsv, mean_lab):
+        self.triangle = triangle
+        self.color = color
+        self.mean_hsv = mean_hsv
+        self.mean_lab = mean_lab
+
+    def yrg(self) -> YRG:
+        return self.triangle.yrg
+
+    def color_name(self) -> str:
+        return self.color["name"]
+
+    def __repr__(self) -> str:
+        return f"Cell(triangle={self.yrg()}, color={self.color_name()})"
+
+
 class ImageProcessor:
     def __init__(self, input_img_path:str, output_dir_path:str):
         self.input_img_path = input_img_path
@@ -129,10 +146,13 @@ class ImageProcessor:
                 coords_img = rot_img.copy()
                 self.draw_yrg_coords(yrg_coords, coords_img)
                 cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
-                cells, colors_img = self.extract_cells_colors(yrg_coords, rot_img, params)
+                cells = self.extract_cells_colors(yrg_coords, rot_img, params)
+                colors_img = self.draw_cells(rot_img, cells)
                 cv2.imwrite(self.dest_name("_7_colors"), colors_img)
-
-                self.orient_white_cells(cells)
+                # self.orient_white_cells(cells)
+                self.rotate_cells_60_ccw(yrg_coords, cells)
+                rot_col_img = self.draw_cells(rot_img, cells)
+                cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
 
                 break
 
@@ -387,7 +407,7 @@ class ImageProcessor:
         return yrg_coords
 
     def draw_yrg_coords(self, yrg_coords:YRGCoord, out_img:np.array) -> None:
-        t = yrg_coords.triangle(0, 0, 0)
+        t = yrg_coords.triangle(YRG(0, 0, 0))
         radius = int(t.inscribed_circle_radius() *.5 )
 
         for triangle in self.triangles(yrg_coords):
@@ -397,9 +417,9 @@ class ImageProcessor:
             px = int(tc.x)
             py = int(tc.y)
             cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
-            y = triangle.y_piece + coord.N//2
-            r = triangle.r_piece + coord.N//2
-            g = triangle.g_piece
+            y = triangle.yrg.y + coord.N//2
+            r = triangle.yrg.r + coord.N//2
+            g = triangle.yrg.g
             cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
@@ -408,19 +428,16 @@ class ImageProcessor:
         for (y, r, g) in coord.VALID_YRG:
             y_piece = y - n2
             r_piece = r - n2
-            yield yrg_coords.triangle(y_piece, r_piece, g, offset=center)
+            yield yrg_coords.triangle(YRG(y_piece, r_piece, g), offset=center)
 
-    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> Tuple[list,np.array]:
-        t = yrg_coords.triangle(0, 0, 0)
-        radius = int(t.inscribed_circle_radius() *.5 )
-
+    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
         ksize = params.get("blur_ksize", (11, 11))
         sigmaX = params.get("blur_sigmaX", 0)
-        out_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
+        blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
 
-        hsv_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2HSV)
-        lab_img = cv2.cvtColor(out_img, cv2.COLOR_BGR2Lab)
+        hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
+        lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
         # # Clip and quantize the HSV
         # # Clip the hue channel -- we only care about the redish hue
         # h, s, v = cv2.split(hsv_img)
@@ -429,9 +446,6 @@ class ImageProcessor:
         # s = (s // 16) * 16
         # v = (v // 32) * 32
         # hsv_img = cv2.merge((h, s, v))
-
-        # Fill out_img with black
-        out_img.fill(0)
 
         shrink_ratio = 0.5
 
@@ -445,48 +459,58 @@ class ImageProcessor:
             # Note that cv2.mean() always returns a scalar with 4 components.
             mean_hsv = cv2.mean(hsv_img, mask=mask)
             mean_lab = cv2.mean(lab_img, mask=mask)
-            print(f"Mean color HSV@@{','.join([ str(x) for x in mean_hsv[0:3] ])}")
+            # print(f"Mean color HSV@@{','.join([ str(x) for x in mean_hsv[0:3] ])}")
             # print(f"Mean color Lab@@{','.join([ str(x) for x in mean_lab[0:3] ])}")
+
             color = colors.select(
                 mean_hsv[0], mean_hsv[1], mean_hsv[2],
                 mean_lab[0], mean_lab[1], mean_lab[2])
-            cells.append({
-                "color": color,
-                "triangle": triangle,
-            })
+            cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
+        return cells
 
+    def draw_cells(self, in_img:np.array, cells:list[Cell]) -> np.array:
+        # Make a new image the same size as in_img but black
+        out_img = np.zeros(in_img.shape, dtype=np.uint8)
+
+        radius = int(cells[0].triangle.inscribed_circle_radius() *.5 )
+
+        for cell in cells:
             # Convert the mean HSV to BGR
-            mean_bgr = cv2.cvtColor(np.uint8([[mean_hsv[:3]]]), cv2.COLOR_HSV2BGR)[0][0]
+            mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_hsv]]), cv2.COLOR_HSV2BGR)[0][0]
             mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
 
             # # Convert the mean Lab to BGR
             # mean_bgr = cv2.cvtColor(np.uint8([[mean_lab[:3]]]), cv2.COLOR_LAB2BGR)[0][0]
             # mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
 
-            # Draw the mean color on the triangle, using the full triangle size
-            poly = np.int32(triangle.to_np_array())
+            poly = np.int32(cell.triangle.to_np_array())
             cv2.fillPoly(out_img, [poly], mean_bgr)
-            cv2.circle(out_img, triangle.center().to_int(), radius, color["bgr"], -1)
+            cv2.circle(out_img, cell.triangle.center().to_int(), radius, cell.color["bgr"], -1)
             cv2.polylines(out_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
+        return out_img
 
-        return (cells, out_img)
+    def rotate_cells_60_ccw(self, yrg_coords:YRGCoord, cells:list[Cell]) -> None:
+        """Rotates the cells list in-place."""
+        for cell in cells:
+            cell.triangle = yrg_coords.rot_60_ccw(cell.triangle)
 
-    def orient_white_cells(self, cells:list) -> None:
-        # We expect to find 3 white cells in the puzzle.
-        # Two of them must have the same "g" piece coordinate.
-        whites = [ cell for cell in cells if cell["color"]["name"] == "White" ]
-        if len(whites) != 3:
-            print(f"Found {len(whites)} white cells, expected 3.")
-            return None
-        # Check if two of them have the same "g" piece coordinate
-        g = {}
-        g[0] = [ cell for cell in whites if cell["triangle"].g_piece == 0 ]
-        g[1] = [ cell for cell in whites if cell["triangle"].g_piece == 1 ]
-        pair = [ v for k, v in g.items() if len(v) == 2 ]
-        if len(pair) != 1:
-            print(f"Found {len(pair)} pairs of white cells with the same g piece coordinate.")
-            return None
-        pair = pair[0]
-        print(f"White pair: {pair}")
+    # def orient_white_cells(self, cells:list[Cell]) -> None:
+    #     # We expect to find 3 white cells in the puzzle.
+    #     # Two of them must have the same "g" piece coordinate.
+    #     whites = [ cell for cell in cells if cell.color_name() == "White" ]
+    #     if len(whites) != 3:
+    #         print(f"Found {len(whites)} white cells, expected 3.")
+    #         return None
+    #     # Check if two of them have the same "g" piece coordinate
+    #     cells_g = {}
+    #     cells_g[0] = [ cell for cell in whites if cell.yrg().g == 0 ]
+    #     cells_g[1] = [ cell for cell in whites if cell.yrg().g == 1 ]
+    #     pair = [ cs for k, cs in cells_g.items() if len(cs) == 2 ]
+    #     single = [ cs for k, cs in cells_g.items() if len(cs) == 1 ]
+    #     if len(single) != 1 or len(pair) != 1:
+    #         print(f"Found {len(pair)} pairs of white cells with the same g piece coordinate.")
+    #         return None
+    #     pair = pair[0]
+    #     print(f"White pair: {pair}")
 
 # ~~
