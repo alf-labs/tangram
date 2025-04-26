@@ -1,7 +1,9 @@
 # Tangram Puzzle Image Analyzer
 
 This analyzer attempts to parse pictures of a
-[Tangram Puzzle](https://amzn.to/4cOuWxd).
+[Tangram Puzzle](data/originals/sample/sample.jpg).
+
+<p align=center><img width="384" src="data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
 
 
 ## Usage
