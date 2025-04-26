@@ -13,6 +13,8 @@ from coord import Axis, YRG, YRGCoord, Triangle, segments, segment_center, VALID
 from typing import Generator
 from typing import Tuple
 
+TAU = 2 * math.pi
+
 RESIZE_PX = 1024
 
 PARAMS = [
@@ -24,6 +26,15 @@ PARAMS = [
         "bw_threshold": 16,
         "use_edges": False,
         "polygon_eps_width_ratio": 1/20,
+    },
+    {
+        "blur_ksize": (11, 11),
+        "blur_sigmaX": 0,
+        "brightness_scale": 3,
+        "brightness_offset": 0,
+        "bw_threshold": 32,
+        "use_edges": False,
+        "polygon_eps_width_ratio": -1/200,
     },
     {
         "blur_ksize": (11, 11),
@@ -121,7 +132,7 @@ class ImageProcessor:
             return
 
         resized = self.load_resized_image(input_img_path)
-        resized = self.auto_level(resized)
+        # resized = self.auto_level(resized)
         lab_img = self.convert_to_lab(resized)
         cv2.imwrite(self.dest_name("_1_lab"), lab_img)
         hex_img = resized.copy()
@@ -340,11 +351,13 @@ class ImageProcessor:
 
     def find_hexagon_contour(self, bw_image:np.array, draw_img:np.array=None, params:dict={}) -> list:
         # Find the largest contour in the threshold image
+        # Possible choices for findContour are CHAIN_APPROX_SIMPLE and CHAIN_APPROX_TC89_L1.
+        # The "simple" one seems to perform better for our post-analysis.
         cnts, _ = cv2.findContours(bw_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) == 0:
             print("No contours found.")
             return None
-        # get the contour based on max contour area.
+        # Get the contour based on max contour area.
         c = max(cnts, key=cv2.contourArea)
 
         if draw_img is not None:
@@ -353,16 +366,15 @@ class ImageProcessor:
             # Draw the bounding box on the image
             cv2.rectangle(draw_img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-        # Note that [c] is not an hexagon. It may have thousands of points or more.
-        eps_w_ratio = params.get("polygon_eps_width_ratio", 1 / 20)
-        if eps_w_ratio > 0:
-            eps = w * eps_w_ratio
-        else:
-            eps = -1 * eps_w_ratio * cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(curve=c, epsilon=eps, closed=True)
+        approx = self.filter_hexagon(c, params)
 
         if draw_img is not None:
             cv2.drawContours(draw_img, [approx], -1, (0, 255, 255), 4)
+            for p in approx:
+                px, py = p[0]
+                cv2.circle(draw_img, (px, py), 5, (0, 0, 255), -1)
+            px, py = approx[0][0]
+            cv2.circle(draw_img, (px, py), 10, (255, 0, 255), -1)
 
         # Check if we really found an hexagon
         if len(approx) == 6:
@@ -371,12 +383,90 @@ class ImageProcessor:
             print(f"Hexagon not detected. Found {len(approx)} points.")
             return None
 
-        # Approx is an odd structure:
-        # list of [ list of a single [ list of x, y ] ]
-        # e.g. [ [[x1, y1]], [[x2, y2]], [[x3, y3]], [[x4, y4]], [[x5, y5]], [[x6, y6]] ]
+        # See filter_hexagon() for the Approx format.
         # We need to convert it to a more usable format
         polygon = [ (point[0][0], point[0][1]) for point in approx ]
         return polygon
+
+    def filter_hexagon(self, contour:list, params:dict={}) -> list:
+        # Contour (input) and Approx (output of approxPolyDP) use an unusual structure:
+        # it's an np.array of shape (num_points, 1, 2).
+        # The python representation is:
+        # list of [ list of a single [ list of x, y ] ]
+        # e.g. [ [[x1, y1]], [[x2, y2]], [[x3, y3]], [[x4, y4]], [[x5, y5]], [[x6, y6]] ]
+
+        c = contour
+        num_points = c.shape[0]
+        angles = []
+
+        def _v(idx):
+            p1 = c[idx][0]
+            p2 = c[(idx + 1) % num_points][0]
+            return p2 - p1
+
+        def _p_angle(idx):
+            p0 = c[(idx + num_points - 1) % num_points][0]
+            p1 = c[idx][0]
+            p2 = c[(idx + 1) % num_points][0]
+            deg = self.angle_delta(p1 - p0, p2 - p1)
+            return p1, deg
+
+        curr_angle = 0
+        points = [ c[0] ]
+        threshold = 45
+        (x, y, w, h) = cv2.boundingRect(c)
+
+        for idx in range(0, num_points):
+            p1, deg = _p_angle(idx)
+            curr_angle += deg
+            angles.append(deg)
+            # sel = ""
+            if curr_angle <= -threshold or curr_angle >= threshold:
+                if curr_angle <= -threshold:
+                    curr_angle += 60
+                else:
+                    curr_angle -= 60
+                curr_angle = 0
+                points.append([ p1 ])
+                # sel = " ******** " + str(len(points))
+            # print(p1, "+", deg, "=", curr_angle, sel)
+
+        points = np.array(points)
+        # print("@@ points", points)
+
+        # Note that [c] is not an hexagon. It may have thousands of points or more.
+        eps_w_ratio = params.get("polygon_eps_width_ratio", 1 / 20)
+        if eps_w_ratio > 0:
+            eps = w * eps_w_ratio
+        else:
+            eps = -1 * eps_w_ratio * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(curve=points, epsilon=eps, closed=True)
+
+        return approx
+
+    def angle_vec(self, a:np.array) -> float:
+        a_rad = math.atan2(a[1], a[0])
+        TAU = 2 * math.pi
+        if a_rad < 0:
+            a_rad += TAU
+        return np.degrees(a_rad)
+
+    def angle_delta(self, a:np.array, b:np.array) -> float:
+        if np.array_equal(a, b):
+            # Obvious shortcut
+            return 0
+
+        a_deg = self.angle_vec(a)
+        b_deg = self.angle_vec(b)
+        if a_deg < b_deg:
+            angle_deg = b_deg - a_deg
+        else:
+            angle_deg = b_deg - a_deg + 360
+        if angle_deg > 180:
+            angle_deg -= 360
+        # print("@@angle:", a, b, "@", a_deg, b_deg, "->", angle_deg)
+
+        return angle_deg
 
     def detect_hexagon_rotation(self, polygon:list, draw_img:np.array=None) -> Tuple[float, list]:
         # print(f"Hexagon points: {polygon}")

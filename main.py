@@ -133,6 +133,7 @@ class Main:
         with open(index_path, "w") as f:
             f.write(html)
         print(f"Generated index at {index_path}")
+        print(stats_str.replace("<br/>", ""))
 
 
 if __name__ == "__main__":
