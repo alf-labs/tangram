@@ -75,6 +75,10 @@ class YRG:
     def __repr__(self) -> str:
         return f"YRG({self.y}, {self.r}, {self.g})"
 
+    def __eq__(self, other:"YRG") -> bool:
+        return self.y == other.y and self.r == other.r and self.g == other.g
+
+
 class Triangle:
     def __init__(self, yrg_piece:YRG, p0:XY, p1:XY, p2:XY, offset:XY=None):
         self.yrg = yrg_piece
@@ -217,18 +221,6 @@ class YRGCoord:
         else:
             return Triangle(yrg_piece,  rhombus[0], rhombus[2], rhombus[3], offset)
 
-    # def find_cell(self, cells:list, yrg_piece:YRG) -> Triangle:
-    #     for cell in cells:
-    #         if cell.yrg == yrg_piece:
-    #             return cell
-    #     return None
-
-    # def find_cell_pos(self, cells:list, yrg_piece:YRG) -> int:
-    #     for idx_cell, cell in enumerate(cells):
-    #         if cell.yrg == yrg_piece:
-    #             return idx_cell
-    #     return -1
-
     def rot_60_ccw(self, triangle:Triangle) -> Triangle:
         """
         "Rotates" a Triangle by modifying its y,r,g coordinates and returns the new Triangle.
@@ -241,30 +233,5 @@ class YRGCoord:
         return self.triangle(YRG(yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2]), triangle.offset)
 
 
-    #     """Rotates the cells 60 degrees counter-clockwise. This just modifies the y,r,g coordinates
-    #     in the underlying Triangle objects."""
-    #     new_cells = []
-    #     old_cells = cells.copy()
-
-    #     num_cells = len(VALID_YRG)
-    #     assert num_cells == len(ROT_60_CCW_SRC), f"Invalid number of cells: {num_cells} != {len(ROT_60_CCW_SRC)}"
-
-    #     for idx_cell in range(num_cells):
-    #         yrg_src = ROT_60_CCW_SRC[idx_cell]
-    #         yrg_dst = VALID_YRG[idx_cell]
-
-    #         pos = self.find_cell_pos(old_cells, yrg_src[0], yrg_src[1], yrg_src[2])
-    #         if pos == -1:
-    #             print(f"Warning: Cell {yrg_src} not found in old_cells")
-    #         else:
-    #             cell = old_cells.pop(pos)
-    #             new_cell = Triangle(yrg_dst[0], yrg_dst[1], yrg_dst[2], cell.xy_list[0], cell.xy_list[1], cell.xy_list[2])
-
-
-    #     for cell in cells:
-    #         y_piece, r_piece, g_piece = cell
-    #         new_cell = ROT_60_CCW_SRC[y_piece * N * N + r_piece * N + g_piece]
-    #         new_cells.append(new_cell)
-    #     return new_cells
 
 # ~~

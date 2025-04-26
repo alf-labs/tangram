@@ -44,6 +44,20 @@ class Main:
     def generate_index(self, dir_output:str) -> None:
         img_infos = [] # dict: basename=str, src=path, alt=list[path]
         max_columns = 1
+
+        name_to_sig = {}
+        sig_counts = {}
+        # Find all the signatures and count their number of occurrences to find dups
+        for sig_path in glob.glob(os.path.join(dir_output, "*_sig.txt"), recursive=False):
+            basename = os.path.basename(sig_path)
+            basename = basename.replace("_sig.txt", "")
+            with open(sig_path, "r") as f:
+                sig = f.read()
+                name_to_sig[basename] = sig
+                sig_counts[sig] = sig_counts.get(sig, 0) + 1
+        print([ s for s in sig_counts.keys() if sig_counts[s] > 1])
+
+
         for src in glob.glob(os.path.join(dir_output, "*_src.jpg"), recursive=False):
             basename = os.path.basename(src)
             basename = basename.replace("_src.jpg", "")
@@ -67,10 +81,19 @@ class Main:
         table = "<table>\n"
         n = 0
         for info in img_infos:
+            table += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
             table += "<tr class='title'>\n"
             n += 1
             table += f"  <td colspan={max_columns}>{n} - {info['basename']}</td>\n"
             table += "</tr>\n"
+            sig = name_to_sig.get(info["basename"], "")
+            sig_count = sig_counts.get(sig, 0)
+            if sig_count > 0 and sig:
+                sig_dup = " dup" if sig_count > 1 else ""
+                sig_info = "unique" if sig_count == 1 else f"duplicate ({sig_count})"
+                table += f"<tr class='sig {sig_dup}'>\n"
+                table += f"  <td colspan={max_columns}>{sig} ({sig_info})</td>\n"
+                table += "</tr>\n"
 
             table += "<tr class='images'>\n"
             table += f"  <td><img src='{info['src']}'></td>\n"

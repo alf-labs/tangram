@@ -9,7 +9,7 @@ import math
 import numpy as np
 import os
 
-from coord import Axis, YRG, YRGCoord, Triangle, segments, segment_center
+from coord import Axis, YRG, YRGCoord, Triangle, segments, segment_center, VALID_YRG
 from typing import Generator
 from typing import Tuple
 
@@ -97,10 +97,12 @@ class ImageProcessor:
         if not os.path.exists(output_dir_path):
             raise FileNotFoundError(f"Directory {output_dir_path} does not exist.")
 
-    def dest_name(self, suffix:str) -> str:
+    def dest_name(self, suffix:str, ext:str=None) -> str:
         """Generates a destination name for the processed image."""
         base_name = os.path.basename(self.input_img_path)
-        name, ext = os.path.splitext(base_name)
+        name, _ext = os.path.splitext(base_name)
+        if ext is None:
+            ext = _ext
         return os.path.join(self.output_dir_path, f"{name}{suffix}{ext}")
 
     def process_image(self, overwrite:bool) -> None:
@@ -137,27 +139,35 @@ class ImageProcessor:
             cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
 
             if hexagon is not None:
-                rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
-                rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
-                cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
-                cv2.imwrite(self.dest_name("_5_rot"), rot_img)
-
-                yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
-                coords_img = rot_img.copy()
-                self.draw_yrg_coords(yrg_coords, coords_img)
-                cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
-                cells = self.extract_cells_colors(yrg_coords, rot_img, params)
-                colors_img = self.draw_cells(rot_img, cells)
-                cv2.imwrite(self.dest_name("_7_colors"), colors_img)
-                _cells = self.orient_white_cells(yrg_coords, cells)
-                if _cells is not None:
-                    cells = _cells
-                    rot_col_img = self.draw_cells(rot_img, cells)
-                    cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
-
                 break
 
+        if hexagon is not None:
+            rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
+            rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
+            cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
+            cv2.imwrite(self.dest_name("_5_rot"), rot_img)
+
+            yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
+            coords_img = rot_img.copy()
+            self.draw_yrg_coords(yrg_coords, coords_img)
+            cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
+            cells = self.extract_cells_colors(yrg_coords, rot_img, params={})
+            colors_img = self.draw_cells(rot_img, cells)
+            cv2.imwrite(self.dest_name("_7_colors"), colors_img)
+            result = self.orient_white_cells(yrg_coords, cells)
+
+            if result is not None:
+                rot_col_img = self.draw_cells(rot_img, result)
+                cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
+
+                sig = self.cells_signature(result)
+                print(f"Signature: {sig}")
+                sig_file = self.dest_name("_sig", ".txt")
+                with open(sig_file, "w") as f:
+                    f.write(sig)
+
         cv2.imwrite(src_img_path, resized)
+        return
 
 
     def load_resized_image(self, input_img_path:str) -> np.array:
@@ -558,5 +568,25 @@ class ImageProcessor:
             self.rotate_cells_60_ccw(yrg_coords, cells)
 
         return cells
+
+    def cells_signature(self, cells:list[Cell]) -> str:
+        """Generates a signature for the cells."""
+        if cells is None:
+            return None
+        results = []
+        n2 = coord.N//2
+        for y, r, g in VALID_YRG:
+            yrg = YRG(y - n2, r - n2, g)
+
+            cell = [ cell for cell in cells if cell.yrg() == yrg ]
+            if len(cell) == 0:
+                resuklts.append("-")
+            else:
+                color = cell[0].color_name()
+                # First letter of the color name is enough to distinguish it
+                color = color[0].upper()
+                results.append(color)
+
+        return "".join(results)
 
 # ~~
