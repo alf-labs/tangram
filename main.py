@@ -23,7 +23,7 @@ class Main:
         parser.add_argument("-d", "--input-dir",
             required=False,
             help="Automatically process all images in the given input directory")
-        parser.add_argument("-o", "--dir-output",
+        parser.add_argument("-o", "--output-dir",
             default=os.path.join("data", "output"),
             help="Path to output directory")
         parser.add_argument("-y", "--overwrite",
@@ -41,14 +41,14 @@ class Main:
             raise FileNotFoundError(f"Directory {dir_input} does not exist.")
         return glob.glob(os.path.join(dir_input, "**", "*.jpg"), recursive=True)
 
-    def generate_index(self, dir_output:str) -> None:
+    def generate_index(self, output_dir:str) -> None:
         img_infos = [] # dict: basename=str, src=path, alt=list[path]
         max_columns = 1
 
         name_to_sig = {}
         sig_counts = {}
         # Find all the signatures and count their number of occurrences to find dups
-        for sig_path in glob.glob(os.path.join(dir_output, "*_sig.txt"), recursive=False):
+        for sig_path in glob.glob(os.path.join(output_dir, "*_sig.txt"), recursive=False):
             basename = os.path.basename(sig_path)
             basename = basename.replace("_sig.txt", "")
             with open(sig_path, "r") as f:
@@ -58,7 +58,7 @@ class Main:
         print([ s for s in sig_counts.keys() if sig_counts[s] > 1])
 
 
-        for src in glob.glob(os.path.join(dir_output, "*_src.jpg"), recursive=False):
+        for src in glob.glob(os.path.join(output_dir, "*_src.jpg"), recursive=False):
             basename = os.path.basename(src)
             basename = basename.replace("_src.jpg", "")
             info = {
@@ -67,7 +67,7 @@ class Main:
                 "alt": []
             }
             img_infos.append(info)
-            for alt in glob.glob(os.path.join(dir_output, basename + "_[0-9]*.jpg"), recursive=False):
+            for alt in glob.glob(os.path.join(output_dir, basename + "_[0-9]*.jpg"), recursive=False):
                 info["alt"].append(os.path.basename(alt))
             max_columns = 1 + max(max_columns, len(info["alt"]))
 
@@ -103,7 +103,7 @@ class Main:
         table += "</table>\n"
 
         html = template.replace(TABLE_PLACEHOLDER, table)
-        index_path = os.path.join(dir_output, "index.html")
+        index_path = os.path.join(output_dir, "index.html")
         with open(index_path, "w") as f:
             f.write(html)
         print(f"Generated index at {index_path}")
@@ -115,12 +115,12 @@ if __name__ == "__main__":
     if m.args.overwrite:
         print("Will overwrite existing files")
     if m.args.input_image:
-        m.process_file(m.args.input_image, m.args.dir_output)
+        m.process_file(m.args.input_image, m.args.output_dir)
     elif m.args.input_dir:
         inputs = m.find_files(m.args.input_dir)
         for f in inputs:
-            m.process_file(f, m.args.dir_output)
-        m.generate_index(m.args.dir_output)
+            m.process_file(f, m.args.output_dir)
+        m.generate_index(m.args.output_dir)
     else:
         print("No input file (-i) or directory specified (-d).")
 
