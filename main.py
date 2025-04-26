@@ -5,6 +5,7 @@
 import argparse
 import glob
 import os
+import time
 
 from img_proc import ImageProcessor
 
@@ -46,6 +47,12 @@ class Main:
         img_infos = [] # dict: basename=str, src=path, alt=list[path]
         max_columns = 1
 
+        stats = {
+            "num_img": 0,
+            "num_sig": 0,
+            "num_unique": 0,
+            "num_dups": 0,
+        }
         name_to_sig = {}
         sig_counts = {}
         # Find all the signatures and count their number of occurrences to find dups
@@ -58,7 +65,9 @@ class Main:
                 sig = f.read()
                 name_to_sig[basename] = sig
                 sig_counts[sig] = sig_counts.get(sig, 0) + 1
-        print([ s for s in sig_counts.keys() if sig_counts[s] > 1])
+                stats["num_sig"] = stats["num_sig"] + 1
+        stats["num_unique"] = len([ s for s in sig_counts.keys() if sig_counts[s] == 1])
+        stats["num_dups"] = len([ s for s in sig_counts.keys() if sig_counts[s] > 1])
 
         for src in glob.glob(os.path.join(output_dir, "*_src.jpg"), recursive=False):
             basename = os.path.basename(src)
@@ -71,6 +80,7 @@ class Main:
                 "alt": []
             }
             img_infos.append(info)
+            stats["num_img"] = stats["num_img"] + 1
             for alt in glob.glob(os.path.join(output_dir, basename + "_[0-9]*.jpg"), recursive=False):
                 info["alt"].append(os.path.basename(alt))
             max_columns = 1 + max(max_columns, len(info["alt"]))
@@ -81,8 +91,19 @@ class Main:
         with open(template_path, "r") as f:
             template = f.read()
 
+        # Stats
+        stats_str = f"""
+        Number of images: {stats['num_img']} <br/>
+        Processed successfully: {stats['num_sig']} <br/>
+        Failed to process: {stats['num_img'] - stats['num_sig']} <br/>
+        Unique images: {stats['num_unique']} <br/>
+        Duplicated images: {stats['num_dups']} <br/>
+        Generated on {time.asctime()}
+        """
+
         # Generate HTML table
         table = "<table>\n"
+        table += f"<tr class='space'><td colspan={max_columns}>{stats_str}</td></tr>\n"
         n = 0
         for info in img_infos:
             table += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
