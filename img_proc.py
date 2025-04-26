@@ -149,10 +149,11 @@ class ImageProcessor:
                 cells = self.extract_cells_colors(yrg_coords, rot_img, params)
                 colors_img = self.draw_cells(rot_img, cells)
                 cv2.imwrite(self.dest_name("_7_colors"), colors_img)
-                # self.orient_white_cells(cells)
-                self.rotate_cells_60_ccw(yrg_coords, cells)
-                rot_col_img = self.draw_cells(rot_img, cells)
-                cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
+                _cells = self.orient_white_cells(yrg_coords, cells)
+                if _cells is not None:
+                    cells = _cells
+                    rot_col_img = self.draw_cells(rot_img, cells)
+                    cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
 
                 break
 
@@ -494,23 +495,68 @@ class ImageProcessor:
         for cell in cells:
             cell.triangle = yrg_coords.rot_60_ccw(cell.triangle)
 
-    # def orient_white_cells(self, cells:list[Cell]) -> None:
-    #     # We expect to find 3 white cells in the puzzle.
-    #     # Two of them must have the same "g" piece coordinate.
-    #     whites = [ cell for cell in cells if cell.color_name() == "White" ]
-    #     if len(whites) != 3:
-    #         print(f"Found {len(whites)} white cells, expected 3.")
-    #         return None
-    #     # Check if two of them have the same "g" piece coordinate
-    #     cells_g = {}
-    #     cells_g[0] = [ cell for cell in whites if cell.yrg().g == 0 ]
-    #     cells_g[1] = [ cell for cell in whites if cell.yrg().g == 1 ]
-    #     pair = [ cs for k, cs in cells_g.items() if len(cs) == 2 ]
-    #     single = [ cs for k, cs in cells_g.items() if len(cs) == 1 ]
-    #     if len(single) != 1 or len(pair) != 1:
-    #         print(f"Found {len(pair)} pairs of white cells with the same g piece coordinate.")
-    #         return None
-    #     pair = pair[0]
-    #     print(f"White pair: {pair}")
+    def orient_white_cells(self, yrg_coords:YRGCoord, cells:list[Cell]) -> None:
+        # We expect to find 3 white cells in the puzzle.
+        # Two of them must have the same "g" piece coordinate.
+        whites = [ cell for cell in cells if cell.color_name() == "White" ]
+        if len(whites) != 3:
+            print(f"Found {len(whites)} white cells, expected 3.")
+            return None
+        # Check if two of them have the same "g" piece coordinate
+        cells_g = {}
+        cells_g[0] = [ cell for cell in whites if cell.yrg().g == 0 ]
+        cells_g[1] = [ cell for cell in whites if cell.yrg().g == 1 ]
+        pair = [ cs for k, cs in cells_g.items() if len(cs) == 2 ]
+        single = [ cs for k, cs in cells_g.items() if len(cs) == 1 ]
+        if len(single) != 1 or len(pair) != 1:
+            print(f"Found {len(pair)} pairs of white cells with the same g piece coordinate.")
+            return None
+        pair = pair[0]      # This is a list of 2 cells
+        center = single[0][0] # This is a single cell in the center
+        print(f"White pair: {pair}, center: {center}")
+
+
+        # List all the points and count their number of occurrences
+        dist_epsilon = 0.1
+        points = []
+        for cell in [*pair, center]:
+            for new_point in cell.triangle.xy_list:
+                def add_if_close(point):
+                    for p in points:
+                        if p["p"].distance(point) <= dist_epsilon:
+                            p["count"] += 1
+                            return True
+                    return False
+                if not add_if_close(new_point):
+                    points.append({ "p": new_point, "count": 1})
+
+        # The shared point must be present 3 times
+        # print(f"Found {points}.")
+        common_point = [ p for p in points if p["count"] == 3 ]
+        if len(common_point) != 1:
+            print(f"Found {len(common_point)} common points, expected 1.")
+            return None
+        common_point = common_point[0]["p"]
+        # print(f"Common point: {common_point}")
+
+        center_xy_list = center.triangle.xy_list
+        # Find the index of the common point in the center triangle
+        p1_index = [ i for i, p in enumerate(center_xy_list) if p.distance(common_point) <= dist_epsilon ][0]
+        p3_index = (p1_index + 1) % len(center_xy_list)
+        p4_index = (p1_index + 2) % len(center_xy_list)
+        # print(f"Common point index: {p1_index}, {p3_index}, {p4_index}")
+
+        p3 = center_xy_list[p3_index]
+        p4 = center_xy_list[p4_index]
+        dx = p4.x - p3.x
+        dy = p4.y - p3.y
+        angle = math.degrees(math.atan2(dy, dx))
+        angle_deg = round(angle / 60) * 60
+        print(f"Angle: {angle} -> {angle_deg} degrees")
+
+        for rot in range(0, (180 + angle_deg)//60):
+            self.rotate_cells_60_ccw(yrg_coords, cells)
+
+        return cells
 
 # ~~

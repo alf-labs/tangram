@@ -53,6 +53,13 @@ class XY:
     def to_int(self) -> Tuple[int, int]:
         return (int(self.x), int(self.y))
 
+    def distance(self, other:"XY") -> float:
+        """Returns the distance to another XY object."""
+        dx = self.x - other.x
+        dy = self.y - other.y
+        return math.sqrt(dx * dx + dy * dy)
+
+
 class YRG:
     def __init__(self, y_piece:int, r_piece:int, g_piece:int):
         self.y = y_piece
