@@ -224,7 +224,6 @@ class YRGCoord:
                 "len": length_px / YRG_RADIUS
             }
             angle += 60
-        print("@@ radials", radials)
         return radials, XY( (center_x, center_y) )
 
     def radial_unit(self, angle_deg:float) -> XY:

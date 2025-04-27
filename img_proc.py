@@ -147,21 +147,21 @@ class ImageProcessor:
 
             if not params.get("use_edges", False):
                 edges = contrasted
-            hexagon = self.find_hexagon_contour(edges, hex_img, params)
+            hexagon = self.find_hexagon_contour(edges, draw_img=hex_img, params=params)
             cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
 
             if hexagon is not None:
                 break
 
         if hexagon is not None:
-            rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, hex_img)
+            rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, draw_img=hex_img)
             rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
             cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
             cv2.imwrite(self.dest_name("_5_rot"), rot_img)
 
             yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
             coords_img = rot_img.copy()
-            self.draw_yrg_coords(yrg_coords, coords_img)
+            self.draw_yrg_coords(yrg_coords, out_img=coords_img)
             cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
             cells = self.extract_cells_colors(yrg_coords, rot_img, params={})
             colors_img = self.draw_cells(rot_img, cells)
@@ -614,16 +614,13 @@ class ImageProcessor:
 
         hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
         lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
-        # # Clip and quantize the HSV
-        # # Clip the hue channel -- we only care about the redish hue
-        # h, s, v = cv2.split(hsv_img)
-        # np.clip(h, 0, 20, out=h)
-        # h = (h // 4) * 4
-        # s = (s // 16) * 16
-        # v = (v // 32) * 32
-        # hsv_img = cv2.merge((h, s, v))
+        # Extract HSV LAB channels (used to compute averages below)
+        h, s, v = cv2.split(hsv_img)
+        l, a, b = cv2.split(lab_img)
 
         shrink_ratio = 0.5
+
+        radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() *.5)
 
         cells = []
         for triangle in self.triangles(yrg_coords):
@@ -634,15 +631,36 @@ class ImageProcessor:
             # cv2.fillPoly(mask, [poly], (255, 255, 255))
 
             # Method 2:
-            # Create a mask based on a circle centered i nthe triangle
-            radius = int(triangle.inscribed_circle_radius() *.5)
-            mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
-            cv2.circle(mask, triangle.center().to_int(), radius, (255, 255, 255), -1)
+            # Create a mask based on a circle centered in the triangle.
+            # mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
+            # cv2.circle(mask, , radius, (255), -1)
+
+            # Method 3:
+            # Create a square mask by actually cropping the channels directly.
+            # That seems a tad faster and actually more reliable.
+            cx, cy = triangle.center().to_int()
+            x1 = cx - radius
+            x2 = cx + radius
+            y1 = cy - radius
+            y2 = cy + radius
+            ch = h[y1:y2, x1:x2]
+            cs = s[y1:y2, x1:x2]
+            cv = v[y1:y2, x1:x2]
+            cl = l[y1:y2, x1:x2]
+            ca = a[y1:y2, x1:x2]
+            cb = b[y1:y2, x1:x2]
 
             # Get the mean color of the polygon
+
+            # For methods 1 and 2:
             # Note that cv2.mean() always returns a scalar with 4 components.
-            mean_hsv = cv2.mean(hsv_img, mask=mask)
-            mean_lab = cv2.mean(lab_img, mask=mask)
+            # mean_hsv = cv2.mean(hsv_img, mask=mask)
+            # mean_lab = cv2.mean(lab_img, mask=mask)
+
+            # For method 3:
+            mean_hsv = self.color_mean((ch, cs, cv))
+            mean_lab = self.color_mean((cl, ca, cb))
+
             # print(f"Mean color HSV@@{','.join([ str(x) for x in mean_hsv[0:3] ])}")
             # print(f"Mean color Lab@@{','.join([ str(x) for x in mean_lab[0:3] ])}")
 
@@ -652,6 +670,15 @@ class ImageProcessor:
             cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
         return cells
 
+    def color_mean(self, channels:Tuple) -> list:
+        # Input array: list of N np.array split channels (HSV, LAB, etc)
+        # Output array: N components (average per component)
+        r = []
+        for channel in channels:
+            med = np.median(channel, overwrite_input=True)
+            r.append(med)
+        return r
+
     def draw_cells(self, in_img:np.array, cells:list[Cell]) -> np.array:
         # Make a new image the same size as in_img but black
         out_img = np.zeros(in_img.shape, dtype=np.uint8)
@@ -659,6 +686,8 @@ class ImageProcessor:
         radius = int(cells[0].triangle.inscribed_circle_radius() *.5 )
 
         for cell in cells:
+            # We can either display the mean HSV or the mean LAB for validation purposes.
+
             # Convert the mean HSV to BGR
             mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_hsv]]), cv2.COLOR_HSV2BGR)[0][0]
             mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
