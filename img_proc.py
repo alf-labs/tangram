@@ -161,15 +161,19 @@ class ImageProcessor:
 
             yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
             coords_img = rot_img.copy()
-            self.draw_yrg_coords(yrg_coords, out_img=coords_img)
+            self.draw_yrg_coords_into(yrg_coords, dest_img=coords_img)
             cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
-            cells = self.extract_cells_colors(yrg_coords, rot_img, params={})
-            colors_img = self.draw_cells(rot_img, cells)
+
+            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, params={})
+            colors_img = rot_img.copy()
+            self.draw_cells_into(cells=cells, dest_img=colors_img)
             cv2.imwrite(self.dest_name("_7_colors"), colors_img)
+
             result = self.orient_white_cells(yrg_coords, cells)
 
             if result is not None:
-                rot_col_img = self.draw_cells(rot_img, result)
+                rot_col_img = rot_img.copy()
+                self.draw_cells_into(cells=result, dest_img=rot_col_img)
                 cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
 
                 sig = self.cells_signature(result)
@@ -583,21 +587,21 @@ class ImageProcessor:
         yrg_coords = YRGCoord(center, y_axis, r_axis, g_axis)
         return yrg_coords
 
-    def draw_yrg_coords(self, yrg_coords:YRGCoord, out_img:np.array) -> None:
+    def draw_yrg_coords_into(self, yrg_coords:YRGCoord, dest_img:np.array) -> None:
         t = yrg_coords.triangle(YRG(0, 0, 0))
         radius = int(t.inscribed_circle_radius() *.5 )
 
         for triangle in self.triangles(yrg_coords):
             poly = np.int32(triangle.to_np_array())
-            cv2.polylines(out_img, [poly], isClosed=True, color=(255, 255, 255), thickness=2)
+            cv2.polylines(dest_img, [poly], isClosed=True, color=(255, 255, 255), thickness=2)
             tc = triangle.center()
             px = int(tc.x)
             py = int(tc.y)
-            cv2.circle(out_img, (px, py), radius, (255, 255, 255), 1)
+            cv2.circle(dest_img, (px, py), radius, (255, 255, 255), 1)
             y = triangle.yrg.y + coord.N//2
             r = triangle.yrg.r + coord.N//2
             g = triangle.yrg.g
-            cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            cv2.putText(dest_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
         n2 = coord.N//2
@@ -679,10 +683,8 @@ class ImageProcessor:
             r.append(med)
         return r
 
-    def draw_cells(self, in_img:np.array, cells:list[Cell]) -> np.array:
-        # Make a new image the same size as in_img but black
-        out_img = np.zeros(in_img.shape, dtype=np.uint8)
-
+    def draw_cells_into(self, cells:list[Cell], dest_img:np.array) -> None:
+        dest_img.fill(0)
         radius = int(cells[0].triangle.inscribed_circle_radius() *.5 )
 
         for cell in cells:
@@ -697,10 +699,9 @@ class ImageProcessor:
             # mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
 
             poly = np.int32(cell.triangle.to_np_array())
-            cv2.fillPoly(out_img, [poly], mean_bgr)
-            cv2.circle(out_img, cell.triangle.center().to_int(), radius, cell.color["bgr"], -1)
-            cv2.polylines(out_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
-        return out_img
+            cv2.fillPoly(dest_img, [poly], mean_bgr)
+            cv2.circle(dest_img, cell.triangle.center().to_int(), radius, cell.color["bgr"], -1)
+            cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
     def rotate_cells_60_ccw(self, yrg_coords:YRGCoord, cells:list[Cell]) -> None:
         """Rotates the cells list in-place."""
