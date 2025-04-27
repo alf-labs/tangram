@@ -540,7 +540,7 @@ class ImageProcessor:
         return rotated_img, rotated_polygon, hex_center
 
     def compute_yrg_coords(self, polygon:list, center:tuple) -> YRGCoord:
-        # Note that everything here assumse the polygon is an hexagon.
+        # Note that everything here assume the polygon is an hexagon.
         segs = list(segments(polygon))
         len_seg = len(segs)
         def wrap(index:int) -> int:
@@ -548,7 +548,7 @@ class ImageProcessor:
 
         # Find the segment with the highest y-coordinate center
         bottom_segment = max(segs, key=lambda segment: segment_center(segment)[1])
-        # Fin the index of "bottom_segment" in the segments list
+        # Find the index of "bottom_segment" in the segments list
         bottom_index = segs.index(bottom_segment)
 
         y_end_segment_index = bottom_index
@@ -600,12 +600,11 @@ class ImageProcessor:
             cv2.putText(out_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
-        center = yrg_coords.center_px
         n2 = coord.N//2
         for (y, r, g) in coord.VALID_YRG:
             y_piece = y - n2
             r_piece = r - n2
-            yield yrg_coords.triangle(YRG(y_piece, r_piece, g), offset=center)
+            yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
 
     def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
