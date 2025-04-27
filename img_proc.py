@@ -105,6 +105,7 @@ class ImageProcessor:
         self.input_img_path = input_img_path
         self.output_dir_path = output_dir_path
         self.img_index = 0
+        self._previous_img_index = {}
 
         if not os.path.exists(output_dir_path):
             raise FileNotFoundError(f"Directory {output_dir_path} does not exist.")
@@ -117,10 +118,14 @@ class ImageProcessor:
             ext = _ext
         return os.path.join(self.output_dir_path, f"{name}{suffix}{ext}")
 
-    def write_indexed_img(self, suffix:str, in_img:np.array) -> None:
-        self.img_index += 1
-        suffix = f"_{self.img_index}_{suffix}"
-        cv2.imwrite(self.dest_name(suffix), in_img)
+    def write_indexed_img(self, suffix:str, in_img:np.array, replace:bool=False) -> None:
+        if replace and suffix in self._previous_img_index:
+            dest_suffix = self._previous_img_index[suffix]
+        else:
+            self.img_index += 1
+            dest_suffix = f"_{self.img_index}_{suffix}"
+            self._previous_img_index[suffix] = dest_suffix
+        cv2.imwrite(self.dest_name(dest_suffix), in_img)
 
     def process_image(self, overwrite:bool) -> None:
         print("------")
@@ -146,15 +151,15 @@ class ImageProcessor:
         for params in PARAMS:
             # Convert the image to LAB color space to enhance contrast
             contrasted = self.enhance_image(lab_img, params)
-            self.write_indexed_img("contrast", contrasted)
+            self.write_indexed_img("contrast", contrasted, replace=True)
 
             edges = self.edge_detect(contrasted, params)
-            self.write_indexed_img("edges", edges)
+            self.write_indexed_img("edges", edges, replace=True)
 
             if not params.get("use_edges", False):
                 edges = contrasted
             hexagon = self.find_hexagon_contour(edges, draw_img=hex_img, params=params)
-            self.write_indexed_img("hexagon", hex_img)
+            self.write_indexed_img("hexagon", hex_img, replace=True)
 
             if hexagon is not None:
                 break
@@ -162,7 +167,7 @@ class ImageProcessor:
         if hexagon is not None:
             rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, draw_img=hex_img)
             rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
-            self.write_indexed_img("hexagon", hex_img)
+            self.write_indexed_img("hexagon", hex_img, replace=True)
             self.write_indexed_img("rot", rot_img)
 
             yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
@@ -178,11 +183,11 @@ class ImageProcessor:
             self.write_indexed_img("colors", colors_img)
 
             # # Method 2: try to detect BW and color cells separately.
-            # temp_cells, histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
-            # temp_bw_img = rot_img.copy()
-            # self.draw_cells_into(cells=temp_cells, dest_img=temp_bw_img)
-            # self.draw_histograms_info(historgrams=histograms, dest_img=temp_bw_img)
-            # self.write_indexed_img("bw", temp_bw_img)
+            temp_cells, temp_histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
+            temp_bw_img = rot_img.copy()
+            self.draw_cells_into(cells=temp_cells, dest_img=temp_bw_img)
+            self.draw_histograms_into(histograms=temp_histograms, dest_img=temp_bw_img)
+            self.write_indexed_img("bw", temp_bw_img)
 
             # Detect the 3 white cells and re-orient the cells accordingly
             # Stop if we can't find the 3 white cells.
@@ -689,6 +694,61 @@ class ImageProcessor:
             cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
         return cells
 
+    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
+        histograms = {}
+        # Apply GaussianBlur to reduce noise
+        ksize = (11, 11)
+        sigmaX = 0
+        blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
+
+        hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
+        lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
+        # Extract HSV LAB channels (used to compute averages below)
+        h, s, v = cv2.split(hsv_img)
+        l, a, b = cv2.split(lab_img)
+
+        radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
+
+        means = []  # triangle -> (mean_hsv, mean_lab)
+        histograms["h"] = [0] * 256
+        histograms["l"] = [0] * 256
+        for triangle in self.triangles(yrg_coords):
+            # Create a square mask by actually cropping the channels directly.
+            # That seems a tad faster and actually more reliable.
+            cx, cy = triangle.center().to_int()
+            x1 = cx - radius
+            x2 = cx + radius
+            y1 = cy - radius
+            y2 = cy + radius
+            ch = h[y1:y2, x1:x2]
+            cs = s[y1:y2, x1:x2]
+            cv = v[y1:y2, x1:x2]
+            cl = l[y1:y2, x1:x2]
+            ca = a[y1:y2, x1:x2]
+            cb = b[y1:y2, x1:x2]
+
+            # Get the mean color of the polygon
+            mean_hsv = self.color_mean((ch, cs, cv))
+            mean_lab = self.color_mean((cl, ca, cb))
+            mh = int(mean_hsv[0])
+            ml = int(mean_lab[0])
+            means.append({
+                "t": triangle,
+                "h": mh,
+                "l": ml,
+            })
+            histograms["h"][mh] += 1
+            histograms["l"][ml] += 1
+
+        cells = []
+        for mean in means:
+            color = colors.select(
+                mean["h"], 0, 0,
+                mean["l"], 0, 0)
+            cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
+
+        return cells, histograms
+
     def color_mean(self, channels:Tuple) -> list:
         # Input array: list of N np.array split channels (HSV, LAB, etc)
         # Output array: N components (average per component)
@@ -697,6 +757,30 @@ class ImageProcessor:
             med = np.median(channel, overwrite_input=True)
             r.append(med)
         return r
+
+    def draw_histograms_into(self, histograms:dict, dest_img:np.array) -> None:
+        sx = dest_img.shape[1]
+        sy = dest_img.shape[0] - 5
+        h = 128
+        w1 = sx // len(histograms)
+        w2 = w1 - 16
+        px = 0
+        py = sy - h
+        for name, values in histograms.items():
+            print("@@ histogram", name.upper(), "from", min(values),"to", max(values))
+            cv2.putText(dest_img, name.upper(), (px, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            lines = []
+            nv = len(values)
+            mx = max(values)
+            for i in range(0, nv - 1):
+                y1 = sy - int(values[i] / mx * h)
+                y2 = sy - int(values[i+1] / mx * h)
+                x1 = int(  px + i     / nv * w2 )
+                x2 = int(  px + (i+1) / nv * w2 )
+                lines.append( [ [ x1, y1 ], [ x2, y2 ] ] )
+            lines = np.array(lines, np.int32)
+            cv2.polylines(dest_img, lines, isClosed=False, color=(255, 255, 255), thickness=1)
+            px += w1
 
     def draw_cells_into(self, cells:list[Cell], dest_img:np.array) -> None:
         dest_img.fill(0)
