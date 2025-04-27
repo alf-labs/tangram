@@ -553,7 +553,7 @@ class ImageProcessor:
 
         y_end_segment_index = bottom_index
 
-        # I don't know if the polygon is define clockwise or counter-clockwise,
+        # I don't know if the polygon is defined clockwise or counter-clockwise,
         # so let's detect that and handle both cases.
         # It is clockwise if the next segment (after bottom_segment) has a X center which is lower than bottom's X center.
         bottom_center = segment_center(bottom_segment)
@@ -627,10 +627,18 @@ class ImageProcessor:
 
         cells = []
         for triangle in self.triangles(yrg_coords):
-            # Create a mask based on a shrunk triangle to filter on the HSB
-            poly = np.int32(triangle.shrink(shrink_ratio).to_np_array())
+            # # Method 1:
+            # # Create a mask based on a shrunk triangle to filter on the HSB
+            # poly = np.int32(triangle.shrink(shrink_ratio).to_np_array())
+            # mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
+            # cv2.fillPoly(mask, [poly], (255, 255, 255))
+
+            # Method 2:
+            # Create a mask based on a circle centered i nthe triangle
+            radius = int(triangle.inscribed_circle_radius() *.5)
             mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
-            cv2.fillPoly(mask, [poly], (255, 255, 255))
+            cv2.circle(mask, triangle.center().to_int(), radius, (255, 255, 255), -1)
+
             # Get the mean color of the polygon
             # Note that cv2.mean() always returns a scalar with 4 components.
             mean_hsv = cv2.mean(hsv_img, mask=mask)
