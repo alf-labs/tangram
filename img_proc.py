@@ -14,7 +14,7 @@ from typing import Generator
 from typing import Tuple
 
 TAU = 2 * math.pi
-
+SHRINK_RATIO = 0.5
 RESIZE_PX = 1024
 
 PARAMS = [
@@ -104,6 +104,7 @@ class ImageProcessor:
     def __init__(self, input_img_path:str, output_dir_path:str):
         self.input_img_path = input_img_path
         self.output_dir_path = output_dir_path
+        self.img_index = 0
 
         if not os.path.exists(output_dir_path):
             raise FileNotFoundError(f"Directory {output_dir_path} does not exist.")
@@ -115,6 +116,11 @@ class ImageProcessor:
         if ext is None:
             ext = _ext
         return os.path.join(self.output_dir_path, f"{name}{suffix}{ext}")
+
+    def write_indexed_img(self, suffix:str, in_img:np.array) -> None:
+        self.img_index += 1
+        suffix = f"_{self.img_index}_{suffix}"
+        cv2.imwrite(self.dest_name(suffix), in_img)
 
     def process_image(self, overwrite:bool) -> None:
         print("------")
@@ -134,21 +140,21 @@ class ImageProcessor:
         resized = self.load_resized_image(input_img_path)
         # resized = self.auto_level(resized)
         lab_img = self.convert_to_lab(resized)
-        cv2.imwrite(self.dest_name("_1_lab"), lab_img)
+        self.write_indexed_img("lab", lab_img)
         hex_img = resized.copy()
 
         for params in PARAMS:
             # Convert the image to LAB color space to enhance contrast
             contrasted = self.enhance_image(lab_img, params)
-            cv2.imwrite(self.dest_name("_2_contrast"), contrasted)
+            self.write_indexed_img("contrast", contrasted)
 
             edges = self.edge_detect(contrasted, params)
-            cv2.imwrite(self.dest_name("_3_edges"), edges)
+            self.write_indexed_img("edges", edges)
 
             if not params.get("use_edges", False):
                 edges = contrasted
             hexagon = self.find_hexagon_contour(edges, draw_img=hex_img, params=params)
-            cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
+            self.write_indexed_img("hexagon", hex_img)
 
             if hexagon is not None:
                 break
@@ -156,25 +162,36 @@ class ImageProcessor:
         if hexagon is not None:
             rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, draw_img=hex_img)
             rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
-            cv2.imwrite(self.dest_name("_4_hexagon"), hex_img)
-            cv2.imwrite(self.dest_name("_5_rot"), rot_img)
+            self.write_indexed_img("hexagon", hex_img)
+            self.write_indexed_img("rot", rot_img)
 
             yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
             coords_img = rot_img.copy()
             self.draw_yrg_coords_into(yrg_coords, dest_img=coords_img)
-            cv2.imwrite(self.dest_name("_6_yrg"), coords_img)
+            self.write_indexed_img("yrg", coords_img)
 
-            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, params={})
+            # Method 1: try to detect both colors and BW cells at the same time.
+            # Performance is passable.
+            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img)
             colors_img = rot_img.copy()
             self.draw_cells_into(cells=cells, dest_img=colors_img)
-            cv2.imwrite(self.dest_name("_7_colors"), colors_img)
+            self.write_indexed_img("colors", colors_img)
 
+            # # Method 2: try to detect BW and color cells separately.
+            # temp_cells, histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
+            # temp_bw_img = rot_img.copy()
+            # self.draw_cells_into(cells=temp_cells, dest_img=temp_bw_img)
+            # self.draw_histograms_info(historgrams=histograms, dest_img=temp_bw_img)
+            # self.write_indexed_img("bw", temp_bw_img)
+
+            # Detect the 3 white cells and re-orient the cells accordingly
+            # Stop if we can't find the 3 white cells.
             result = self.orient_white_cells(yrg_coords, cells)
 
             if result is not None:
                 rot_col_img = rot_img.copy()
                 self.draw_cells_into(cells=result, dest_img=rot_col_img)
-                cv2.imwrite(self.dest_name("_8_colors"), rot_col_img)
+                self.write_indexed_img("colors", rot_col_img)
 
                 sig = self.cells_signature(result)
                 print(f"Signature: {sig}")
@@ -294,7 +311,7 @@ class ImageProcessor:
         # lab = cv2.merge((l, a, b))
         # # Convert the LAB image back to BGR color space
         # lab = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-        # cv2.imwrite(self.dest_name("_2_enhance"), lab)
+        # self.write_indexed_img("enhance", lab)
 
         # Convert the image to grayscale
         gray = cv2.cvtColor(lab, cv2.COLOR_BGR2GRAY)
@@ -610,10 +627,10 @@ class ImageProcessor:
             r_piece = r - n2
             yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
 
-    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, params:dict={}) -> list[Cell]:
+    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
-        ksize = params.get("blur_ksize", (11, 11))
-        sigmaX = params.get("blur_sigmaX", 0)
+        ksize = (11, 11)
+        sigmaX = 0
         blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
 
         hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
@@ -622,15 +639,13 @@ class ImageProcessor:
         h, s, v = cv2.split(hsv_img)
         l, a, b = cv2.split(lab_img)
 
-        shrink_ratio = 0.5
-
-        radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() *.5)
+        radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
 
         cells = []
         for triangle in self.triangles(yrg_coords):
             # # Method 1:
             # # Create a mask based on a shrunk triangle to filter on the HSB
-            # poly = np.int32(triangle.shrink(shrink_ratio).to_np_array())
+            # poly = np.int32(triangle.shrink(SHRINK_RATIO).to_np_array())
             # mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
             # cv2.fillPoly(mask, [poly], (255, 255, 255))
 
