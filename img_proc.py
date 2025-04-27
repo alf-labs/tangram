@@ -123,7 +123,7 @@ class ImageProcessor:
             dest_suffix = self._previous_img_index[suffix]
         else:
             self.img_index += 1
-            dest_suffix = f"_{self.img_index}_{suffix}"
+            dest_suffix = "_%02d_%s" % (self.img_index, suffix)
             self._previous_img_index[suffix] = dest_suffix
         cv2.imwrite(self.dest_name(dest_suffix), in_img)
 
@@ -143,9 +143,11 @@ class ImageProcessor:
             return
 
         resized = self.load_resized_image(input_img_path)
+        # Disable auto-level upfront, it provides poor results.
         # resized = self.auto_level(resized)
         lab_img = self.convert_to_lab(resized)
-        self.write_indexed_img("lab", lab_img)
+        # This image is only useful for debugging initial hexagon search
+        # self.write_indexed_img("lab", lab_img)
         hex_img = resized.copy()
 
         for params in PARAMS:
@@ -175,19 +177,19 @@ class ImageProcessor:
             self.draw_yrg_coords_into(yrg_coords, dest_img=coords_img)
             self.write_indexed_img("yrg", coords_img)
 
+            # # Method 2: try to detect BW and color cells separately.
+            cells, histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
+            bw_img = rot_img.copy()
+            self.draw_cells_into(cells=cells, dest_img=bw_img)
+            self.draw_histograms_into(histograms=histograms, dest_img=bw_img)
+            self.write_indexed_img("bw", bw_img)
+
             # Method 1: try to detect both colors and BW cells at the same time.
             # Performance is passable.
-            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img)
+            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, cells=cells)
             colors_img = rot_img.copy()
             self.draw_cells_into(cells=cells, dest_img=colors_img)
             self.write_indexed_img("colors", colors_img)
-
-            # # Method 2: try to detect BW and color cells separately.
-            temp_cells, temp_histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
-            temp_bw_img = rot_img.copy()
-            self.draw_cells_into(cells=temp_cells, dest_img=temp_bw_img)
-            self.draw_histograms_into(histograms=temp_histograms, dest_img=temp_bw_img)
-            self.write_indexed_img("bw", temp_bw_img)
 
             # Detect the 3 white cells and re-orient the cells accordingly
             # Stop if we can't find the 3 white cells.
@@ -632,7 +634,7 @@ class ImageProcessor:
             r_piece = r - n2
             yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
 
-    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array) -> list[Cell]:
+    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, cells:list) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
         ksize = (11, 11)
         sigmaX = 0
@@ -646,8 +648,9 @@ class ImageProcessor:
 
         radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
 
-        cells = []
         for triangle in self.triangles(yrg_coords):
+            if self.is_in_cells(triangle, cells):
+                continue
             # # Method 1:
             # # Create a mask based on a shrunk triangle to filter on the HSB
             # poly = np.int32(triangle.shrink(SHRINK_RATIO).to_np_array())
@@ -694,6 +697,13 @@ class ImageProcessor:
             cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
         return cells
 
+    def is_in_cells(self, triangle:Triangle, cells:list) -> bool:
+        yrg = triangle.yrg
+        for cell in cells:
+            if cell.triangle.yrg == yrg:
+                return True
+        return False
+
     def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
         histograms = {}
         # Apply GaussianBlur to reduce noise
@@ -707,11 +717,56 @@ class ImageProcessor:
         h, s, v = cv2.split(hsv_img)
         l, a, b = cv2.split(lab_img)
 
+        # Gamma correction formula is:
+        # output = (input / 255) ^ (1 / gamma) * 255
+        # Modify it to use 128 has the center point:
+        # output = (abs(input-128) / 128) ^ (1 / gamma) * 128 * sign(input - 128) + 128
+        # Create a gamma LUT
+        gamma = 10
+        def sign(x):
+            return -1 if x < 0 else 1
+        gamma_lut = np.array([
+            # (i / 255) ** (1 / gamma) * 255
+            (abs(i - 128) / 128) ** (1 / gamma) * 128 * sign(i - 128) + 128
+            for i in np.arange(0, 256)
+        ]).astype(np.uint8)
+        # print("@@ gamma lut:", gamma_lut)
+
+        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        S=4
+        clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
+        # h = clahe.apply(h)
+        # s = clahe.apply(s)
+        # l = clahe.apply(l)
+        # Or apply histogram equalization
+        # h = cv2.equalizeHist(h)
+        # s = cv2.equalizeHist(s)
+        # l = cv2.equalizeHist(l)
+        # Or apply a gamma correction LUT
+        s = cv2.LUT(s, gamma_lut)
+        l = cv2.LUT(l, gamma_lut)
+
+        # Temp debug -- save HSB + LAB to view their H/L channels
+        mask_h = np.where(s > 128, 0, 255)
+        print("@@ h:", h.shape, h.dtype)
+        h = np.bitwise_and(h, mask_h).astype(np.uint8)
+        v = np.bitwise_and(v, mask_h).astype(np.uint8)
+        print("@@ h:", h.shape, h.dtype)
+        tmp_img = cv2.merge( (h, s, v) )
+        tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_HSV2BGR)
+        self.write_indexed_img("hsv", tmp_img)
+        # Debug only
+        # tmp_img = cv2.merge( (l, a, b) )
+        # tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_LAB2BGR)
+        # self.write_indexed_img("lab", tmp_img)
+
+
         radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
 
-        means = []  # triangle -> (mean_hsv, mean_lab)
         histograms["h"] = [0] * 256
+        histograms["s"] = [0] * 256
         histograms["l"] = [0] * 256
+        cells = []
         for triangle in self.triangles(yrg_coords):
             # Create a square mask by actually cropping the channels directly.
             # That seems a tad faster and actually more reliable.
@@ -731,22 +786,18 @@ class ImageProcessor:
             mean_hsv = self.color_mean((ch, cs, cv))
             mean_lab = self.color_mean((cl, ca, cb))
             mh = int(mean_hsv[0])
+            ms = int(mean_hsv[1])
             ml = int(mean_lab[0])
-            means.append({
-                "t": triangle,
-                "h": mh,
-                "l": ml,
-            })
             histograms["h"][mh] += 1
+            histograms["s"][ms] += 1
             histograms["l"][ml] += 1
+            color = colors.select_bw(
+                mean_hsv[0], mean_hsv[1], mean_hsv[2],
+                mean_lab[0], mean_lab[1], mean_lab[2])
+            if color is not None:
+                cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
 
-        cells = []
-        for mean in means:
-            color = colors.select(
-                mean["h"], 0, 0,
-                mean["l"], 0, 0)
-            cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
-
+        print("@@ BW cells:", cells)
         return cells, histograms
 
     def color_mean(self, channels:Tuple) -> list:
@@ -771,19 +822,23 @@ class ImageProcessor:
             cv2.putText(dest_img, name.upper(), (px, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             lines = []
             nv = len(values)
-            mx = max(values)
+            mx = min(h, max(values))
+            w = w2 / nv
             for i in range(0, nv - 1):
-                y1 = sy - int(values[i] / mx * h)
-                y2 = sy - int(values[i+1] / mx * h)
-                x1 = int(  px + i     / nv * w2 )
-                x2 = int(  px + (i+1) / nv * w2 )
-                lines.append( [ [ x1, y1 ], [ x2, y2 ] ] )
-            lines = np.array(lines, np.int32)
-            cv2.polylines(dest_img, lines, isClosed=False, color=(255, 255, 255), thickness=1)
+                y1 = sy - int(values[i] * h / mx)
+                # y2 = sy - int(values[i+1] / mx * h)
+                x1 = math.floor( px + i * w )
+                x2 = math.ceil ( x1 + w )
+                # lines.append( [ [ x1, y1 ], [ x2, y2 ] ] )
+                cv2.rectangle(dest_img, (x1, y1), (x2, sy), color=(255, 255, 255), thickness=-11)
+            # lines = np.array(lines, np.int32)
+            # cv2.polylines(dest_img, lines, isClosed=False, color=(255, 255, 255), thickness=1)
             px += w1
 
     def draw_cells_into(self, cells:list[Cell], dest_img:np.array) -> None:
         dest_img.fill(0)
+        if len(cells) == 0:
+            return
         radius = int(cells[0].triangle.inscribed_circle_radius() *.5 )
 
         for cell in cells:

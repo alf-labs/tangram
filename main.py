@@ -81,7 +81,7 @@ class Main:
             }
             img_infos.append(info)
             stats["num_img"] = stats["num_img"] + 1
-            for alt in glob.glob(os.path.join(output_dir, basename + "_[0-9]*.jpg"), recursive=False):
+            for alt in glob.glob(os.path.join(output_dir, basename + "_[0-9][0-9]_*.jpg"), recursive=False):
                 info["alt"].append(os.path.basename(alt))
             max_columns = 1 + max(max_columns, len(info["alt"]))
 
