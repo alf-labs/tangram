@@ -97,38 +97,38 @@ class Main:
         Processed successfully: {stats['num_sig']} <br/>
         Failed to process: {stats['num_img'] - stats['num_sig']} <br/>
         Unique images: {stats['num_unique']} <br/>
-        Duplicated images: {stats['num_dups']} <br/>
-        Generated on {time.asctime()}
+        Duplicated images: {stats['num_dups']}
         """
 
         # Generate HTML table
-        table = "<table>\n"
-        table += f"<tr class='space'><td colspan={max_columns}>{stats_str}</td></tr>\n"
+        rows = ""
         n = 0
         for info in img_infos:
-            table += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
-            table += "<tr class='title'>\n"
+            rows += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
+            rows += "<tr class='title'>\n"
             n += 1
-            table += f"  <td colspan={max_columns}>{n} - {info['basename']}</td>\n"
-            table += "</tr>\n"
+            rows += f"  <td colspan={max_columns}>{n} - {info['basename']}</td>\n"
+            rows += "</tr>\n"
             sig = name_to_sig.get(info["basename"], "Failed to process")
             sig_count = sig_counts.get(sig, 0)
             sig_class = "dup" if sig_count > 1 else (
                 "err" if sig_count == 0 else "ok")
             sig_info = "(unique)" if sig_count == 1 else (
                 f"(duplicate: {sig_count})" if sig_count > 1 else "")
-            table += f"<tr class='sig {sig_class}'>\n"
-            table += f"  <td colspan={max_columns}>{sig} {sig_info}</td>\n"
-            table += "</tr>\n"
+            rows += f"<tr class='sig {sig_class}'>\n"
+            rows += f"  <td colspan={max_columns}>{sig} {sig_info}</td>\n"
+            rows += "</tr>\n"
 
-            table += "<tr class='images'>\n"
-            table += f"  <td><img src='{info['src']}'></td>\n"
+            rows += "<tr class='images'>\n"
+            rows += f"  <td><img src='{info['src']}'></td>\n"
             for alt in info["alt"]:
-                table += f"  <td><img src='{alt}'></td>\n"
-            table += "</tr>\n"
-        table += "</table>\n"
+                rows += f"  <td><img src='{alt}'></td>\n"
+            rows += "</tr>\n"
 
-        html = template.replace(TABLE_PLACEHOLDER, table)
+        html = template.replace("TABLE_ROWS", rows)
+        html = html.replace("TIMESTAMP", time.asctime())
+        html = html.replace("NUM_COLS", str(max_columns))
+        html = html.replace("STATS", stats_str)
         index_path = os.path.join(output_dir, "index.html")
         with open(index_path, "w") as f:
             f.write(html)
