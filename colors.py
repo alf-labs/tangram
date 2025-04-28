@@ -4,22 +4,22 @@
 
 import math
 
-COLORS = [
-    {
-        "name": "White",
-        "rgb": (192, 192, 192),
-        "bgr": (192, 192, 192),
-        "h": { "min": 10, "max": 20 },
-        "s": { "min": 0, "max": 128 },
-        "l": { "min": 164, "max": 255 },
-    },
-    {
-        "name": "Black",
-        "rgb": (64, 64, 64),
-        "bgr": (64, 64, 64),
-        "s": { "min": 0, "max": 128 },
-        "l": { "min": 0, "max": 170 },
-    },
+COLORS_REDS = [
+    # {
+    #     "name": "White",
+    #     "rgb": (192, 192, 192),
+    #     "bgr": (192, 192, 192),
+    #     "h": { "min": 10, "max": 20 },
+    #     "s": { "min": 0, "max": 128 },
+    #     "l": { "min": 164, "max": 255 },
+    # },
+    # {
+    #     "name": "Black",
+    #     "rgb": (64, 64, 64),
+    #     "bgr": (64, 64, 64),
+    #     "s": { "min": 0, "max": 128 },
+    #     "l": { "min": 0, "max": 170 },
+    # },
     # {
     #     "name": "Orange",
     #     "rgb": (192, 128, 0),
@@ -51,22 +51,25 @@ COLORS_BW = [
         "name": "White",
         "rgb": (192, 192, 192),
         "bgr": (192, 192, 192),
-        "h": { "min": 10, "max": 20 },
-        "s": { "min": 0, "max": 128 },
+        "h": { "min":  10, "max": 20 },
+        "s": { "min":   0, "max": 128 },
+        "v": { "min": 150, "max": 255 },
         "l": { "min": 164, "max": 255 },
     },
     {
         "name": "Black",
         "rgb": (64, 64, 64),
         "bgr": (64, 64, 64),
+        "h": { "min": 5, "max":  20 },
         "s": { "min": 0, "max": 128 },
+        "v": { "min": 0, "max": 140 },
         "l": { "min": 0, "max": 170 },
     },
 ]
 
 def select(h:float, s:float, v:float, l:float, a:float, b:float) -> dict:
     ab = math.degrees(math.atan2(b, a))
-    return _select_table(COLORS, h, s, v, l, ab)
+    return _select_table(COLORS_REDS, h, s, v, l, ab)
 
 def select_bw(h:float, s:float, v:float, l:float, a:float, b:float) -> dict:
     ab = math.degrees(math.atan2(b, a))
@@ -86,6 +89,7 @@ def _select_table(table:list, h:float, s:float, v:float, l:float, ab:float) -> d
             continue
         print(f"Color found: h={h}, s={s}, v={v}, l={l}, ab={ab} --> {color['name']}")
         return color
+    print(f"Color      : h={h}, s={s}, v={v}, l={l}, ab={ab} -- NOT FOUND")
     return None
 
 # ~~

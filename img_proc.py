@@ -191,20 +191,21 @@ class ImageProcessor:
             self.draw_cells_into(cells=cells, dest_img=colors_img)
             self.write_indexed_img("colors", colors_img)
 
-            # Detect the 3 white cells and re-orient the cells accordingly
-            # Stop if we can't find the 3 white cells.
-            result = self.orient_white_cells(yrg_coords, cells)
+            if self.validate_cells(cells):
+                # Detect the 3 white cells and re-orient the cells accordingly
+                # Stop if we can't find the 3 white cells.
+                result = self.orient_white_cells(yrg_coords, cells)
 
-            if result is not None:
-                rot_col_img = rot_img.copy()
-                self.draw_cells_into(cells=result, dest_img=rot_col_img)
-                self.write_indexed_img("colors", rot_col_img)
+                if result is not None:
+                    rot_col_img = rot_img.copy()
+                    self.draw_cells_into(cells=result, dest_img=rot_col_img)
+                    self.write_indexed_img("colors", rot_col_img)
 
-                sig = self.cells_signature(result)
-                print(f"Signature: {sig}")
-                sig_file = self.dest_name("_sig", ".txt")
-                with open(sig_file, "w") as f:
-                    f.write(sig)
+                    sig = self.cells_signature(result)
+                    print(f"Signature: {sig}")
+                    sig_file = self.dest_name("_sig", ".txt")
+                    with open(sig_file, "w") as f:
+                        f.write(sig)
 
         cv2.imwrite(src_img_path, resized)
         return
@@ -707,8 +708,8 @@ class ImageProcessor:
     def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
         histograms = {}
         # Apply GaussianBlur to reduce noise
-        ksize = (11, 11)
-        sigmaX = 0
+        ksize = (21, 21)
+        sigmaX = 10
         blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
 
         hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
@@ -737,11 +738,11 @@ class ImageProcessor:
         clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
         # h = clahe.apply(h)
         # s = clahe.apply(s)
-        # l = clahe.apply(l)
+        l = clahe.apply(l)
         # Or apply histogram equalization
         # h = cv2.equalizeHist(h)
         # s = cv2.equalizeHist(s)
-        # l = cv2.equalizeHist(l)
+        l = cv2.equalizeHist(l)
         # Or apply a gamma correction LUT
         s = cv2.LUT(s, gamma_lut)
         l = cv2.LUT(l, gamma_lut)
@@ -767,6 +768,10 @@ class ImageProcessor:
         histograms["s"] = [0] * 256
         histograms["l"] = [0] * 256
         cells = []
+        num_cols = {
+            "Black": 0,
+            "White": 0,
+        }
         for triangle in self.triangles(yrg_coords):
             # Create a square mask by actually cropping the channels directly.
             # That seems a tad faster and actually more reliable.
@@ -794,10 +799,11 @@ class ImageProcessor:
             color = colors.select_bw(
                 mean_hsv[0], mean_hsv[1], mean_hsv[2],
                 mean_lab[0], mean_lab[1], mean_lab[2])
-            if color is not None:
+            if color is not None and color["name"] in num_cols:
                 cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
+                num_cols[ color["name"] ] += 1
 
-        print("@@ BW cells:", cells)
+        print("@@ num colors:", num_cols)
         return cells, histograms
 
     def color_mean(self, channels:Tuple) -> list:
@@ -861,6 +867,30 @@ class ImageProcessor:
         """Rotates the cells list in-place."""
         for cell in cells:
             cell.triangle = yrg_coords.rot_60_ccw(cell.triangle)
+
+    def validate_cells(self, cells:list[Cell]) -> bool:
+        num_colors = {
+        }
+        for cell in cells:
+            col_name = cell.color_name()
+            num_colors[col_name] = num_colors.get(col_name, 0) + 1
+        print("@@ Cell Colors found:", num_colors)
+
+        _expected = {
+            "White": 3,
+            "Black": 12,
+            # We don't currently validate Red/Yellow because we don't know how to
+            # find the orange, and it is perceived as either red or yellow, making the
+            # counts undecisive.
+            # "Orange": 9,
+            # "Red": 18,
+            # "Yellow": 12
+        }
+        for k, v in _expected.items():
+            if num_colors.get(k, 0) != v:
+                print(f"Found {num_colors.get(k, 0)} {k} cells, expected {v}.")
+                return False
+        return True
 
     def orient_white_cells(self, yrg_coords:YRGCoord, cells:list[Cell]) -> None:
         # We expect to find 3 white cells in the puzzle.
