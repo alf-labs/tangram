@@ -67,6 +67,22 @@ COLORS_BW = [
     },
 ]
 
+EXPECTED_NUM_CELLS ={
+    "White": 3,
+    "Black": 12,
+    # "Red": 0,
+    # "Yellow": 0,
+}
+
+def by_name(name:str) -> dict:
+    for c in COLORS_BW:
+        if name == c["name"]:
+            return c
+    for c in COLORS_REDS:
+        if name == c["name"]:
+            return c
+    return None
+
 def select(h:float, s:float, v:float, l:float, a:float, b:float) -> dict:
     ab = math.degrees(math.atan2(b, a))
     return _select_table(COLORS_REDS, h, s, v, l, ab)

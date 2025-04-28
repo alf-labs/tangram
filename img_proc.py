@@ -171,7 +171,7 @@ class ImageProcessor:
             rot_angle_deg, hex_center = self.detect_hexagon_rotation(hexagon, draw_img=hex_img)
             rot_img, rot_poly, hex_center = self.rotate_image(resized, hexagon, rot_angle_deg, hex_center)
             self.write_indexed_img("hexagon", hex_img, replace=True)
-            self.write_indexed_img("rot", rot_img)
+            # self.write_indexed_img("rot", rot_img)
 
             yrg_coords = self.compute_yrg_coords(rot_poly, hex_center)
             coords_img = rot_img.copy()
@@ -752,73 +752,10 @@ class ImageProcessor:
                 return True
         return False
 
-    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
-        histograms = {}
-        # Apply GaussianBlur to reduce noise
-        ksize = (21, 21)
-        sigmaX = 10
-        blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
-
-        hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-        lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
-        # Extract HSV LAB channels (used to compute averages below)
-        h, s, v = cv2.split(hsv_img)
-        l, a, b = cv2.split(lab_img)
-
-        # Gamma correction formula is:
-        # output = (input / 255) ^ (1 / gamma) * 255
-        # Modify it to use 128 has the center point:
-        # output = (abs(input-128) / 128) ^ (1 / gamma) * 128 * sign(input - 128) + 128
-        # Create a gamma LUT
-        gamma = 10
-        def sign(x):
-            return -1 if x < 0 else 1
-        gamma_lut = np.array([
-            # (i / 255) ** (1 / gamma) * 255
-            (abs(i - 128) / 128) ** (1 / gamma) * 128 * sign(i - 128) + 128
-            for i in np.arange(0, 256)
-        ]).astype(np.uint8)
-        # print("@@ gamma lut:", gamma_lut)
-
-        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        S=4
-        clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
-        # h = clahe.apply(h)
-        # s = clahe.apply(s)
-        l = clahe.apply(l)
-        # Or apply histogram equalization
-        # h = cv2.equalizeHist(h)
-        # s = cv2.equalizeHist(s)
-        l = cv2.equalizeHist(l)
-        # Or apply a gamma correction LUT
-        s = cv2.LUT(s, gamma_lut)
-        l = cv2.LUT(l, gamma_lut)
-
-        # Temp debug -- save HSB + LAB to view their H/L channels
-        mask_h = np.where(s > 128, 0, 255)
-        print("@@ h:", h.shape, h.dtype)
-        h = np.bitwise_and(h, mask_h).astype(np.uint8)
-        v = np.bitwise_and(v, mask_h).astype(np.uint8)
-        print("@@ h:", h.shape, h.dtype)
-        tmp_img = cv2.merge( (h, s, v) )
-        tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_HSV2BGR)
-        self.write_indexed_img("hsv", tmp_img)
-        # Debug only
-        # tmp_img = cv2.merge( (l, a, b) )
-        # tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_LAB2BGR)
-        # self.write_indexed_img("lab", tmp_img)
-
-
+    def iter_triangles(self, yrg_coords:YRGCoord) -> Generator:
+        # Returns a square (index, triangle, x1, y1, x2, y2) that can be used to extract colors.
         radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
-
-        histograms["h"] = [0] * 256
-        histograms["s"] = [0] * 256
-        histograms["l"] = [0] * 256
-        cells = []
-        num_cols = {
-            "Black": 0,
-            "White": 0,
-        }
+        idx = 0
         for triangle in self.triangles(yrg_coords):
             # Create a square mask by actually cropping the channels directly.
             # That seems a tad faster and actually more reliable.
@@ -827,28 +764,106 @@ class ImageProcessor:
             x2 = cx + radius
             y1 = cy - radius
             y2 = cy + radius
-            ch = h[y1:y2, x1:x2]
-            cs = s[y1:y2, x1:x2]
-            cv = v[y1:y2, x1:x2]
-            cl = l[y1:y2, x1:x2]
-            ca = a[y1:y2, x1:x2]
-            cb = b[y1:y2, x1:x2]
+            yield (idx, triangle, x1, y1, x2, y2)
+            idx += 1
 
-            # Get the mean color of the polygon
-            mean_hsv = self.color_mean((ch, cs, cv))
-            mean_lab = self.color_mean((cl, ca, cb))
-            mh = int(mean_hsv[0])
-            ms = int(mean_hsv[1])
-            ml = int(mean_lab[0])
-            histograms["h"][mh] += 1
-            histograms["s"][ms] += 1
-            histograms["l"][ml] += 1
-            color = colors.select_bw(
-                mean_hsv[0], mean_hsv[1], mean_hsv[2],
-                mean_lab[0], mean_lab[1], mean_lab[2])
-            if color is not None and color["name"] in num_cols:
-                cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
-                num_cols[ color["name"] ] += 1
+    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
+        histograms = {}
+        # Apply GaussianBlur to reduce noise
+        ksize = (21, 21)
+        sigmaX = 10
+        blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
+
+        lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
+        l, a, b = cv2.split(lab_img)
+
+        mean_a = []
+        mean_l = []
+        for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
+            ca = a[y1:y2, x1:x2]
+            cl = l[y1:y2, x1:x2]
+            ma = self.color_mean((ca, ))
+            ml = self.color_mean((cl, ))
+            mean_a.append( int(ma[0]) )
+            mean_l.append( int(ml[0]) )
+
+        mean_a = np.array(mean_a).astype(np.uint8)
+        mean_l = np.array(mean_l).astype(np.uint8)
+
+        # Filter A to detect both black and white cells
+        min_a = min(mean_a)
+        delta_a = 1 / (max(mean_a) - min_a)
+        for i, ma in enumerate(mean_a):
+            mean_a[i] = (ma - min_a) * delta_a * 255
+
+        # Adjust coeficient here till we have the desired number of cells
+        expected_count = colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Black"]
+        updated_a = mean_a.copy()
+        for coef in np.arange(1, 10, 0.5):
+            cutoff_a = np.median(mean_a) / coef
+            num_found = 0
+            for i, m in enumerate(mean_a):
+                ua = 0 if m < cutoff_a else 255
+                updated_a[i] = ua
+                if ua == 0:
+                    num_found += 1
+            print("@@ A coef, num, cutoff, updated:", coef, num_found, cutoff_a, updated_a)
+            if num_found == expected_count:
+                break
+
+        tmp_img = in_img.copy()
+        tmp_img.fill(0)
+        for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
+            poly = np.int32(t.to_np_array())
+            va = int(updated_a[idx])
+            cv2.fillPoly(tmp_img, [poly], (va, va, va))
+        self.write_indexed_img("va", tmp_img)
+
+        # Filter L to detect only white cells
+
+        max_l = max(mean_l)
+        med_l = np.median(mean_l)
+        # Adjust coeficient here till we have the desired number of cells
+        expected_count = colors.EXPECTED_NUM_CELLS["White"]
+        updated_l = mean_l.copy()
+        for coef in np.arange(1, 0, -0.1):
+            cutoff_l = max_l * coef + med_l * (1 - coef)
+            num_found = 0
+            for i, m in enumerate(mean_l):
+                ul = 0 if m < cutoff_l else 255
+                updated_l[i] = ul
+                if ul == 255:
+                    num_found += 1
+            print("@@ L coef, num, cutoff, updated:", coef, num_found, cutoff_l, updated_l)
+            if num_found == expected_count:
+                break
+
+        for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
+            poly = np.int32(t.to_np_array())
+            vl = int(updated_l[idx])
+            cv2.fillPoly(tmp_img, [poly], (vl, vl, vl))
+        self.write_indexed_img("vl", tmp_img)
+
+        # Combine both filters
+
+        cells = []
+        num_cols = {}
+        for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
+            va = int(updated_a[idx]) # 0 if B or W
+            vl = int(updated_l[idx]) # 255 if W
+            if va == 0:
+                # Get a mean color just for display/debug purposes
+                cl = l[y1:y2, x1:x2]
+                ca = a[y1:y2, x1:x2]
+                cb = b[y1:y2, x1:x2]
+                mean_lab = self.color_mean((cl, ca, cb))
+
+                name = "Black"
+                if vl == 255:
+                    name = "White"
+                color = colors.by_name(name)
+                cells.append(Cell(t, color, None, mean_lab))
+                num_cols[name] = num_cols.get(name, 0) + 1
 
         print("@@ num colors:", num_cols)
         return cells, histograms
@@ -863,6 +878,8 @@ class ImageProcessor:
         return r
 
     def draw_histograms_into(self, histograms:dict, dest_img:np.array) -> None:
+        if len(histograms) == 0:
+            return
         sx = dest_img.shape[1]
         sy = dest_img.shape[0] - 5
         h = 128
@@ -897,13 +914,14 @@ class ImageProcessor:
         for cell in cells:
             # We can either display the mean HSV or the mean LAB for validation purposes.
 
-            # Convert the mean HSV to BGR
-            mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_hsv]]), cv2.COLOR_HSV2BGR)[0][0]
-            mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
-
-            # # Convert the mean Lab to BGR
-            # mean_bgr = cv2.cvtColor(np.uint8([[mean_lab[:3]]]), cv2.COLOR_LAB2BGR)[0][0]
-            # mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
+            if cell.mean_hsv is not None:
+                # Convert the mean HSV to BGR
+                mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_hsv]]), cv2.COLOR_HSV2BGR)[0][0]
+                mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
+            else:
+                # Convert the mean Lab to BGR
+                mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_lab[:3]]]), cv2.COLOR_LAB2BGR)[0][0]
+                mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
 
             poly = np.int32(cell.triangle.to_np_array())
             cv2.fillPoly(dest_img, [poly], mean_bgr)
