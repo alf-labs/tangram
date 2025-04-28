@@ -145,6 +145,7 @@ class ImageProcessor:
         resized = self.load_resized_image(input_img_path)
         # Disable auto-level upfront, it provides poor results.
         # resized = self.auto_level(resized)
+        channels = self.extract_channels(resized)
         lab_img = self.convert_to_lab(resized)
         # This image is only useful for debugging initial hexagon search
         # self.write_indexed_img("lab", lab_img)
@@ -298,6 +299,52 @@ class ImageProcessor:
         # rgb_img = stretched
 
         return rgb_img
+
+    def extract_channels(self, rgb_img:np.array) -> list:
+        channels = {}
+        sy, sx = rgb_img.shape[:2]
+        r, g, b = cv2.split(rgb_img)
+        img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2LAB)
+        l_, a_, b_ = cv2.split(img)
+        img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2YUV)
+        y, u, v = cv2.split(img)
+        img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
+        h_, s_, v_ = cv2.split(img)
+
+        # Recreate a gray scale image with all the channels, for debug purposes.
+        gray = np.zeros((sy * 4, sx * 3), dtype=np.uint8)
+        def _log(y):
+            return math.log(1 + y * 0.001)
+        def _copy(py, names, c1, c2, c3):
+            px = 0
+            cs = [ (c1, names[0]), (c2, names[1]), (c3, names[2]) ]
+            for c, n in cs:
+                # print("@@ channel:", gray.shape, py, py + sy, px, px + sx, c.shape)
+                gray[ py:py+sy, px:px+sx ] = c
+                col0 = (int(gray[py, px]) - 64 + 256) % 256
+                col = (col0, col0, col0)
+                cv2.putText(gray, n, (px + 5, py + 100), cv2.FONT_HERSHEY_SIMPLEX, 4, col, 10)
+                hist, _ = np.histogram(c, 256)
+
+                hh = sy // 6
+                mx = _log(max(hist))
+                nv = len(hist)
+                ox = 10
+                ww = (sx - 2 * ox) / nv
+                y2 = py + sy
+                for i in range(0, nv - 1):
+                    y1 = y2 - int(_log(hist[i]) * hh / mx)
+                    x1 = math.floor( px + ox + i * ww )
+                    x2 = math.ceil ( x1 + ww )
+                    cv2.rectangle(gray, (x1, y1), (x2, y2), color=col, thickness=-11)
+
+                px += sx
+            return py + sy
+        py = _copy( 0, "RGB", r , g , b )
+        py = _copy(py, "LAB", l_, a_, b_)
+        py = _copy(py, "YUV", y , u , v )
+        py = _copy(py, "HSV", h_, s_, v_)
+        self.write_indexed_img("channels", gray)
 
     def convert_to_lab(self, rgb_img:np.array) -> np.array:
         # Convert the image to LAB color space to enhance contrast
