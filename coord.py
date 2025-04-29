@@ -205,7 +205,6 @@ class Axis:
         # Line B
         s2 = np.array(self.segment_start[1], dtype=np.float64)
         e2 = np.array(self.segment_end[1], dtype=np.float64)
-        print("@@ s,e:", s1, e1, s2, e2)
 
         a1 = (s1[1] - e1[1]) / (s1[0] - e1[0])
         b1 = s1[1] - (a1 * s1[0])
@@ -242,10 +241,6 @@ class YRGCoord:
         py = self.y_axis.center()
         pr = self.r_axis.center()
         self.axes_center = XY(segment_center( ( py.to_int(), pr.to_int() ) ))
-        print("@@ center px:", self.center_px)
-        print("@@ center Y :", self.y_axis.center())
-        print("@@ center R :", self.r_axis.center())
-        print("@@ center ax:", self.axes_center)
 
         self.radials, self.radials_center_px = self.compute_distortion(y_axis, r_axis)
 

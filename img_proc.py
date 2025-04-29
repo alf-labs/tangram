@@ -143,7 +143,6 @@ class ImageProcessor:
 
         resized = self.load_resized_image(input_img_path)
         # Disable auto-level upfront, it provides poor results.
-        # resized = self.auto_level(resized)
         channels = self.extract_channels(resized)
         lab_img = self.convert_to_lab(resized)
         # This image is only useful for debugging initial hexagon search
@@ -177,18 +176,11 @@ class ImageProcessor:
             self.draw_yrg_coords_into(yrg_coords, dest_img=coords_img)
             self.write_indexed_img("yrg", coords_img)
 
-            # # Method 2: try to detect BW and color cells separately.
+            # Method 2: try to detect BW and color cells separately.
             cells = self.extract_cells_2(yrg_coords, in_img=rot_img)
             bw_img = rot_img.copy()
             self.draw_cells_into(cells=cells, dest_img=bw_img)
             self.write_indexed_img("bw", bw_img)
-
-            # # Method 1: try to detect both colors and BW cells at the same time.
-            # # Performance is passable.
-            # cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, cells=cells)
-            # colors_img = rot_img.copy()
-            # self.draw_cells_into(cells=cells, dest_img=colors_img)
-            # self.write_indexed_img("colors", colors_img)
 
             if self.validate_cells(cells):
                 # Detect the 3 white cells and re-orient the cells accordingly
@@ -230,6 +222,19 @@ class ImageProcessor:
         # Mixed success with these methods.
 
         # ----------
+        # No processing.
+        # return rgb_img
+
+        # ----------
+        # # Normalize the RGB channels independantly, always a bad idea
+        # b, g, r = cv2.split(rgb_img)
+        # r = cv2.equalizeHist(r)
+        # g = cv2.equalizeHist(g)
+        # b = cv2.equalizeHist(b)
+        # rgb_img = cv2.merge((b, g, r))
+
+
+        # ----------
         # Attempt 1: adjust contrast in the Lab color space.
         # Normaly one would only be done for Luminance.
         # Try adjusting a*b* channels too to see what it gives
@@ -238,17 +243,17 @@ class ImageProcessor:
         # band in the red-orange spectra, that may work, at the expense of distorting
         # the white and black pieces colors.)
 
-        # Convert the image to LAB color space
-        lab_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab_img)
-        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        S=4
-        clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
-        l = clahe.apply(l)
-        a = clahe.apply(a)
-        b = clahe.apply(b)
-        lab_img = cv2.merge((l, a, b))
-        rgb_img = cv2.cvtColor(lab_img, cv2.COLOR_LAB2BGR)
+        # # Convert the image to LAB color space
+        # lab_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2LAB)
+        # l, a, b = cv2.split(lab_img)
+        # # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        # S=4
+        # clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(S, S))
+        # l = clahe.apply(l)
+        # a = clahe.apply(a)
+        # b = clahe.apply(b)
+        # lab_img = cv2.merge((l, a, b))
+        # rgb_img = cv2.cvtColor(lab_img, cv2.COLOR_LAB2BGR)
 
         # ----------
         # Attempt 2: adjust contrast in the YUV color space.
@@ -702,70 +707,6 @@ class ImageProcessor:
             r_piece = r - n2
             yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
 
-    def extract_cells_colors(self, yrg_coords:YRGCoord, in_img:np.array, cells:list) -> list[Cell]:
-        # Apply GaussianBlur to reduce noise
-        ksize = (11, 11)
-        sigmaX = 0
-        blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
-
-        hsv_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2HSV)
-        lab_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
-        # Extract HSV LAB channels (used to compute averages below)
-        h, s, v = cv2.split(hsv_img)
-        l, a, b = cv2.split(lab_img)
-
-        radius = int(yrg_coords.triangle(YRG(0, 0, 0)).inscribed_circle_radius() * SHRINK_RATIO)
-
-        for triangle in self.triangles(yrg_coords):
-            if self.is_in_cells(triangle, cells):
-                continue
-            # # Method 1:
-            # # Create a mask based on a shrunk triangle to filter on the HSB
-            # poly = np.int32(triangle.shrink(SHRINK_RATIO).to_np_array())
-            # mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
-            # cv2.fillPoly(mask, [poly], (255, 255, 255))
-
-            # Method 2:
-            # Create a mask based on a circle centered in the triangle.
-            # mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
-            # cv2.circle(mask, , radius, (255), -1)
-
-            # Method 3:
-            # Create a square mask by actually cropping the channels directly.
-            # That seems a tad faster and actually more reliable.
-            cx, cy = triangle.center().to_int()
-            x1 = cx - radius
-            x2 = cx + radius
-            y1 = cy - radius
-            y2 = cy + radius
-            ch = h[y1:y2, x1:x2]
-            cs = s[y1:y2, x1:x2]
-            cv = v[y1:y2, x1:x2]
-            cl = l[y1:y2, x1:x2]
-            ca = a[y1:y2, x1:x2]
-            cb = b[y1:y2, x1:x2]
-
-            # Get the mean color of the polygon
-
-            # For methods 1 and 2:
-            # Note that cv2.mean() always returns a scalar with 4 components.
-            # mean_hsv = cv2.mean(hsv_img, mask=mask)
-            # mean_lab = cv2.mean(lab_img, mask=mask)
-
-            # For method 3:
-            mean_hsv = self.color_mean((ch, cs, cv))
-            mean_lab = self.color_mean((cl, ca, cb))
-
-            # print(f"Mean color HSV@@{','.join([ str(x) for x in mean_hsv[0:3] ])}")
-            # print(f"Mean color Lab@@{','.join([ str(x) for x in mean_lab[0:3] ])}")
-
-            color = colors.select(
-                mean_hsv[0], mean_hsv[1], mean_hsv[2],
-                mean_lab[0], mean_lab[1], mean_lab[2])
-            mean_bgr = self.to_bgr(cv2.COLOR_HSV2BGR, mean_hsv)
-            cells.append(Cell(triangle, color, mean_bgr))
-        return cells
-
     def is_in_cells(self, triangle:Triangle, cells:list) -> bool:
         yrg = triangle.yrg
         for cell in cells:
@@ -834,27 +775,22 @@ class ImageProcessor:
                 source:np.array,
                 find_high:bool,
                 expected_count:int,
-                exclude:list[int]=None):
+                exclude:list[int]=None,
+                include:list[int]=None):
             # Coef 1 starts at min (find low) or max (find high) and coef 0 ends at median.
+            # Excluded indices: we already know their color and wish to exclude them from
+            #   all processing here, including the min/max computations.
+            # Included indices: we already know their colors and we already know they are
+            #   part of the desired solution, but we should not use them when sorting.
+            #   These values are part of the "expected_count".
             input_ = source.copy()
-            if exclude is None:
-                exclude = []
+            if include is None: include = []
+            if exclude is None: exclude = []
             included_ = []
             for i,v in enumerate(input_):
                 if i not in exclude:
                     included_.append( [i, float(v)] )
             # print(f"@@ {label} source:", str(included_))
-
-            # if normalize:
-            if True:
-                min_ = min([ v[1] for v in included_ ])
-                max_ = max([ v[1] for v in included_ ])
-                assert max_ > min_
-                delta_ = 1 / (max_ - min_)
-                for i, m in enumerate(included_):
-                    included_[i][1] = (m[1] - min_) * delta_ * 255
-                min_ = min([ v[1] for v in included_ ])
-                max_ = max([ v[1] for v in included_ ])
 
             updated_ = input_.copy()
             target_ = 255 if find_high else 0
@@ -862,6 +798,12 @@ class ImageProcessor:
 
             # Just take the N higher (find_high) or lower elements
             included_.sort(key=lambda x: x[1], reverse=find_high)
+
+            for i in include:
+                # We already know we want this index
+                updated_[i] = target_
+                expected_count -= 1
+            included_ = [ [i,v] for i,v in included_ if i not in include ]
             for i, v in included_[:expected_count]:
                 updated_[i] = target_
             # print(f"@@ {label} updated:", str(updated_).replace("\n", ""))
@@ -893,10 +835,10 @@ class ImageProcessor:
             va = int(updated_a[idx]) # 0 if Black or White
             vl = int(updated_l[idx]) # 255 if White
             name = None
-            if va == 0:
+            if vl == 255:
+                name = "White"
+            elif va == 0:
                 name = "Black"
-                if vl == 255:
-                    name = "White"
 
             if name is not None:
                 # Get a mean color just for display/debug purposes
@@ -913,23 +855,19 @@ class ImageProcessor:
         # Filter U/R to detect orange cells
         # Ignore B & W cells found above.
 
-        # updated_u = _filter_channel("U", mean_u,
-        #                 find_high=False,
-        #                 exclude=exclude_idx,
-        #                 expected_count=expected_counts["Orange"] + expected_counts["Yellow"])
-        # _draw_triangles("vu_o_y", updated_u)
-
-        updated_l = _filter_channel("L", mean_l,
-                        find_high=True,
-                        exclude=exclude_idx,
-                        expected_count=expected_counts["Orange"] + expected_counts["Yellow"])
-        _draw_triangles("vl_o_y", updated_l)
-
         updated_r = _filter_channel("R", mean_r,
                         find_high=True,
                         exclude=exclude_idx,
                         expected_count=expected_counts["Orange"])
         _draw_triangles("vr_o", updated_r)
+        include_idx = [ i for i, v in enumerate(updated_r) if v == 255 ]
+
+        updated_l = _filter_channel("L", mean_l,
+                        find_high=True,
+                        include=include_idx,
+                        exclude=exclude_idx,
+                        expected_count=expected_counts["Orange"] + expected_counts["Yellow"])
+        _draw_triangles("vl_o_y", updated_l)
 
         # Combine both filters to get the Orange, Yellow, and Red cells
 
@@ -942,10 +880,10 @@ class ImageProcessor:
             vr = int(updated_r[idx]) # 255 if Orange
             name = None
             # if vu == 0:
-            if vl == 255:
+            if vr == 255:
                 name = "Orange"
-                if vr != 255:
-                    name = "Yellow"
+            elif vl == 255:
+                name = "Yellow"
             else:
                 name = "Red"
 
