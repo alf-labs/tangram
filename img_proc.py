@@ -178,17 +178,17 @@ class ImageProcessor:
             self.write_indexed_img("yrg", coords_img)
 
             # # Method 2: try to detect BW and color cells separately.
-            cells = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
+            cells = self.extract_cells_2(yrg_coords, in_img=rot_img)
             bw_img = rot_img.copy()
             self.draw_cells_into(cells=cells, dest_img=bw_img)
             self.write_indexed_img("bw", bw_img)
 
-            # Method 1: try to detect both colors and BW cells at the same time.
-            # Performance is passable.
-            cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, cells=cells)
-            colors_img = rot_img.copy()
-            self.draw_cells_into(cells=cells, dest_img=colors_img)
-            self.write_indexed_img("colors", colors_img)
+            # # Method 1: try to detect both colors and BW cells at the same time.
+            # # Performance is passable.
+            # cells = self.extract_cells_colors(yrg_coords, in_img=rot_img, cells=cells)
+            # colors_img = rot_img.copy()
+            # self.draw_cells_into(cells=cells, dest_img=colors_img)
+            # self.write_indexed_img("colors", colors_img)
 
             if self.validate_cells(cells):
                 # Detect the 3 white cells and re-orient the cells accordingly
@@ -788,7 +788,7 @@ class ImageProcessor:
             yield (idx, triangle, x1, y1, x2, y2)
             idx += 1
 
-    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> list[Cell]:
+    def extract_cells_2(self, yrg_coords:YRGCoord, in_img:np.array) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
         ksize = (21, 21)
         sigmaX = 10
@@ -830,108 +830,138 @@ class ImageProcessor:
                 cv2.fillPoly(tmp_img, [poly], (gray, gray, gray))
             self.write_indexed_img(suffix, tmp_img)
 
-        def _filter_channel(label:str, source:np.array, coef_range:np.array, normalize:bool, find_low:bool, expected_count:int):
+        def _filter_channel(label:str,
+                source:np.array,
+                find_high:bool,
+                expected_count:int,
+                exclude:list[int]=None):
             # Coef 1 starts at min (find low) or max (find high) and coef 0 ends at median.
-            if normalize:
-                input_ = source.copy()
-                min_ = min(input_)
-                max_ = max(input_)
+            input_ = source.copy()
+            if exclude is None:
+                exclude = []
+            included_ = []
+            for i,v in enumerate(input_):
+                if i not in exclude:
+                    included_.append( [i, float(v)] )
+            # print(f"@@ {label} source:", str(included_))
+
+            # if normalize:
+            if True:
+                min_ = min([ v[1] for v in included_ ])
+                max_ = max([ v[1] for v in included_ ])
                 assert max_ > min_
                 delta_ = 1 / (max_ - min_)
-                for i, m in enumerate(input_):
-                    input_[i] = (m - min_) * delta_ * 255
-            else:
-                input_ = source
-            min_ = min(input_)
-            max_ = max(input_)
-            med_ = np.median(input_)
-            print(f"@@ {label} source norm:", str(input_).replace("\n", ""))
+                for i, m in enumerate(included_):
+                    included_[i][1] = (m[1] - min_) * delta_ * 255
+                min_ = min([ v[1] for v in included_ ])
+                max_ = max([ v[1] for v in included_ ])
 
             updated_ = input_.copy()
-            for coef in coef_range:
-                if find_low:
-                    cutoff_ = min_ * coef + med_ * (1 - coef)
-                    target_ = 0
-                else:
-                    cutoff_ = max_ * coef + med_ * (1 - coef)
-                    target_ = 255
-                num_found = 0
-                for i, m in enumerate(input_):
-                    u_ = 0 if m <= cutoff_ else 255
-                    updated_[i] = u_
-                    if u_ == target_:
-                        num_found += 1
-                print(f"@@ {label} coef, num, cutoff, updated:", coef, num_found, cutoff_,
-                f"\n@@ {label}:", str(updated_).replace("\n", ""))
-                if num_found == expected_count:
-                    break
+            target_ = 255 if find_high else 0
+            updated_.fill(255 - target_)
+
+            # Just take the N higher (find_high) or lower elements
+            included_.sort(key=lambda x: x[1], reverse=find_high)
+            for i, v in included_[:expected_count]:
+                updated_[i] = target_
+            # print(f"@@ {label} updated:", str(updated_).replace("\n", ""))
+
             return updated_
 
         # Filter A to detect both black and white cells
 
+        expected_counts = colors.EXPECTED_NUM_CELLS
+
         updated_a = _filter_channel("A", mean_a,
-                        coef_range=np.arange(0, 1, 0.1),
-                        normalize=True,
-                        find_low=True,
-                        expected_count=colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Black"])
-        _draw_triangles("va", updated_a)
+                        find_high=False,
+                        expected_count=expected_counts["White"] + expected_counts["Black"])
+        _draw_triangles("va_b_w", updated_a)
 
         # Filter L to detect only white cells
 
         updated_l = _filter_channel("L", mean_l,
-                        coef_range=np.arange(1, 0, -0.1),
-                        normalize=False,
-                        find_low=False,
-                        expected_count=colors.EXPECTED_NUM_CELLS["Orange"])
-        _draw_triangles("vl", updated_l)
+                        find_high=True,
+                        expected_count=expected_counts["White"])
+        _draw_triangles("vl_w", updated_l)
 
-        # Filter U/R to detect orange cells
-
-        updated_u = _filter_channel("U", mean_u,
-                        coef_range=np.arange(1, 0, -0.1),
-                        normalize=True,
-                        find_low=True,
-                        expected_count=colors.EXPECTED_NUM_CELLS["Orange"] + colors.EXPECTED_NUM_CELLS["Yellow"])
-        _draw_triangles("vu", updated_u)
-
-        updated_r = _filter_channel("R", mean_r,
-                        coef_range=np.arange(1, 0, -0.1),
-                        normalize=True,
-                        find_low=False,
-                        expected_count=colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Yellow"])
-        _draw_triangles("vr", updated_r)
-
-        # Combine both filters
+        # Combine both filters to get the B & W cells
 
         cells = []
-        num_cols = {}
+        exclude_idx = []
+        num_colors = {}
         for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
             va = int(updated_a[idx]) # 0 if Black or White
             vl = int(updated_l[idx]) # 255 if White
-            vu = int(updated_u[idx]) # 255 if Orange
             name = None
             if va == 0:
                 name = "Black"
                 if vl == 255:
                     name = "White"
-            if name is None and vu == 255:
-                name = "Orange"
 
             if name is not None:
                 # Get a mean color just for display/debug purposes
                 cr = _r[y1:y2, x1:x2]
                 cg = _g[y1:y2, x1:x2]
                 cb = _b[y1:y2, x1:x2]
-                # mean_lab = self.color_mean((cl, ca, cb))
                 mean_bgr = self.color_mean((cb, cg, cr))
 
                 color = colors.by_name(name)
-                # mean_bgr = self.to_bgr(cv2.COLOR_LAB2BGR, mean_lab)
-                # mean_bgr = (int(cr), int(cg), int(cb))
                 cells.append(Cell(t, color, mean_bgr))
-                num_cols[name] = num_cols.get(name, 0) + 1
+                exclude_idx.append(idx)
+                num_colors[name] = num_colors.get(name, 0) + 1
 
-        print("@@ num colors:", num_cols)
+        # Filter U/R to detect orange cells
+        # Ignore B & W cells found above.
+
+        # updated_u = _filter_channel("U", mean_u,
+        #                 find_high=False,
+        #                 exclude=exclude_idx,
+        #                 expected_count=expected_counts["Orange"] + expected_counts["Yellow"])
+        # _draw_triangles("vu_o_y", updated_u)
+
+        updated_l = _filter_channel("L", mean_l,
+                        find_high=True,
+                        exclude=exclude_idx,
+                        expected_count=expected_counts["Orange"] + expected_counts["Yellow"])
+        _draw_triangles("vl_o_y", updated_l)
+
+        updated_r = _filter_channel("R", mean_r,
+                        find_high=True,
+                        exclude=exclude_idx,
+                        expected_count=expected_counts["Orange"])
+        _draw_triangles("vr_o", updated_r)
+
+        # Combine both filters to get the Orange, Yellow, and Red cells
+
+        for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
+            if self.is_in_cells(t, cells):
+                continue
+
+            # vu = int(updated_u[idx]) # 0 if Orange or Yellow
+            vl = int(updated_l[idx]) # 255 if Orange or Yellow
+            vr = int(updated_r[idx]) # 255 if Orange
+            name = None
+            # if vu == 0:
+            if vl == 255:
+                name = "Orange"
+                if vr != 255:
+                    name = "Yellow"
+            else:
+                name = "Red"
+
+            if name is not None:
+                # Get a mean color just for display/debug purposes
+                cr = _r[y1:y2, x1:x2]
+                cg = _g[y1:y2, x1:x2]
+                cb = _b[y1:y2, x1:x2]
+                mean_bgr = self.color_mean((cb, cg, cr))
+
+                color = colors.by_name(name)
+                cells.append(Cell(t, color, mean_bgr))
+                exclude_idx.append(idx)
+                num_colors[name] = num_colors.get(name, 0) + 1
+
+        print("@@ num colors:", num_colors)
         return cells
 
     def color_mean(self, channels:Tuple) -> list:
