@@ -183,8 +183,43 @@ class Axis:
         print(f"Axis unit vectors: u={self.u} v={self.v}")
 
     def center(self) -> XY:
-        c = segment_center([self.center_start, self.center_end])
-        return XY( (c[0], c[1]) )
+        # This simplification does not work because the axis is defined using
+        # 2 polygons sides which are not necessarily parallel due to image skewing.
+        # This kind of "center" assume the lines cross exactly in their middle.
+        # c = segment_center([self.center_start, self.center_end])
+        #
+        # Instead, consider the lines joining the opposite sides of the start
+        # and end segments and compute the _actual_ intersection of these lines.
+        # It may not be at 50% of the lines length.
+        #
+        # The segments are defined counter-clockwise, so to get intersecting lines,
+        # we need:
+        # Line A from segment_start[0] to segment_end[0].
+        # Line B from segment_start[1] to segment_end[1].
+
+        # Line A
+        s1 = np.array(self.segment_start[0], dtype=np.float64)
+        e1 = np.array(self.segment_end[0], dtype=np.float64)
+
+        # Line B
+        s2 = np.array(self.segment_start[1], dtype=np.float64)
+        e2 = np.array(self.segment_end[1], dtype=np.float64)
+        print("@@ s,e:", s1, e1, s2, e2)
+
+        a1 = (s1[1] - e1[1]) / (s1[0] - e1[0])
+        b1 = s1[1] - (a1 * s1[0])
+
+        a2 = (s2[1] - e2[1]) / (s2[0] - e2[0])
+        b2 = s2[1] - (a2 * s2[0])
+
+        # if abs(a1 - a2) < sys.float_info.epsilon:
+        #     return False
+        assert abs(a1 - a2) > 1e-5, "Error: start/end segments parallel"
+
+        cx = (b2 - b1) / (a1 - a2)
+        cy = a1 * cx + b1
+
+        return XY( ( int(cx), int(cy)) )
 
 
 class YRGCoord:
@@ -200,6 +235,17 @@ class YRGCoord:
         self.y_axis.set_rotation(120)
         self.r_axis.set_rotation(0)
         self.g_axis.set_rotation(0)
+
+        # Recompute the center based on the real Y and R axes
+        # and then average them in case they disagree.
+        py = self.y_axis.center()
+        pr = self.r_axis.center()
+        self.axes_center = XY(segment_center( ( py.to_int(), pr.to_int() ) ))
+        print("@@ center px:", self.center_px)
+        print("@@ center Y :", self.y_axis.center())
+        print("@@ center R :", self.r_axis.center())
+        print("@@ center ax:", self.axes_center)
+
         self.radials, self.radials_center_px = self.compute_distortion(y_axis, r_axis)
 
     def compute_distortion(self, y_axis:Axis, r_axis:Axis) -> list:
@@ -211,17 +257,25 @@ class YRGCoord:
             XY(y_axis.segment_end[0]),      # angle 240
             XY(y_axis.segment_end[1]),      # angle 300
         ]
-        center_x = sum([ p.x for p in points ]) / len(points)
-        center_y = sum([ p.y for p in points ]) / len(points)
+        # center_x = sum([ p.x for p in points ]) / len(points)
+        # center_y = sum([ p.y for p in points ]) / len(points)
+        center_x = self.axes_center.x
+        center_y = self.axes_center.y
         angle = 0
         radials = {}
-        # Each radial represents the lenght in pixels of a unit vector from the center
+        # Each radial represents the length in pixels of a unit vector from the center
         # to an outer hexagon point taking into account the distortion at that specific
         # angle.
         for p in points:
-            length_px = self.center_px.distance(p)
+            length_px = self.axes_center.distance(p)
+            dx = p.x - self.axes_center.x
+            dy = p.y - self.axes_center.y
+            real_angle_rad = math.atan2(dy, dx)
+            real_angle_deg = np.degrees(-real_angle_rad)
+            if real_angle_deg < 0: real_angle_deg = 360 + real_angle_deg
             radials[angle] = {
-                "len": length_px / YRG_RADIUS
+                "len": length_px / YRG_RADIUS,
+                "deg": float(real_angle_deg),
             }
             angle += 60
         return radials, XY( (center_x, center_y) )
@@ -234,22 +288,22 @@ class YRGCoord:
         angle_deg = angle_deg % 360
 
         angle_rad = np.radians(angle_deg)
-        if angle_deg in self.radials:
-            unit_length = self.radials[angle_deg]["len"]
-        else:
-            # Find the radial just before and after and compute a weight average.
-            angle_before = int((angle_deg // 60) * 60) % 360
-            angle_after = int(((angle_deg + 60) // 60) * 60) % 360
 
-            factor = 1 - (angle_deg - angle_before) / 60
-            unit_len_before = self.radials[angle_before]["len"]
-            unit_len_after = self.radials[angle_after]["len"]
-            unit_length = unit_len_before * factor + unit_len_after * (1-factor)
+        # Find the radial just before and after and compute a weight average.
+        angle_before = int((angle_deg // 60) * 60) % 360
+        angle_after = int(((angle_deg + 60) // 60) * 60) % 360
 
-        # print("@@ angle_deg", angle_before, angle_deg, angle_after,
-        #     "angle", float(np.degrees(angle_rad_before)), float(np.degrees(angle_rad)), float(np.degrees(angle_rad_after)), 
-        #     "unit", unit_len_before, unit_length, unit_len_after,
-        #     "factor", factor)
+        factor = 1 - (angle_deg - angle_before) / 60
+        unit_len_before = self.radials[angle_before]["len"]
+        unit_len_after = self.radials[angle_after]["len"]
+        unit_length = unit_len_before * factor + unit_len_after * (1-factor)
+
+        real_angle_before = self.radials[angle_before]["deg"]
+        real_angle_after = self.radials[angle_after]["deg"]
+        if real_angle_after < real_angle_before:
+            real_angle_after += 360
+        adjusted_angle_deg = real_angle_before * factor + real_angle_after * (1-factor)
+        angle_rad = np.radians(-adjusted_angle_deg)
 
         xy = XY( (unit_length * math.cos(angle_rad), unit_length * math.sin(angle_rad)) )
         return xy
@@ -259,8 +313,8 @@ class YRGCoord:
         R = self.r_axis
 
         # # Method 1: use a fixed Y/R unit vector to convert to point coordinates
-        # x = y_piece * Y.v.x + r_piece * R.v.x + self.center_px.x
-        # y = y_piece * Y.v.y + r_piece * R.v.y + self.center_px.y
+        # x = y_piece * Y.v.x + r_piece * R.v.x + self.axes_center.x
+        # y = y_piece * Y.v.y + r_piece * R.v.y + self.axes_center.y
 
         # Method 2: use the radials to adjust for hexagon axes distortions
         # Convert the desired Y/R coordinate into polar coordinates
