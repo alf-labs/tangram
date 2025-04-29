@@ -596,8 +596,9 @@ class ImageProcessor:
         for segment in segments(rotated_polygon):
             cv2.line(rotated_img, pt1=segment[0], pt2=segment[1], color=(0, 255, 0), thickness=3)
 
-        # Crop the image to the squared bounding box with some padding
-        wh2 = wh // 2 + 10
+        # Crop the image to the squared bounding box, yet still fit in the image boundaries
+        wh = min(w, h, wh)
+        wh2 = wh // 2
         cv2.rectangle(rotated_img, (cx - wh2, cy - wh2), (cx + wh2, cy + wh2), (255, 0, 0), 2)
         rotated_img = rotated_img[
             clamp(cy - wh2, 0, h) : clamp(cy + wh2, 0, h),
@@ -610,6 +611,10 @@ class ImageProcessor:
         rotated_polygon = [(point[0] - offsetx, point[1] - offsety) for point in rotated_polygon]
         # Adjust the center by the offset
         hex_center = (cx - offsetx, cy - offsety)
+
+        # Redraw the offset hexagon for debug/validation purposes
+        for segment in segments(rotated_polygon):
+            cv2.line(rotated_img, pt1=segment[0], pt2=segment[1], color=(0, 255, 255), thickness=3)
 
         return rotated_img, rotated_polygon, hex_center
 
@@ -672,6 +677,23 @@ class ImageProcessor:
             r = triangle.yrg.r + coord.N//2
             g = triangle.yrg.g
             cv2.putText(dest_img, f"{y}{r}{g}", (px - 15, py + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        # Draw the sides of the Y and R axis, for debug/validation purposes.
+        # This shows if the Y/R axes are properly scaled and centered.
+        p0 = np.int32(yrg_coords.y_axis.segment_start[0])
+        p1 = np.int32(yrg_coords.y_axis.segment_end[0])
+        p2 = np.int32(yrg_coords.y_axis.segment_start[1])
+        p3 = np.int32(yrg_coords.y_axis.segment_end[1])
+        lines = np.array([ [p0, p1], [p2, p3] ])
+        cv2.polylines(dest_img, lines, isClosed=False, color=(0,0, 255), thickness=2)
+
+        p0 = np.int32(yrg_coords.r_axis.segment_start[0])
+        p1 = np.int32(yrg_coords.r_axis.segment_end[0])
+        p2 = np.int32(yrg_coords.r_axis.segment_start[1])
+        p3 = np.int32(yrg_coords.r_axis.segment_end[1])
+        lines = np.array([ [p0, p1], [p2, p3] ])
+        cv2.polylines(dest_img, lines, isClosed=False, color=(255, 0, 0), thickness=2)
+
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
         n2 = coord.N//2

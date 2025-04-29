@@ -68,8 +68,8 @@ EXPECTED_NUM_CELLS ={
     "White": 3,
     "Black": 12,
     "Orange": 9,
-    # "Red": 0,
-    # "Yellow": 0,
+    "Red": 18,
+    "Yellow": 12,
 }
 
 def by_name(name:str) -> dict:

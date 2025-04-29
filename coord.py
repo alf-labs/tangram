@@ -161,6 +161,7 @@ class Axis:
         dy = self.center_end[1] - self.center_start[1]
         self.step_size_px = math.sqrt(dx * dx + dy * dy) / N
         self._v = np.array([self.step_size_px, 0])
+        self._u = np.array([1, 0])
         self.angle_deg = 0
         self.v = None
 
@@ -322,7 +323,7 @@ class YRGCoord:
         uy = y_piece * Y.u.y + r_piece * R.u.y
         angle_rad = math.atan2(uy, ux)
         length = math.sqrt(ux * ux + uy * uy)
-        unit_xy = self.radial_unit(np.degrees(angle_rad))
+        unit_xy = self.radial_unit(np.degrees(-angle_rad))
         x = self.radials_center_px.x + length * unit_xy.x
         y = self.radials_center_px.y + length * unit_xy.y
 
