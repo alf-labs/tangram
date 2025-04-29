@@ -51,19 +51,11 @@ COLORS_BW = [
         "name": "White",
         "rgb": (192, 192, 192),
         "bgr": (192, 192, 192),
-        "h": { "min":  10, "max": 20 },
-        "s": { "min":   0, "max": 128 },
-        "v": { "min": 150, "max": 255 },
-        "l": { "min": 164, "max": 255 },
     },
     {
         "name": "Black",
         "rgb": (64, 64, 64),
         "bgr": (64, 64, 64),
-        "h": { "min": 5, "max":  20 },
-        "s": { "min": 0, "max": 128 },
-        "v": { "min": 0, "max": 140 },
-        "l": { "min": 0, "max": 170 },
     },
 ]
 
@@ -86,10 +78,6 @@ def by_name(name:str) -> dict:
 def select(h:float, s:float, v:float, l:float, a:float, b:float) -> dict:
     ab = math.degrees(math.atan2(b, a))
     return _select_table(COLORS_REDS, h, s, v, l, ab)
-
-def select_bw(h:float, s:float, v:float, l:float, a:float, b:float) -> dict:
-    ab = math.degrees(math.atan2(b, a))
-    return _select_table(COLORS_BW, h, s, v, l, ab)
 
 def _select_table(table:list, h:float, s:float, v:float, l:float, ab:float) -> dict:
     for color in table:

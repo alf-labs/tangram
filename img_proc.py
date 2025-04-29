@@ -84,11 +84,10 @@ def clamp(value:int, min_value:int, max_value:int) -> int:
 
 
 class Cell:
-    def __init__(self, triangle:Triangle, color:dict, mean_hsv, mean_lab):
+    def __init__(self, triangle:Triangle, color:dict, mean_bgr:Tuple):
         self.triangle = triangle
         self.color = color
-        self.mean_hsv = mean_hsv
-        self.mean_lab = mean_lab
+        self.mean_bgr = mean_bgr
 
     def yrg(self) -> YRG:
         return self.triangle.yrg
@@ -179,10 +178,9 @@ class ImageProcessor:
             self.write_indexed_img("yrg", coords_img)
 
             # # Method 2: try to detect BW and color cells separately.
-            cells, histograms = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
+            cells = self.extract_cells_bw_only(yrg_coords, in_img=rot_img)
             bw_img = rot_img.copy()
             self.draw_cells_into(cells=cells, dest_img=bw_img)
-            self.draw_histograms_into(histograms=histograms, dest_img=bw_img)
             self.write_indexed_img("bw", bw_img)
 
             # Method 1: try to detect both colors and BW cells at the same time.
@@ -742,7 +740,8 @@ class ImageProcessor:
             color = colors.select(
                 mean_hsv[0], mean_hsv[1], mean_hsv[2],
                 mean_lab[0], mean_lab[1], mean_lab[2])
-            cells.append(Cell(triangle, color, mean_hsv[:3], mean_lab[:3]))
+            mean_bgr = self.to_bgr(cv2.COLOR_HSV2BGR, mean_hsv)
+            cells.append(Cell(triangle, color, mean_bgr))
         return cells
 
     def is_in_cells(self, triangle:Triangle, cells:list) -> bool:
@@ -767,8 +766,7 @@ class ImageProcessor:
             yield (idx, triangle, x1, y1, x2, y2)
             idx += 1
 
-    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> Tuple[list[Cell],dict]:
-        histograms = {}
+    def extract_cells_bw_only(self, yrg_coords:YRGCoord, in_img:np.array) -> list[Cell]:
         # Apply GaussianBlur to reduce noise
         ksize = (21, 21)
         sigmaX = 10
@@ -862,11 +860,12 @@ class ImageProcessor:
                 if vl == 255:
                     name = "White"
                 color = colors.by_name(name)
-                cells.append(Cell(t, color, None, mean_lab))
+                mean_bgr = self.to_bgr(cv2.COLOR_LAB2BGR, mean_lab)
+                cells.append(Cell(t, color, mean_bgr))
                 num_cols[name] = num_cols.get(name, 0) + 1
 
         print("@@ num colors:", num_cols)
-        return cells, histograms
+        return cells
 
     def color_mean(self, channels:Tuple) -> list:
         # Input array: list of N np.array split channels (HSV, LAB, etc)
@@ -877,33 +876,33 @@ class ImageProcessor:
             r.append(med)
         return r
 
-    def draw_histograms_into(self, histograms:dict, dest_img:np.array) -> None:
-        if len(histograms) == 0:
-            return
-        sx = dest_img.shape[1]
-        sy = dest_img.shape[0] - 5
-        h = 128
-        w1 = sx // len(histograms)
-        w2 = w1 - 16
-        px = 0
-        py = sy - h
-        for name, values in histograms.items():
-            print("@@ histogram", name.upper(), "from", min(values),"to", max(values))
-            cv2.putText(dest_img, name.upper(), (px, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            lines = []
-            nv = len(values)
-            mx = min(h, max(values))
-            w = w2 / nv
-            for i in range(0, nv - 1):
-                y1 = sy - int(values[i] * h / mx)
-                # y2 = sy - int(values[i+1] / mx * h)
-                x1 = math.floor( px + i * w )
-                x2 = math.ceil ( x1 + w )
-                # lines.append( [ [ x1, y1 ], [ x2, y2 ] ] )
-                cv2.rectangle(dest_img, (x1, y1), (x2, sy), color=(255, 255, 255), thickness=-11)
-            # lines = np.array(lines, np.int32)
-            # cv2.polylines(dest_img, lines, isClosed=False, color=(255, 255, 255), thickness=1)
-            px += w1
+    # def draw_histograms_into(self, histograms:dict, dest_img:np.array) -> None:
+    #     if len(histograms) == 0:
+    #         return
+    #     sx = dest_img.shape[1]
+    #     sy = dest_img.shape[0] - 5
+    #     h = 128
+    #     w1 = sx // len(histograms)
+    #     w2 = w1 - 16
+    #     px = 0
+    #     py = sy - h
+    #     for name, values in histograms.items():
+    #         print("@@ histogram", name.upper(), "from", min(values),"to", max(values))
+    #         cv2.putText(dest_img, name.upper(), (px, py), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    #         lines = []
+    #         nv = len(values)
+    #         mx = min(h, max(values))
+    #         w = w2 / nv
+    #         for i in range(0, nv - 1):
+    #             y1 = sy - int(values[i] * h / mx)
+    #             # y2 = sy - int(values[i+1] / mx * h)
+    #             x1 = math.floor( px + i * w )
+    #             x2 = math.ceil ( x1 + w )
+    #             # lines.append( [ [ x1, y1 ], [ x2, y2 ] ] )
+    #             cv2.rectangle(dest_img, (x1, y1), (x2, sy), color=(255, 255, 255), thickness=-11)
+    #         # lines = np.array(lines, np.int32)
+    #         # cv2.polylines(dest_img, lines, isClosed=False, color=(255, 255, 255), thickness=1)
+    #         px += w1
 
     def draw_cells_into(self, cells:list[Cell], dest_img:np.array) -> None:
         dest_img.fill(0)
@@ -914,17 +913,8 @@ class ImageProcessor:
         for cell in cells:
             # We can either display the mean HSV or the mean LAB for validation purposes.
 
-            if cell.mean_hsv is not None:
-                # Convert the mean HSV to BGR
-                mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_hsv]]), cv2.COLOR_HSV2BGR)[0][0]
-                mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
-            else:
-                # Convert the mean Lab to BGR
-                mean_bgr = cv2.cvtColor(np.uint8([[cell.mean_lab[:3]]]), cv2.COLOR_LAB2BGR)[0][0]
-                mean_bgr = (int(mean_bgr[0]), int(mean_bgr[1]), int(mean_bgr[2]))
-
             poly = np.int32(cell.triangle.to_np_array())
-            cv2.fillPoly(dest_img, [poly], mean_bgr)
+            cv2.fillPoly(dest_img, [poly], cell.mean_bgr)
             cv2.circle(dest_img, cell.triangle.center().to_int(), radius, cell.color["bgr"], -1)
             cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
@@ -1040,5 +1030,11 @@ class ImageProcessor:
                 results.append(color)
 
         return "".join(results)
+
+    def to_bgr(self, color2bgr, in_tuple:Tuple) -> Tuple:
+        # color2bgr: cv2.COLOR_LAB2BGR, or cv2.COLOR_YUV2BGR, etc
+        b, g, r = cv2.cvtColor(np.uint8([[in_tuple]]), color2bgr)[0][0]
+        return (int(b), int(g), int(r))
+
 
 # ~~
