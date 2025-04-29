@@ -301,7 +301,7 @@ class ImageProcessor:
     def extract_channels(self, rgb_img:np.array) -> list:
         channels = {}
         sy, sx = rgb_img.shape[:2]
-        r, g, b = cv2.split(rgb_img)
+        b, g, r = cv2.split(rgb_img)
         img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2LAB)
         l_, a_, b_ = cv2.split(img)
         img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2YUV)
@@ -794,47 +794,33 @@ class ImageProcessor:
         sigmaX = 10
         blur_img = cv2.GaussianBlur(in_img, ksize, sigmaX)
 
+        _b, _g, _r = cv2.split(blur_img)
         tmp_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2Lab)
-        _l, _a, _b = cv2.split(tmp_img)
+        _l, _a, _  = cv2.split(tmp_img)
         tmp_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2YUV)
-        _y, _u, _v = cv2.split(tmp_img)
+        _ , _u, _  = cv2.split(tmp_img)
 
         mean_a = []
         mean_l = []
-        mean_v = []
+        mean_u = []
+        mean_r = []
         for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
             ca = _a[y1:y2, x1:x2]
             cl = _l[y1:y2, x1:x2]
-            cv = _v[y1:y2, x1:x2]
-            ma, ml, mv = self.color_mean((ca, cl, cv))
+            cu = _u[y1:y2, x1:x2]
+            cr = _r[y1:y2, x1:x2]
+            ma, ml, mu, mr = self.color_mean((ca, cl, cu, cr))
             mean_a.append( int(ma) )
             mean_l.append( int(ml) )
-            mean_v.append( int(mv) )
+            mean_u.append( int(mu) )
+            mean_r.append( int(mr) )
 
         mean_a = np.array(mean_a).astype(np.uint8)
         mean_l = np.array(mean_l).astype(np.uint8)
-        mean_v = np.array(mean_v).astype(np.uint8)
+        mean_u = np.array(mean_u).astype(np.uint8)
+        mean_r = np.array(mean_r).astype(np.uint8)
 
-        # Filter A to detect both black and white cells
-        min_a = min(mean_a)
-        delta_a = 1 / (max(mean_a) - min_a)
-        for i, ma in enumerate(mean_a):
-            mean_a[i] = (ma - min_a) * delta_a * 255
-
-        # Adjust coeficient here till we have the desired number of cells
-        expected_count = colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Black"]
-        updated_a = mean_a.copy()
-        for coef in np.arange(1, 10, 0.5):
-            cutoff_a = np.median(mean_a) / coef
-            num_found = 0
-            for i, m in enumerate(mean_a):
-                ua = 0 if m < cutoff_a else 255
-                updated_a[i] = ua
-                if ua == 0:
-                    num_found += 1
-            if num_found == expected_count:
-                break
-
+        # Local support methods
         tmp_img = in_img.copy()
         tmp_img.fill(0)
         def _draw_triangles(suffix:str, updated_channel:list):
@@ -843,53 +829,77 @@ class ImageProcessor:
                 gray = int(updated_channel[idx])
                 cv2.fillPoly(tmp_img, [poly], (gray, gray, gray))
             self.write_indexed_img(suffix, tmp_img)
+
+        def _filter_channel(label:str, source:np.array, coef_range:np.array, normalize:bool, find_low:bool, expected_count:int):
+            # Coef 1 starts at min (find low) or max (find high) and coef 0 ends at median.
+            if normalize:
+                input_ = source.copy()
+                min_ = min(input_)
+                max_ = max(input_)
+                assert max_ > min_
+                delta_ = 1 / (max_ - min_)
+                for i, m in enumerate(input_):
+                    input_[i] = (m - min_) * delta_ * 255
+            else:
+                input_ = source
+            min_ = min(input_)
+            max_ = max(input_)
+            med_ = np.median(input_)
+            print(f"@@ {label} source norm:", str(input_).replace("\n", ""))
+
+            updated_ = input_.copy()
+            for coef in coef_range:
+                if find_low:
+                    cutoff_ = min_ * coef + med_ * (1 - coef)
+                    target_ = 0
+                else:
+                    cutoff_ = max_ * coef + med_ * (1 - coef)
+                    target_ = 255
+                num_found = 0
+                for i, m in enumerate(input_):
+                    u_ = 0 if m <= cutoff_ else 255
+                    updated_[i] = u_
+                    if u_ == target_:
+                        num_found += 1
+                print(f"@@ {label} coef, num, cutoff, updated:", coef, num_found, cutoff_,
+                f"\n@@ {label}:", str(updated_).replace("\n", ""))
+                if num_found == expected_count:
+                    break
+            return updated_
+
+        # Filter A to detect both black and white cells
+
+        updated_a = _filter_channel("A", mean_a,
+                        coef_range=np.arange(0, 1, 0.1),
+                        normalize=True,
+                        find_low=True,
+                        expected_count=colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Black"])
         _draw_triangles("va", updated_a)
 
         # Filter L to detect only white cells
 
-        max_l = max(mean_l)
-        med_l = np.median(mean_l)
-        # Adjust coeficient here till we have the desired number of cells
-        expected_count = colors.EXPECTED_NUM_CELLS["White"]
-        updated_l = mean_l.copy()
-        for coef in np.arange(1, 0, -0.1):
-            cutoff_l = max_l * coef + med_l * (1 - coef)
-            num_found = 0
-            for i, m in enumerate(mean_l):
-                ul = 0 if m < cutoff_l else 255
-                updated_l[i] = ul
-                if ul == 255:
-                    num_found += 1
-            if num_found == expected_count:
-                break
+        updated_l = _filter_channel("L", mean_l,
+                        coef_range=np.arange(1, 0, -0.1),
+                        normalize=False,
+                        find_low=False,
+                        expected_count=colors.EXPECTED_NUM_CELLS["Orange"])
         _draw_triangles("vl", updated_l)
 
-        # Filter V to detect orange cells
+        # Filter U/R to detect orange cells
 
-        min_v = min(mean_v)
-        delta_v = 1 / (max(mean_v) - min_v)
-        for i, mv in enumerate(mean_v):
-            mean_v[i] = (mv - min_v) * delta_v * 255
+        updated_u = _filter_channel("U", mean_u,
+                        coef_range=np.arange(1, 0, -0.1),
+                        normalize=True,
+                        find_low=True,
+                        expected_count=colors.EXPECTED_NUM_CELLS["Orange"] + colors.EXPECTED_NUM_CELLS["Yellow"])
+        _draw_triangles("vu", updated_u)
 
-        max_v = max(mean_v)
-        med_v = np.median(mean_v)
-        # Adjust coeficient here till we have the desired number of cells
-        expected_count = colors.EXPECTED_NUM_CELLS["Orange"]
-        updated_v = mean_v.copy()
-        # coef = 1
-        for coef in np.arange(1, 0, -0.1):
-            cutoff_v = max_v * coef + med_v * (1 - coef)
-            num_found = 0
-            for i, m in enumerate(mean_v):
-                um = 0 if m < cutoff_v else 255
-                updated_v[i] = um
-                if um == 255:
-                    num_found += 1
-            # print("@@ V coef, num, cutoff, updated:", coef, num_found, cutoff_v,
-            #  "\n@@ V:", str(updated_v).replace("\n", ""))
-            if num_found == expected_count:
-                break
-        _draw_triangles("vv", updated_v)
+        updated_r = _filter_channel("R", mean_r,
+                        coef_range=np.arange(1, 0, -0.1),
+                        normalize=True,
+                        find_low=False,
+                        expected_count=colors.EXPECTED_NUM_CELLS["White"] + colors.EXPECTED_NUM_CELLS["Yellow"])
+        _draw_triangles("vr", updated_r)
 
         # Combine both filters
 
@@ -898,24 +908,26 @@ class ImageProcessor:
         for (idx, t, x1, y1, x2, y2) in self.iter_triangles(yrg_coords):
             va = int(updated_a[idx]) # 0 if Black or White
             vl = int(updated_l[idx]) # 255 if White
-            vv = int(updated_v[idx]) # 255 if Orange
+            vu = int(updated_u[idx]) # 255 if Orange
             name = None
             if va == 0:
                 name = "Black"
                 if vl == 255:
                     name = "White"
-            if name is None and vv == 255:
+            if name is None and vu == 255:
                 name = "Orange"
 
             if name is not None:
                 # Get a mean color just for display/debug purposes
-                cl = _l[y1:y2, x1:x2]
-                ca = _a[y1:y2, x1:x2]
+                cr = _r[y1:y2, x1:x2]
+                cg = _g[y1:y2, x1:x2]
                 cb = _b[y1:y2, x1:x2]
-                mean_lab = self.color_mean((cl, ca, cb))
+                # mean_lab = self.color_mean((cl, ca, cb))
+                mean_bgr = self.color_mean((cb, cg, cr))
 
                 color = colors.by_name(name)
-                mean_bgr = self.to_bgr(cv2.COLOR_LAB2BGR, mean_lab)
+                # mean_bgr = self.to_bgr(cv2.COLOR_LAB2BGR, mean_lab)
+                # mean_bgr = (int(cr), int(cg), int(cb))
                 cells.append(Cell(t, color, mean_bgr))
                 num_cols[name] = num_cols.get(name, 0) + 1
 
