@@ -44,6 +44,11 @@ COLORS_REDS = [
         # "s": { "min": 128, "max": 255 },
         # "v": { "min": 0, "max": 180 },
     },
+    {
+        "name": "Orange",
+        "rgb": (200, 80, 0),
+        "bgr": (0, 80, 200),
+    },
 ]
 
 COLORS_BW = [
@@ -62,6 +67,7 @@ COLORS_BW = [
 EXPECTED_NUM_CELLS ={
     "White": 3,
     "Black": 12,
+    "Orange": 9,
     # "Red": 0,
     # "Yellow": 0,
 }
