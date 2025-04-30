@@ -649,15 +649,12 @@ class ImageProcessor:
 
         if is_clockwise:
             # the next segment represents the start of the G axis, then the start of the R axis
-            g_start_segment_index = next_segment_index
             r_start_segment_index = wrap(next_segment_index + 1)
         else:
             # the previous segment presents the start of the G axis, then the start of the R axis
-            g_start_segment_index = wrap(bottom_index - 1)
             r_start_segment_index = wrap(bottom_index - 2)
 
         y_start_segment_index = wrap(y_end_segment_index + 3)
-        g_end_segment_index = wrap(g_start_segment_index + 3)
         r_end_segment_index = wrap(r_start_segment_index + 3)
 
         # Define the axes

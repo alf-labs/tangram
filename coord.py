@@ -165,6 +165,9 @@ class Axis:
         self.angle_deg = 0
         self.v = None
 
+    def __repr__(self) -> str:
+        return f"Axis( {self.segment_start} {self.center_start} -> {self.segment_end} {self.center_end} )"
+
     def set_rotation(self, angle_deg:float) -> None:
         self.angle_deg = angle_deg
 

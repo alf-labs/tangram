@@ -7,6 +7,7 @@ import glob
 import os
 import time
 
+from gen import Generator
 from img_proc import ImageProcessor
 
 TABLE_PLACEHOLDER = "TABLE_PLACEHOLDER"
@@ -31,11 +32,18 @@ class Main:
         parser.add_argument("-y", "--overwrite",
             action="store_true",
             help="Overwrite existing files")
+        parser.add_argument("-g", "--generate",
+            action="store_true",
+            help="Generate all possible solutions")
         self.args = parser.parse_args()
 
-    def process_file(self, input_file_path:str, outout_dir_path:str) -> None:
+    def analyze_file(self, input_file_path:str, outout_dir_path:str) -> None:
         p = ImageProcessor(input_file_path, outout_dir_path)
         p.process_image(m.args.overwrite)
+
+    def generate_solutions(self, outout_dir_path:str) -> None:
+        g = Generator(outout_dir_path)
+        g.generate(m.args.overwrite)
 
     def find_files(self, dir_input:str) -> list:
         """Finds all files in the given directory."""
@@ -43,7 +51,7 @@ class Main:
             raise FileNotFoundError(f"Directory {dir_input} does not exist.")
         return glob.glob(os.path.join(dir_input, "**", "*.jpg"), recursive=True)
 
-    def generate_index(self, output_dir:str) -> None:
+    def write_analyzer_index(self, output_dir:str) -> None:
         img_infos = [] # dict: basename=str, src=path, alt=list[path]
         max_columns = 1
 
@@ -142,13 +150,15 @@ if __name__ == "__main__":
     m.parse_arguments()
     if m.args.overwrite:
         print("Will overwrite existing files")
-    if m.args.input_image:
-        m.process_file(m.args.input_image, m.args.output_dir)
+    if m.args.generate:
+        m.generate_solutions(m.args.output_dir)
+    elif m.args.input_image:
+        m.analyze_file(m.args.input_image, m.args.output_dir)
     elif m.args.input_dir:
         inputs = m.find_files(m.args.input_dir)
         for f in inputs:
-            m.process_file(f, m.args.output_dir)
-        m.generate_index(m.args.output_dir)
+            m.analyze_file(f, m.args.output_dir)
+        m.write_analyzer_index(m.args.output_dir)
     else:
         print("No input file (-i) or directory specified (-d).")
 
