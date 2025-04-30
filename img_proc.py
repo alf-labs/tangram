@@ -663,8 +663,7 @@ class ImageProcessor:
         # Define the axes
         y_axis = Axis(segs[y_start_segment_index], segs[y_end_segment_index])
         r_axis = Axis(segs[r_start_segment_index], segs[r_end_segment_index])
-        g_axis = Axis(segs[g_start_segment_index], segs[g_end_segment_index])
-        yrg_coords = YRGCoord(center, y_axis, r_axis, g_axis)
+        yrg_coords = YRGCoord(center, y_axis, r_axis)
         return yrg_coords
 
     def draw_yrg_coords_into(self, yrg_coords:YRGCoord, dest_img:np.array) -> None:

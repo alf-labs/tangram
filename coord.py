@@ -223,7 +223,7 @@ class Axis:
 
 
 class YRGCoord:
-    def __init__(self, center_px:Tuple[float, float], y_axis:Axis, r_axis:Axis, g_axis:Axis):
+    def __init__(self, center_px:Tuple[float, float], y_axis:Axis, r_axis:Axis):
         """
         (cx,cy) are the pixel coordinates of the center of the hexagon
         (y,r,g) are the inner pieces coordinates of the hexagon.
@@ -231,10 +231,8 @@ class YRGCoord:
         self.center_px = XY(center_px)
         self.y_axis = y_axis
         self.r_axis = r_axis
-        self.g_axis = g_axis
         self.y_axis.set_rotation(120)
         self.r_axis.set_rotation(0)
-        self.g_axis.set_rotation(0)
 
         # Recompute the center based on the real Y and R axes
         # and then average them in case they disagree.
