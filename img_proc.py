@@ -769,6 +769,8 @@ class ImageProcessor:
                 poly = np.int32(t.to_np_array())
                 gray = int(updated_channel[idx])
                 cv2.fillPoly(tmp_img, [poly], (gray, gray, gray))
+                gray = 64 if gray < 128 else 192
+                cv2.polylines(tmp_img, [poly], isClosed=True, color=(gray, gray, gray), thickness=1)
             self.write_indexed_img(suffix, tmp_img)
 
         def _filter_channel(label:str,

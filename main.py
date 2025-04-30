@@ -107,7 +107,8 @@ class Main:
             rows += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
             rows += "<tr class='title'>\n"
             n += 1
-            rows += f"  <td colspan={max_columns}>{n} - {info['basename']}</td>\n"
+            name = info["basename"]
+            rows += f"  <td colspan={max_columns} id='{name}'><a href='#{name}'>{n} - {name}</a></td>\n"
             rows += "</tr>\n"
             sig = name_to_sig.get(info["basename"], "Failed to process")
             sig_count = sig_counts.get(sig, 0)
