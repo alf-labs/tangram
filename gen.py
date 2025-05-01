@@ -18,66 +18,73 @@ PX_CELL_SIZE = 30
 
 PIECES = {
     "TW": {
+        "piece": "TW",
         "color": "White",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        ],
         "rot": False,
     },
     "HR": {
+        "piece": "HR",
         "color": "Red",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
+        ],
         "rot": False,
     },
-    "i1": {
+    "i": {
         "color": "Red",
-        "cells": [ (0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+        "cells": [
+            [ (0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+            [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
+        ],
     },
-    "i2": {
-        "color": "Red",
-        "cells": [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
-    },
-    "J1": {
+    "J": {
         "color": "Orange",
-        "cells": [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), (1, 2, 0), ],
+        "cells": [
+            [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), (1, 2, 0), ],
+            [ (1, 1, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+        ],
     },
-    "J2": {
-        "color": "Orange",
-        "cells": [ (1, 1, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
-    },
-    "L1": {
+    "L": {
         "color": "Yellow",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), ],
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), ],
+            [ (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
+        ],
     },
-    "L2": {
-        "color": "Yellow",
-        "cells": [ (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
-    },
-    "P1": {
+    "P": {
         "color": "Red",
-        "cells": [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
-    },
-    "P2": {
-        "color": "Red",
-        "cells": [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
+        "cells": [
+            [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
+            [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
+        ]
     },
     "VB": {
         "color": "Black",
-        "cells": [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+        "cells": [
+            [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+        ],
     },
-    "W1": {
+    "W": {
         "color": "Black",
-        "cells": [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
-    },
-    "W2": {
-        "color": "Black",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+        "cells": [
+            [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+        ],
     },
     "TO": {
         "color": "Orange",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        ],
     },
     "TY": {
         "color": "Yellow",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        ],
         "count": 2,
     },
 }
@@ -179,7 +186,7 @@ class Generator:
             pass
         return None
 
-    def place_piece(self, cells:list[Cell], piece:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> list[Cell]:
+    def place_piece(self, dest_cells:list[Cell], piece_cells:list, piece:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> list[Cell]:
         """
         Fit the given piece if the cells ONLY if the cells are empty (color is None).
         Returns a new cell list if the piece can fit.
@@ -189,16 +196,15 @@ class Generator:
         color = colors.by_name(color_name)
         assert color is not None
 
-        source = piece["cells"]
-        rotated = self.rotate_piece_cells(source, angle_deg)
+        rotated = self.rotate_piece_cells(piece_cells, angle_deg)
 
         # Make a "deep" copy of cells
-        cells = [ cell.copy() for cell in cells ]
+        dest_cells = [ cell.copy() for cell in dest_cells ]
 
         for y, r, g in rotated:
             y += y_offset
             r += r_offset
-            cell = self.find_cell(cells, y, r, g)
+            cell = self.find_cell(dest_cells, y, r, g)
             if cell is None:
                 # The YRG coordinate is out of bounds.
                 return None
@@ -206,7 +212,7 @@ class Generator:
                 # That cell is already occupied.
                 return None
             cell.color = color
-        return cells
+        return dest_cells
 
     def rotate_piece_cells(self, yrg_list:list, angle_deg:int) -> list:
         """
@@ -222,23 +228,23 @@ class Generator:
             yrg_rot.append( (y, r, g) )
         return yrg_rot
 
-    def gen_all_white_pieces(self, cells:list[Cell]) -> Generator:
-        """
-        Generate all the locations possible for the white cell as non-rotated.
-        This is the "key" that identified different puzzles, which is why we never
-        rotate the white piece.
-        """
-        tw = PIECES["TW"]
-        # g value of the first cell
-        tw_g = tw["cells"][0][2]
-        n2 = coord.N//2
-
-        for y, r, g in coord.VALID_YRG:
-            # Only starts on cells with the same g value
-            if g == tw_g:
-                new_cells = self.place_piece(cells, tw, y - n2, r - n2, angle_deg=0)
-                if new_cells is not None:
-                    yield new_cells
+    # def gen_all_white_pieces(self, cells:list[Cell]) -> Generator:
+    #     """
+    #     Generate all the locations possible for the white cell as non-rotated.
+    #     This is the "key" that identified different puzzles, which is why we never
+    #     rotate the white piece.
+    #     """
+    #     tw = PIECES["TW"]
+    #     # g value of the first cell
+    #     tw_g = tw["cells"][0][2]
+    #     n2 = coord.N//2
+    #
+    #     for y, r, g in coord.VALID_YRG:
+    #         # Only starts on cells with the same g value
+    #         if g == tw_g:
+    #             new_cells = self.place_piece(cells, tw, y - n2, r - n2, angle_deg=0)
+    #             if new_cells is not None:
+    #                 yield new_cells
 
     def gen_pieces_list(self) -> Generator:
         """
@@ -249,8 +255,9 @@ class Generator:
         for key, properties in PIECES.items():
             count = properties.get("count", 1)
             rotate = properties.get("rot", True)
+            cells = properties["cells"]
             for i in range(0, count):
-                pieces.append( {"key": key, "idx": count, "rot": rotate} )
+                pieces.append( {"key": key, "idx": count, "cells": cells, "rot": rotate} )
 
         def _gen(_pieces, _current):
             if len(_pieces) == 0:
@@ -259,11 +266,16 @@ class Generator:
             _pieces = _pieces.copy()
             _first = _pieces.pop(0)
             _key = _first["key"]
+            _cells = _first["cells"]
             _angle_max = 300 if _first["rot"] else 0
-            for _angle in range(0, _angle_max + 1, 60):
-                _new_current = _current.copy()
-                _new_current.append( (_key, _angle) )
-                yield from _gen(_pieces, _new_current)
+            for c in _cells:
+                for _angle in range(0, _angle_max + 1, 60):
+                    _new_current = _current.copy()
+                    _info = _first.copy()
+                    _info["angle"] = _angle
+                    _info["cells"] = c
+                    _new_current.append( _info )
+                    yield from _gen(_pieces, _new_current)
 
         yield from _gen(pieces, [])
 
@@ -275,18 +287,21 @@ class Generator:
     def place_first_piece(self, cells:list[Cell], combos:list, current:list) -> Generator:
         if len(combos) == 0:
             return
-        key, angle_deg = combos.pop(0)
+        info = combos.pop(0)
+        key = info["key"]
+        piece_cells = info["cells"]
+        angle_deg = info["angle"]
 
         piece = PIECES[key]
         # g value of the first cell
-        first_g = piece["cells"][0][2]
+        first_g = piece_cells[0][2]
         n2 = coord.N//2
 
         for y, r, g in coord.VALID_YRG:
             # Only starts on cells with the same g value
             if g == first_g:
                 # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y}x{r}")
-                new_cells = self.place_piece(cells, piece, y - n2, r - n2, angle_deg)
+                new_cells = self.place_piece(cells, piece_cells, piece, y - n2, r - n2, angle_deg)
                 self.gen_count += 1
                 if new_cells is not None:
                     if len(combos) == 0:
