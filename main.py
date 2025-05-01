@@ -44,12 +44,48 @@ class Main:
     def generate_solutions(self, outout_dir_path:str) -> None:
         g = Generator(outout_dir_path)
         g.generate(m.args.overwrite)
+        return g
 
     def find_files(self, dir_input:str) -> list:
         """Finds all files in the given directory."""
         if not os.path.exists(dir_input):
             raise FileNotFoundError(f"Directory {dir_input} does not exist.")
         return glob.glob(os.path.join(dir_input, "**", "*.jpg"), recursive=True)
+
+    def write_generator_index(self, output_dir:str, gen:Generator) -> None:
+        # Images
+        images = gen.generated_images
+        max_columns = 8
+        stats_str = f"""
+        Number of images: {len(images)} <br/>
+        """
+
+        col = 0
+        rows = ""
+        for img_name in images:
+            if col == 0:
+                rows += f"<tr>\n"
+            anchor = img_name.replace("gen_", "").replace(".jpg", "")
+            rows += f"<td id='{anchor}'><a href='#{anchor}'>{anchor}</a><br/><img src='{img_name}'></td>"
+            col = (col + 1) % max_columns
+            if col == 0:
+                rows += f"</tr>\n"
+
+        # Read template
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        template_path = os.path.join(script_dir, "gen_template.html")
+        with open(template_path, "r") as f:
+            template = f.read()
+
+        html = template.replace("GEN", rows)
+        html = html.replace("TIMESTAMP", time.asctime())
+        html = html.replace("NUM_COLS", str(max_columns))
+        html = html.replace("STATS", stats_str)
+        index_path = os.path.join(output_dir, "gen.html")
+        with open(index_path, "w") as f:
+            f.write(html)
+        print(f"Generated index at {index_path}")
+        print(stats_str.replace("<br/>", ""))
 
     def write_analyzer_index(self, output_dir:str) -> None:
         img_infos = [] # dict: basename=str, src=path, alt=list[path]
@@ -151,7 +187,8 @@ if __name__ == "__main__":
     if m.args.overwrite:
         print("Will overwrite existing files")
     if m.args.generate:
-        m.generate_solutions(m.args.output_dir)
+        g = m.generate_solutions(m.args.output_dir)
+        m.write_generator_index(m.args.output_dir, g)
     elif m.args.input_image:
         m.analyze_file(m.args.input_image, m.args.output_dir)
     elif m.args.input_dir:

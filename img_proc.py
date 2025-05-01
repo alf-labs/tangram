@@ -98,6 +98,9 @@ class Cell:
     def __repr__(self) -> str:
         return f"Cell(triangle={self.yrg()}, color={self.color_name()})"
 
+    def copy(self) -> "Cell":
+        return Cell(self.triangle, self.color, self.mean_bgr)
+
 
 class ImageProcessor:
     def __init__(self, input_img_path:str, output_dir_path:str):

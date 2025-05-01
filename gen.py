@@ -16,22 +16,30 @@ from typing import Tuple
 
 PX_CELL_SIZE = 30
 
+PIECES = {
+    "TW": {
+        "color": "White",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0) ],
+    }
+}
+
 class Generator:
     def __init__(self, output_dir_path:str):
         self.output_dir_path = output_dir_path
-        self.cells = []
         self.yrg_coords = None
         self.size_px = XY( (0, 0) )
         self.img_count = 0
+        self.generated_images = []
 
     def generate(self, overwrite:bool) -> None:
         print("------")
         print(f"Generating solutions in {self.output_dir_path}")
         print("------")
 
-        self.size_px, self.yrg_coords, self.cells = self.create_cells()
-        img = self.draw_cells_into(self.cells, dest_img=None)
-        self.write_indexed_img(img)
+        self.size_px, self.yrg_coords, cells_empty = self.create_cells()
+        for cells_tw in self.gen_all_white_pieces(cells_empty):
+            img = self.draw_cells_into(cells_tw, dest_img=None)
+            self.write_indexed_img(img)
 
         print("")
 
@@ -56,7 +64,9 @@ class Generator:
         color = colors.by_name("Red")
         for triangle in self.triangles(yrg_coords):
             cells.append(Cell(triangle, None, (64, 64, 64)))
-        return XY( (center_px * 2, center_px * 2) ), yrg_coords, cells
+        img_size = XY( (center_px * 2, center_px * 2) )
+        print("@@ Image size:", img_size)
+        return img_size, yrg_coords, cells
 
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
         # TBD: merge dup in ImageProcessor
@@ -93,7 +103,81 @@ class Generator:
         self.img_count += 1
         path = os.path.join(self.output_dir_path, name)
         cv2.imwrite(path, in_img)
+        self.generated_images.append(name)
         print("@@ Saved", path)
 
+    def find_cell(self, cells:list[Cell], y_piece:int, r_piece:int, g_piece:int) -> Cell:
+        """Returns the cell (if valid) or None."""
+        n2 = coord.N//2
+        try:
+            yrg_abs = YRG(y_piece, r_piece, g_piece)
+            for cell in cells:
+                if cell.triangle.yrg == yrg_abs:
+                    return cell
+        except AssertionError:
+            # Ignore YRG asserting its Y/R range. Just return None.
+            pass
+        return None
+
+    def place_piece(self, cells:list[Cell], piece:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> list[Cell]:
+        """
+        Fit the given piece if the cells ONLY if the cells are empty (color is None).
+        Returns a new cell list if the piece can fit.
+        Otherwise returns None.
+        """
+        color_name = piece["color"]
+        color = colors.by_name(color_name)
+        assert color is not None
+
+        source = piece["cells"]
+        rotated = self.rotate_piece_cells(source, angle_deg)
+
+        # Make a "deep" copy of cells
+        cells = [ cell.copy() for cell in cells ]
+
+        for y, r, g in rotated:
+            y += y_offset
+            r += r_offset
+            cell = self.find_cell(cells, y, r, g)
+            if cell is None:
+                # The YRG coordinate is out of bounds.
+                return None
+            if cell.color is not None:
+                # That cell is already occupied.
+                return None
+            cell.color = color
+        return cells
+
+    def rotate_piece_cells(self, yrg_list:list, angle_deg:int) -> list:
+        """
+        Rotate the (y,r,g) tuples for a given piece.
+        Angle_deg must be a multiple of 60 in range [0, 360[.
+        """
+        if angle_deg == 0:
+            return yrg_list.copy()
+        yrg_rot = []
+        for y, r, g in yrg_list:
+            for angle in range(60, angle_deg+1, 60):
+                y, r, g = self.yrg_coords.rot_60_ccw_yrg(y, r, g)
+            yrg_rot.append( (y, r, g) )
+        return yrg_rot
+
+    def gen_all_white_pieces(self, cells:list[Cell]) -> Generator:
+        """
+        Generate all the locations possible for the white cell as non-rotated.
+        This is the "key" that identified different puzzles, which is why we never
+        rotate the white piece.
+        """
+        tw = PIECES["TW"]
+        # g value of the first cell
+        tw_g = tw["cells"][0][2]
+        n2 = coord.N//2
+
+        for y, r, g in coord.VALID_YRG:
+            # Only starts on cells with the same g value
+            if g == tw_g:
+                new_cells = self.place_piece(cells, tw, y - n2, r - n2, angle_deg=0)
+                if new_cells is not None:
+                    yield new_cells
 
 # ~~

@@ -1,30 +1,17 @@
 <html>
 <head>
-<title>Tangram Puzzle Image Analysis</title>
+<title>Tangram Puzzle Image Generator</title>
 <style type="text/css">
 table, th, td {
     border: 1px solid black;
     border-collapse: collapse; }
-tr.title > td { height: 2em; font-weight: bold; background-color: #CCC; }
+/* tr.title > td { height: 2em; font-weight: bold; background-color: #CCC; }
 tr.sig > td { height: 2em; font-family: monospace; background-color : #8C8; }
 tr.err > td { height: 2em; font-family: monospace; background-color : #CC8; }
 tr.dup > td { height: 2em; font-family: monospace; font-weight: bold; background-color: #F00; }
 tr.images > td { text-align: center; }
-img { max-width: 128px; max-height: 128px; }
+img { max-width: 128px; max-height: 128px; } */
 </style>
-
-<script type="text/javascript">
-    function onImageClick(event) {
-        const newWindow = window.open(event.target.src, "_blank");
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const images = document.querySelectorAll("img");
-        images.forEach(function (img) {
-                img.addEventListener("click", onImageClick);
-        });
-    });
-</script>
 
 </head>
 <body>
@@ -37,7 +24,7 @@ img { max-width: 128px; max-height: 128px; }
     Generated on TIMESTAMP by <a href="https://github.com/alf-labs/tangram">github.com/alf-labs/tangram</a>.
 </td>
 </tr>
-TABLE_ROWS
+GEN
 </table>
 
 </body>

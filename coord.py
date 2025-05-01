@@ -64,6 +64,10 @@ class XY:
 
 class YRG:
     def __init__(self, y_piece:int, r_piece:int, g_piece:int):
+        """
+        Y/R must be "relative" coordinates in range [-N/2 to N/2[.
+        G must be a pseudo-coordinate either 0 or 1.
+        """
         self.y = y_piece
         self.r = r_piece
         self.g = g_piece
@@ -79,6 +83,20 @@ class YRG:
 
     def __eq__(self, other:"YRG") -> bool:
         return self.y == other.y and self.r == other.r and self.g == other.g
+
+    def add(self, y_piece:int, r_piece:int) -> "YRG":
+        """
+        Return the offset of this coordinate by +Y/+R.
+
+        Note that "G" is a pseudo-coordinate and one cannot "offset" between different G
+        value because G=0 vs G=1 denote triangles rotated differently and incompatible.
+        That can only happen due to rotation.
+
+        The new coordinate may not be valid (e.g. may live outside the puzzle physical boundaries).
+        """
+        y2 = self.y + y_piece
+        r2 = self.r + r_piece
+        return YRG(y2, r2, self.g)
 
 
 class Triangle:
@@ -326,7 +344,7 @@ class YRGCoord:
         return XY((x, y))
 
     def rhombus(self, y_piece:int, r_piece:int) -> list[XY]:
-        # Compute the rhombus points
+        """Compute the rhombus points."""
         p0 = self.point_yr(y_piece    , r_piece)
         p1 = self.point_yr(y_piece + 1, r_piece)
         p2 = self.point_yr(y_piece + 1, r_piece + 1)
@@ -344,13 +362,30 @@ class YRGCoord:
         """
         "Rotates" a Triangle by modifying its y,r,g coordinates and returns the new Triangle.
         This uses the YRGCoord to recompute the rhombus pixel coordinates.
+        Raises ValueError if the YRG coordinate is invalid.
         """
         n2 = N//2
         yrg_src = triangle.yrg
-        index = ROT_60_CCW_SRC.index((yrg_src.y + n2, yrg_src.r + n2, yrg_src.g))
+        yrg_abs = (yrg_src.y + n2, yrg_src.r + n2, yrg_src.g)
+        try:
+            index = ROT_60_CCW_SRC.index(yrg_abs)
+        except ValueError:
+            print(f"Error: Invalid coordinate {yrg_abs}")
+            raise
         yrg_dst = VALID_YRG[index]
         return self.triangle(YRG(yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2]))
 
+    def rot_60_ccw_yrg(self, y_piece:int, r_piece:int, g_piece:int) -> Tuple:
+        # Raises ValueError if the YRG coordinate is invalid.
+        n2 = N//2
+        yrg_abs = (y_piece + n2, r_piece + n2, g_piece)
+        try:
+            index = ROT_60_CCW_SRC.index(yrg_abs)
+        except ValueError:
+            print(f"Error: Invalid coordinate {yrg_abs}")
+            raise
+        yrg_dst = VALID_YRG[index]
+        return (yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2])
 
 
 # ~~
