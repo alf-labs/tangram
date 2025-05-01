@@ -8,3 +8,4 @@ data/
 pyenv
 .venv
 _*.sh
+temp.txt
