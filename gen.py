@@ -19,8 +19,67 @@ PX_CELL_SIZE = 30
 PIECES = {
     "TW": {
         "color": "White",
-        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0) ],
-    }
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        "rot": False,
+    },
+    "HR": {
+        "color": "Red",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
+        "rot": False,
+    },
+    "i1": {
+        "color": "Red",
+        "cells": [ (0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+    },
+    "i2": {
+        "color": "Red",
+        "cells": [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
+    },
+    "J1": {
+        "color": "Orange",
+        "cells": [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), (1, 2, 0), ],
+    },
+    "J2": {
+        "color": "Orange",
+        "cells": [ (1, 1, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+    },
+    "L1": {
+        "color": "Yellow",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), ],
+    },
+    "L2": {
+        "color": "Yellow",
+        "cells": [ (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
+    },
+    "P1": {
+        "color": "Red",
+        "cells": [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
+    },
+    "P2": {
+        "color": "Red",
+        "cells": [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
+    },
+    "VB": {
+        "color": "Black",
+        "cells": [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+    },
+    "W1": {
+        "color": "Black",
+        "cells": [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+    },
+    "W2": {
+        "color": "Black",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+    },
+    "TO": {
+        "color": "Orange",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+    },
+    "TY": {
+        "color": "Yellow",
+        "cells": [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+        "count": 2,
+    },
 }
 
 class Generator:
@@ -30,6 +89,7 @@ class Generator:
         self.size_px = XY( (0, 0) )
         self.img_count = 0
         self.generated_images = []
+        self.gen_count = 0
 
     def generate(self, overwrite:bool) -> None:
         print("------")
@@ -37,8 +97,8 @@ class Generator:
         print("------")
 
         self.size_px, self.yrg_coords, cells_empty = self.create_cells()
-        for cells_tw in self.gen_all_white_pieces(cells_empty):
-            img = self.draw_cells_into(cells_tw, dest_img=None)
+        for cells in self.gen_all_solutions(cells_empty):
+            img = self.draw_cells_into(cells, dest_img=None)
             self.write_indexed_img(img)
 
         print("")
@@ -99,7 +159,7 @@ class Generator:
         return dest_img
 
     def write_indexed_img(self, in_img:np.array) -> None:
-        name = "gen_%04d.jpg" % self.img_count
+        name = "gen_%06d.jpg" % self.img_count
         self.img_count += 1
         path = os.path.join(self.output_dir_path, name)
         cv2.imwrite(path, in_img)
@@ -179,5 +239,67 @@ class Generator:
                 new_cells = self.place_piece(cells, tw, y - n2, r - n2, angle_deg=0)
                 if new_cells is not None:
                     yield new_cells
+
+    def gen_pieces_list(self) -> Generator:
+        """
+        Generate all the combinations of pieces we want to place, and their
+        rotation, but without indicating where to place them.
+        """
+        pieces = []
+        for key, properties in PIECES.items():
+            count = properties.get("count", 1)
+            rotate = properties.get("rot", True)
+            for i in range(0, count):
+                pieces.append( {"key": key, "idx": count, "rot": rotate} )
+
+        def _gen(_pieces, _current):
+            if len(_pieces) == 0:
+                yield _current
+                return
+            _pieces = _pieces.copy()
+            _first = _pieces.pop(0)
+            _key = _first["key"]
+            _angle_max = 300 if _first["rot"] else 0
+            for _angle in range(0, _angle_max + 1, 60):
+                _new_current = _current.copy()
+                _new_current.append( (_key, _angle) )
+                yield from _gen(_pieces, _new_current)
+
+        yield from _gen(pieces, [])
+
+    def gen_all_solutions(self, cells:list[Cell]) -> Generator:
+        for combo_pieces_rots in self.gen_pieces_list():
+            print("@@ combo_pieces_rots:", combo_pieces_rots)
+            yield from self.place_first_piece(cells, combo_pieces_rots, [])
+
+    def place_first_piece(self, cells:list[Cell], combos:list, current:list) -> Generator:
+        if len(combos) == 0:
+            return
+        key, angle_deg = combos.pop(0)
+
+        piece = PIECES[key]
+        # g value of the first cell
+        first_g = piece["cells"][0][2]
+        n2 = coord.N//2
+
+        for y, r, g in coord.VALID_YRG:
+            # Only starts on cells with the same g value
+            if g == first_g:
+                # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y}x{r}")
+                new_cells = self.place_piece(cells, piece, y - n2, r - n2, angle_deg)
+                self.gen_count += 1
+                if new_cells is not None:
+                    if len(combos) == 0:
+                        print("@@ gen", self.gen_count, "--", self.img_count , "found")
+                        yield new_cells
+                    else:
+                        new_combos = combos.copy()
+                        # new_current = current.copy()
+                        # new_current.append(f"{key} @ {angle_deg}:{y}x{r}")
+                        # print(f"@@ gen {self.img_count} {new_combos}, {new_current}")
+                        # print("@@ gen", self.img_count, new_combos)
+                        print("@@ gen", self.gen_count, "--", self.img_count , end="\r")
+                        yield from self.place_first_piece(new_cells, new_combos, current)
+
 
 # ~~
