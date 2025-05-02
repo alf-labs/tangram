@@ -15,7 +15,7 @@ from typing import Generator
 from typing import Tuple
 
 N2 = coord.N//2
-DEBUG_MAX_PIECE=3
+DEBUG_MAX_PIECE=0
 DEBUG_SAVE=False
 REPORT_FILE="temp.txt"
 
@@ -29,14 +29,7 @@ PIECES = {
         "cells": [
             [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
         ],
-        "rot": False,
-    },
-    "HR": {
-        "color": "Red",
-        "cells": [
-            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
-        ],
-        "rot": False,
+        "rot": 0,
     },
     "TO": {
         "color": "Orange",
@@ -51,12 +44,20 @@ PIECES = {
         ],
         "count": 2,
     },
+    "HR": {
+        "color": "Red",
+        "cells": [
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
+        ],
+        "rot": 0,
+    },
     "i": {
         "color": "Red",
         "cells": [
             [ (0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
             [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
         ],
+        "rot": 120,
     },
     "J": {
         "color": "Orange",
@@ -139,6 +140,10 @@ class Cells:
             r_piece = r - N2
             yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
 
+    def signature(self) -> str:
+        sig = "".join([ col[0] for col in self.colors if col != INVALID_CELL ])
+        return sig
+
 
 class Generator:
     def __init__(self, output_dir_path:str):
@@ -163,6 +168,12 @@ class Generator:
             for cells in self.gen_all_solutions(cells_empty):
                 img = self.draw_cells_into(cells, dest_img=None)
                 self.write_indexed_img(img)
+                sig = cells.signature()
+                r = f"@@ SIG {sig}"
+                print(r)
+                self.report_file.write(f"@@ SIG {sig}")
+                self.report_file.write("\r")
+
 
         print("")
         print(f"Stats: permutations={self.perm_count}, gen calls={self.gen_count}, images={self.img_count}")
@@ -281,14 +292,14 @@ class Generator:
         pieces = []
         for key, properties in PIECES.items():
             count = properties.get("count", 1)
-            rotate = properties.get("rot", True)
+            rot_max = properties.get("rot", 300)
             cells = properties["cells"]
             for i in range(0, count):
                 piece_info = {
                     "key": key,
                     "idx": i,
                     "cells": cells,
-                    "rot": rotate,
+                    "rot": rot_max,
                     "color": properties["color"],
                 }
                 pieces.append(piece_info)
@@ -304,7 +315,7 @@ class Generator:
             _first = _pieces.pop(0)
             _key = _first["key"]
             _cells = _first["cells"]
-            _angle_max = 300 if _first["rot"] else 0
+            _angle_max = _first["rot"]
             for c in _cells:
                 for _angle in range(0, _angle_max + 1, 60):
                     _new_current = _current.copy()
@@ -317,26 +328,24 @@ class Generator:
         yield from _gen(pieces, [])
 
     def gen_all_solutions(self, cells:Cells) -> Generator:
-        for num_debug in range(1,12):
-            self.img_count = 0
-            p1 = self.perm_count
-            i1 = self.img_count
-            g1 = self.gen_count
-            f1 = self.gen_failed
-            for permutations in self.gen_pieces_list(num_debug):
-                self.perm_count += 1
-                print("@@ permutation", self.perm_count, [ f"{x['key']} @ {x['angle']}" for x in permutations ] )
-                yield from self.place_first_piece(cells, permutations, "")
-            p2 = self.perm_count - p1
-            i2 = self.img_count - i1
-            g2 = self.gen_count - g1
-            f2 = self.gen_failed - f1
-            r = f"@@ DEBUG num permutations: pieces={num_debug} perms_count={p2} gen_count={f2} / {g2} img_count={i2}"
-            self.report_file.write(r)
-            self.report_file.write("\n")
-            print(r)
-            if num_debug == DEBUG_MAX_PIECE:
-                break
+        num_debug = DEBUG_MAX_PIECE
+        self.img_count = 0
+        p1 = self.perm_count
+        i1 = self.img_count
+        g1 = self.gen_count
+        f1 = self.gen_failed
+        for permutations in self.gen_pieces_list(num_debug):
+            self.perm_count += 1
+            print("@@ permutation", self.perm_count, [ f"{x['key']} @ {x['angle']}" for x in permutations ] )
+            yield from self.place_first_piece(cells, permutations, "")
+        p2 = self.perm_count - p1
+        i2 = self.img_count - i1
+        g2 = self.gen_count - g1
+        f2 = self.gen_failed - f1
+        r = f"@@ DEBUG num permutations: pieces={num_debug} perms_count={p2} gen_count={f2} / {g2} img_count={i2}"
+        self.report_file.write(r)
+        self.report_file.write("\n")
+        print(r)
 
     def place_first_piece(self, cells:Cells, combos:list, current:str) -> Generator:
         if len(combos) == 0:
@@ -355,13 +364,13 @@ class Generator:
                 # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y_abs}x{r_abs}")
                 new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
                 self.gen_count += 1
-                # new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
-                new_current = current
+                new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
+                # new_current = current
                 if new_cells is None:
                     self.gen_failed += 1
                 else:
                     if len(combos) == 0:
-                        # print("@@ GEN", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, "FOUND")
+                        print("@@ GEN", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, "FOUND")
                         yield new_cells
                     else:
                         new_combos = combos.copy()
@@ -370,7 +379,7 @@ class Generator:
                         # print("@@ gen", self.img_count, new_combos)
                         # print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, end="\r")
                         # print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, end="\r")
-                        print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, end="\r")
+                        print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_cells.signature(), end="\r")
                         yield from self.place_first_piece(new_cells, new_combos, new_current)
 
 
