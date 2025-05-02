@@ -14,15 +14,17 @@ from img_proc import Cell
 from typing import Generator
 from typing import Tuple
 
-DEBUG_MAX_PIECE=12
-DEBUG_SAVE=True
+N2 = coord.N//2
+DEBUG_MAX_PIECE=3
+DEBUG_SAVE=False
 REPORT_FILE="temp.txt"
 
 PX_CELL_SIZE = 30
+INVALID_CELL = "INVALID"
+EMPTY_CELL = "EMPTY"
 
 PIECES = {
     "TW": {
-        "piece": "TW",
         "color": "White",
         "cells": [
             [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
@@ -30,7 +32,6 @@ PIECES = {
         "rot": False,
     },
     "HR": {
-        "piece": "HR",
         "color": "Red",
         "cells": [
             [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
@@ -93,6 +94,52 @@ PIECES = {
     },
 }
 
+
+class Cells:
+    def __init__(self):
+        self.cells = None
+        self.colors = None
+
+    def init_cells(self, yrg_coords:YRGCoord) -> "Cells":
+        self.cells = []
+        self.colors = [ INVALID_CELL ] * (coord.N * coord.N * 2)
+        for triangle in self._triangles(yrg_coords):
+            self.cells.append(Cell(triangle, None, (64, 64, 64)))
+            y_abs, r_abs, g = triangle.yrg.to_abs()
+            self.set_color(y_abs, r_abs, g, color=EMPTY_CELL)
+        return self
+
+    def valid(self, y_abs, r_abs, g) -> bool:
+        idx = 12 * y_abs + 2 * r_abs + g
+        return idx >= 0 and idx < len(self.colors) and self.colors[idx] != INVALID_CELL
+
+    def occupied(self, y_abs, r_abs, g) -> bool:
+        idx = 12 * y_abs + 2 * r_abs + g
+        c = self.colors[idx]
+        return c != EMPTY_CELL and c != INVALID_CELL
+
+    def get_color(self, y_abs, r_abs, g):
+        idx = 12 * y_abs + 2 * r_abs + g
+        return self.colors[idx]
+
+    def set_color(self, y_abs, r_abs, g, color) -> None:
+        idx = 12 * y_abs + 2 * r_abs + g
+        self.colors[idx] = color
+
+    def copy(self) -> "Cells":
+        new_cells = Cells()
+        new_cells.cells = self.cells    # Warning: linked, not duplicated!
+        new_cells.colors = self.colors.copy()
+        return new_cells
+
+    def _triangles(self, yrg_coords:YRGCoord) -> Generator:
+        # TBD: merge dup in ImageProcessor
+        for (y, r, g) in coord.VALID_YRG:
+            y_piece = y - N2
+            r_piece = r - N2
+            yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
+
+
 class Generator:
     def __init__(self, output_dir_path:str):
         self.output_dir_path = output_dir_path
@@ -104,6 +151,7 @@ class Generator:
         self.gen_failed = 0
         self.perm_count = 0
         self.report_file = None
+        self.rot_cache = {}
 
     def generate(self, overwrite:bool) -> None:
         print("------")
@@ -120,10 +168,8 @@ class Generator:
         print(f"Stats: permutations={self.perm_count}, gen calls={self.gen_count}, images={self.img_count}")
         print("")
 
-    def create_cells(self) -> Tuple[YRGCoord, list[Cell]]:
-        cells = []
-        n2 = coord.N//2
-        center_px = int(PX_CELL_SIZE * n2)
+    def create_cells(self) -> Tuple[YRGCoord, Cells]:
+        center_px = int(PX_CELL_SIZE * N2)
 
         p = {}
         for angle_deg in range(0, 360, 60):
@@ -138,39 +184,29 @@ class Generator:
         r_axis = Axis(( p[120], p[180] ), ( p[300], p[  0] ))
         yrg_coords = YRGCoord((center_px, center_px), y_axis, r_axis)
 
-        color = colors.by_name("Red")
-        for triangle in self.triangles(yrg_coords):
-            cells.append(Cell(triangle, None, (64, 64, 64)))
         img_size = XY( (center_px * 2, center_px * 2) )
-        print("@@ Image size:", img_size)
+        cells = Cells().init_cells(yrg_coords)
+        # print("@@ Image size:", img_size)
         return img_size, yrg_coords, cells
 
-    def triangles(self, yrg_coords:YRGCoord) -> Generator:
-        # TBD: merge dup in ImageProcessor
-        n2 = coord.N//2
-        for (y, r, g) in coord.VALID_YRG:
-            y_piece = y - n2
-            r_piece = r - n2
-            yield yrg_coords.triangle(YRG(y_piece, r_piece, g))
-
-    def draw_cells_into(self, cells:list[Cell], dest_img:np.array) -> np.array:
+    def draw_cells_into(self, cells:Cells, dest_img:np.array) -> np.array:
         # TBD: merge dup in ImageProcessor
         if dest_img is None:
             dest_img = np.zeros( (self.size_px.y, self.size_px.x, 3), dtype=np.uint8 )
         else:
             dest_img.fill(0)
 
-        if len(cells) == 0:
-            return dest_img
+        radius = int(cells.cells[0].triangle.inscribed_circle_radius() *.5 )
+        bg = cells.cells[0].mean_bgr
 
-        radius = int(cells[0].triangle.inscribed_circle_radius() *.5 )
-
-        for cell in cells:
+        for cell in cells.cells:
             poly = np.int32(cell.triangle.to_np_array())
-            bg = cell.mean_bgr
-            if cell.color is not None:
-                bg = cell.color["bgr"]
-            cv2.fillPoly(dest_img, [poly], bg)
+            color = cells.get_color(*cell.triangle.yrg.to_abs())
+            if color == EMPTY_CELL:
+                fg = bg
+            else:
+                fg = colors.by_name(color)["bgr"]
+            cv2.fillPoly(dest_img, [poly], fg)
             cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
         return dest_img
@@ -184,59 +220,55 @@ class Generator:
             cv2.imwrite(path, in_img)
             print("@@ Saved", path)
 
-    def find_cell(self, cells:list[Cell], y_piece:int, r_piece:int, g_piece:int) -> Cell:
-        """Returns the cell (if valid) or None."""
-        n2 = coord.N//2
-        try:
-            yrg_abs = YRG(y_piece, r_piece, g_piece)
-            for cell in cells:
-                if cell.triangle.yrg == yrg_abs:
-                    return cell
-        except AssertionError:
-            # Ignore YRG asserting its Y/R range. Just return None.
-            pass
-        return None
-
-    def place_piece(self, dest_cells:list[Cell], piece_cells:list, piece:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> list[Cell]:
+    def place_piece(self, dest_cells:Cells, piece_cells:list, piece_info:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> Cells:
         """
         Fit the given piece if the cells ONLY if the cells are empty (color is None).
         Returns a new cell list if the piece can fit.
         Otherwise returns None.
         """
-        color_name = piece["color"]
-        color = colors.by_name(color_name)
-        assert color is not None
+        color_name = piece_info["color"]
 
-        rotated = self.rotate_piece_cells(piece_cells, angle_deg)
+        rotated = self.rotate_piece_cells(piece_cells, piece_info, angle_deg)
 
-        # Make a "deep" copy of cells
-        dest_cells = [ cell.copy() for cell in dest_cells ]
+        # Make a "deep" copy of cells only when needed
+        copy_on_write = True
+        cells = dest_cells
 
         for y, r, g in rotated:
-            y += y_offset
-            r += r_offset
-            cell = self.find_cell(dest_cells, y, r, g)
-            if cell is None:
+            y_abs = y + y_offset + N2
+            r_abs = r + r_offset + N2
+
+            if not cells.valid(y_abs, r_abs, g):
                 # The YRG coordinate is out of bounds.
                 return None
-            if cell.color is not None:
+            if cells.occupied(y_abs, r_abs, g):
                 # That cell is already occupied.
                 return None
-            cell.color = color
-        return dest_cells
+            if copy_on_write:
+                cells = cells.copy()
+                copy_on_write = False
+            cells.set_color(y_abs, r_abs, g, color_name)
+        return cells
 
-    def rotate_piece_cells(self, yrg_list:list, angle_deg:int) -> list:
+    def rotate_piece_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
         """
         Rotate the (y,r,g) tuples for a given piece.
         Angle_deg must be a multiple of 60 in range [0, 360[.
         """
         if angle_deg == 0:
-            return yrg_list.copy()
+            return yrg_list
+
+        cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
+        cached = self.rot_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         yrg_rot = []
         for y, r, g in yrg_list:
             for angle in range(60, angle_deg+1, 60):
                 y, r, g = self.yrg_coords.rot_60_ccw_yrg(y, r, g)
             yrg_rot.append( (y, r, g) )
+        self.rot_cache[cache_key] = yrg_rot
         return yrg_rot
 
     def gen_pieces_list(self, max_num_pieces:int=0) -> Generator:
@@ -252,7 +284,14 @@ class Generator:
             rotate = properties.get("rot", True)
             cells = properties["cells"]
             for i in range(0, count):
-                pieces.append( {"key": key, "idx": i, "cells": cells, "rot": rotate} )
+                piece_info = {
+                    "key": key,
+                    "idx": i,
+                    "cells": cells,
+                    "rot": rotate,
+                    "color": properties["color"],
+                }
+                pieces.append(piece_info)
         if max_num_pieces > 0:
             pieces = pieces[:max_num_pieces]
         print("@@ Number of pieces in permutations:", len(pieces))
@@ -277,7 +316,7 @@ class Generator:
 
         yield from _gen(pieces, [])
 
-    def gen_all_solutions(self, cells:list[Cell]) -> Generator:
+    def gen_all_solutions(self, cells:Cells) -> Generator:
         for num_debug in range(1,12):
             self.img_count = 0
             p1 = self.perm_count
@@ -299,26 +338,24 @@ class Generator:
             if num_debug == DEBUG_MAX_PIECE:
                 break
 
-    def place_first_piece(self, cells:list[Cell], combos:list, current:str) -> Generator:
+    def place_first_piece(self, cells:Cells, combos:list, current:str) -> Generator:
         if len(combos) == 0:
             return
-        info = combos.pop(0)
-        key = info["key"]
-        piece_cells = info["cells"]
-        angle_deg = info["angle"]
+        piece_info = combos.pop(0)
+        key = piece_info["key"]
+        piece_cells = piece_info["cells"]
+        angle_deg = piece_info["angle"]
 
-        piece = PIECES[key]
         # g value of the first cell
         first_g = piece_cells[0][2]
-        n2 = coord.N//2
 
-        for y, r, g in coord.VALID_YRG:
+        for y_abs, r_abs, g in coord.VALID_YRG:
             # Only starts on cells with the same g value
             if g == first_g:
-                # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y}x{r}")
-                new_cells = self.place_piece(cells, piece_cells, piece, y - n2, r - n2, angle_deg)
+                # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y_abs}x{r_abs}")
+                new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
                 self.gen_count += 1
-                # new_current = f"{current}{key}@{angle_deg}:{y}x{r} "
+                # new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
                 new_current = current
                 if new_cells is None:
                     self.gen_failed += 1

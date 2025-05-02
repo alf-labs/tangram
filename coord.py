@@ -9,8 +9,9 @@ from typing import Generator
 from typing import Tuple
 
 N = 6  # YRG coords are in 0..5 range
+N2 = N//2
 BORDER_SIZE = 0.5 # Border is half size of an inner piece
-YRG_RADIUS = (N//2) + BORDER_SIZE
+YRG_RADIUS = (N2) + BORDER_SIZE
 TAU = 2 * math.pi
 
 # Valid (Y, R, G) that fit in the puzzle boundaries.
@@ -71,8 +72,8 @@ class YRG:
         self.y = y_piece
         self.r = r_piece
         self.g = g_piece
-        assert -N//2 <= y_piece < N//2, f"Invalid Y piece: {y_piece}"
-        assert -N//2 <= r_piece < N//2, f"Invalid R piece: {r_piece}"
+        assert -N2 <= y_piece < N2, f"Invalid Y piece: {y_piece}"
+        assert -N2 <= r_piece < N2, f"Invalid R piece: {r_piece}"
         assert g_piece == 0 or g_piece == 1, f"Invalid g_piece: {g_piece}"
 
     def __str__(self) -> str:
@@ -97,6 +98,10 @@ class YRG:
         y2 = self.y + y_piece
         r2 = self.r + r_piece
         return YRG(y2, r2, self.g)
+
+    def to_abs(self) -> Tuple:
+        return self.y + N2, self.r + N2, self.g
+
 
 
 class Triangle:
@@ -364,28 +369,26 @@ class YRGCoord:
         This uses the YRGCoord to recompute the rhombus pixel coordinates.
         Raises ValueError if the YRG coordinate is invalid.
         """
-        n2 = N//2
         yrg_src = triangle.yrg
-        yrg_abs = (yrg_src.y + n2, yrg_src.r + n2, yrg_src.g)
+        yrg_abs = (yrg_src.y + N2, yrg_src.r + N2, yrg_src.g)
         try:
             index = ROT_60_CCW_SRC.index(yrg_abs)
         except ValueError:
             print(f"Error: Invalid coordinate {yrg_abs}")
             raise
         yrg_dst = VALID_YRG[index]
-        return self.triangle(YRG(yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2]))
+        return self.triangle(YRG(yrg_dst[0] - N2, yrg_dst[1] - N2, yrg_dst[2]))
 
     def rot_60_ccw_yrg(self, y_piece:int, r_piece:int, g_piece:int) -> Tuple:
         # Raises ValueError if the YRG coordinate is invalid.
-        n2 = N//2
-        yrg_abs = (y_piece + n2, r_piece + n2, g_piece)
+        yrg_abs = (y_piece + N2, r_piece + N2, g_piece)
         try:
             index = ROT_60_CCW_SRC.index(yrg_abs)
         except ValueError:
             print(f"Error: Invalid coordinate {yrg_abs}")
             raise
         yrg_dst = VALID_YRG[index]
-        return (yrg_dst[0] - n2, yrg_dst[1] - n2, yrg_dst[2])
+        return (yrg_dst[0] - N2, yrg_dst[1] - N2, yrg_dst[2])
 
 
 # ~~
