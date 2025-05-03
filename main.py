@@ -55,21 +55,14 @@ class Main:
     def write_generator_index(self, output_dir:str, gen:Generator) -> None:
         # Images
         images = gen.generated_images
-        max_columns = 8
         stats_str = f"""
         Number of images: {len(images)} <br/>
         """
 
-        col = 0
-        rows = ""
+        content = ""
         for img_name in images:
-            if col == 0:
-                rows += f"<tr>\n"
             anchor = img_name.replace("gen_", "").replace(".jpg", "")
-            rows += f"<td id='{anchor}'><a href='#{anchor}'>{anchor}</a><br/><img src='{img_name}'></td>"
-            col = (col + 1) % max_columns
-            if col == 0:
-                rows += f"</tr>\n"
+            content += f"<table class='gen'><tr><td id='{anchor}'><a href='#{anchor}'>{anchor}</a><br/><img src='{img_name}'></td></tr></table>"
 
         # Read template
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -77,9 +70,8 @@ class Main:
         with open(template_path, "r") as f:
             template = f.read()
 
-        html = template.replace("GEN", rows)
+        html = template.replace("CONTENT", content)
         html = html.replace("TIMESTAMP", time.asctime())
-        html = html.replace("NUM_COLS", str(max_columns))
         html = html.replace("STATS", stats_str)
         index_path = os.path.join(output_dir, "gen.html")
         with open(index_path, "w") as f:
