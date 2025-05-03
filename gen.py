@@ -18,7 +18,7 @@ from typing import Generator
 from typing import Tuple
 
 N2 = coord.N2
-DEBUG_MAX_PIECE=0
+DEBUG_PIECE=-1
 DEBUG_SAVE=True
 REPORT_FILE="temp.txt"
 
@@ -41,15 +41,9 @@ PIECES = {
         ],
         "rot": 0,
     },
-    "W": {
-        "color": "Black",
-        "cells": [
-            [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
-            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
-        ],
-    },
     "i": {
         "color": "Red",
+        "name": [ "i1", "i2" ],
         "cells": [
             [ (0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
             [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
@@ -58,19 +52,30 @@ PIECES = {
     },
     "P": {
         "color": "Red",
+        "name": [ "P1", "P2" ],
         "cells": [
             [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
             [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
         ]
     },
+    "W": {
+        "color": "Black",
+        "name": [ "W1", "W2" ],
+        "cells": [
+            [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+        ],
+    },
     "VB": {
         "color": "Black",
+        "name": [ "V1", "V2" ],
         "cells": [
             [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
         ],
     },
     "J": {
         "color": "Orange",
+        "name": [ "J1", "J2" ],
         "cells": [
             [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), (1, 2, 0), ],
             [ (1, 1, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
@@ -78,6 +83,7 @@ PIECES = {
     },
     "L": {
         "color": "Yellow",
+        "name": [ "L1", "L2" ],
         "cells": [
             [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (1, 2, 1), ],
             [ (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
@@ -175,7 +181,6 @@ class Generator:
         self.reject_yrg_invalid = 0
         self.reject_occupied = 0
         self.reject_adjacents = 0
-
 
     def generate(self, overwrite:bool) -> None:
         print("------")
@@ -310,7 +315,7 @@ class Generator:
         Angle_deg must be a multiple of 60 in range [0, 360[.
         """
 
-        cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
+        cache_key = f"{piece_info['key']}@{angle_deg}"
         cached = self.rot_cache.get(cache_key)
         if cached is not None:
             return cached
@@ -328,7 +333,7 @@ class Generator:
         return result
 
     def adjacents_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
-        cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
+        cache_key = f"{piece_info['key']}@{angle_deg}"
         cached = self.adjacents_cache.get(cache_key)
         if cached is not None:
             return cached
@@ -361,29 +366,31 @@ class Generator:
                     num_occupied += 1
         return num_occupied == num_cells
 
-    def gen_pieces_list(self, max_num_pieces:int=0) -> Generator:
+    def gen_pieces_list(self, select_piece:int=0) -> Generator:
         """
         Generate all the combinations of pieces we want to place, and their
         rotation, but without indicating where to place them.
 
-        max_num_pieces: for debugging purposes to limit the number of pieces.
+        select_piece: for debugging purposes, only keep the selected piece.
         """
         pieces = []
         for key, properties in PIECES.items():
             count = properties.get("count", 1)
             rot_max = properties.get("rot", 300)
+            name = properties.get("name", None)
             cells = properties["cells"]
             for i in range(0, count):
+                if name:
+                    key = name[i]
                 piece_info = {
                     "key": key,
-                    "idx": i,
                     "cells": cells,
                     "rot": rot_max,
                     "color": properties["color"],
                 }
                 pieces.append(piece_info)
-        if max_num_pieces > 0:
-            pieces = pieces[:max_num_pieces]
+        if select_piece > -1:
+            pieces = [ pieces[select_piece] ]
         print("@@ Number of pieces in permutations:", len(pieces))
 
         def _gen(_pieces, _current):
@@ -407,10 +414,9 @@ class Generator:
         yield from _gen(pieces, [])
 
     def gen_all_solutions(self, cells:Cells) -> Generator:
-        num_debug = DEBUG_MAX_PIECE
         ts = time.time()
         spd = 0
-        for permutations in self.gen_pieces_list(num_debug):
+        for permutations in self.gen_pieces_list(DEBUG_PIECE):
             self.perm_count += 1
             perms_str = " ".join([ f"{x['key']}@{x['angle']}" for x in permutations ])
             print(f"@@ perm {self.perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
@@ -419,7 +425,7 @@ class Generator:
             if nts > ts:
                 spd = (nts - ts)
                 ts = nts
-        r = f"@@ DEBUG num permutations: pieces={num_debug} perms_count={self.perm_count} gen_count={self.gen_failed} / {self.gen_count} img_count={self.img_count}"
+        r = f"@@ DEBUG num permutations: piece={DEBUG_PIECE} perms_count={self.perm_count} gen_count={self.gen_failed} / {self.gen_count} img_count={self.img_count}"
         self.report_file.write(r)
         self.report_file.write("\n")
         print(r)
