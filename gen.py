@@ -14,7 +14,7 @@ from img_proc import Cell
 from typing import Generator
 from typing import Tuple
 
-N2 = coord.N//2
+N2 = coord.N2
 DEBUG_MAX_PIECE=0
 DEBUG_SAVE=False
 REPORT_FILE="temp.txt"
@@ -116,8 +116,11 @@ class Cells:
 
     def occupied(self, y_abs, r_abs, g) -> bool:
         idx = 12 * y_abs + 2 * r_abs + g
-        c = self.colors[idx]
-        return c != EMPTY_CELL and c != INVALID_CELL
+        if idx >= 0 and idx < len(self.colors):
+            c = self.colors[idx]
+            return c != EMPTY_CELL and c != INVALID_CELL
+        else:
+            return False
 
     def get_color(self, y_abs, r_abs, g):
         idx = 12 * y_abs + 2 * r_abs + g
@@ -157,6 +160,7 @@ class Generator:
         self.perm_count = 0
         self.report_file = None
         self.rot_cache = {}
+        self.adjacents_cache = {}
 
     def generate(self, overwrite:bool) -> None:
         print("------")
@@ -259,6 +263,19 @@ class Generator:
                 cells = cells.copy()
                 copy_on_write = False
             cells.set_color(y_abs, r_abs, g, color_name)
+
+        # The piece fits at the desired location.
+        # Now validate that we are not leaving 1-single empty cells around.
+        adjacents = self.adjacents_cells(rotated, piece_info, angle_deg)
+        for y, r, g in adjacents:
+            y_abs = y + y_offset + N2
+            r_abs = r + r_offset + N2
+            if not cells.occupied(y_abs, r_abs, g):
+                if cells.valid(y_abs, r_abs, g):
+                    if self.is_cell_surrounded(y_abs, r_abs, g, cells):
+                        # Skip this permutation.
+                        return None
+
         return cells
 
     def rotate_piece_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
@@ -281,6 +298,40 @@ class Generator:
             yrg_rot.append( (y, r, g) )
         self.rot_cache[cache_key] = yrg_rot
         return yrg_rot
+
+    def adjacents_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
+        cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
+        cached = self.adjacents_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        abs_neigh = []
+        abs_list = [ (y + N2, r + N2, g) for y, r, g in yrg_list ]
+        for yrg_abs in abs_list:
+            idx = coord.VALID_YRG_TO_IDX[ yrg_abs ]
+            adjacents = coord.VALID_YRG_ADJACENTS[idx]
+            for adjacent in adjacents.values():
+                if (adjacent
+                    and not adjacent in abs_neigh
+                    and not adjacent in abs_list):
+                    abs_neigh.append(adjacent)
+        yrg_neigh = [ (y_abs - N2, r_abs - N2, g) for y_abs, r_abs, g in abs_neigh ]
+
+        self.adjacents_cache[cache_key] = yrg_neigh
+        return yrg_neigh
+
+    def is_cell_surrounded(self, y_abs:int, r_abs:int, g:int, cells:Cells) -> bool:
+        idx = coord.VALID_YRG_TO_IDX[ (y_abs, r_abs, g) ]
+        adjacents = coord.VALID_YRG_ADJACENTS[idx]
+        num_occupied = 0
+        num_cells = 0
+        for adjacent in adjacents.values():
+            if adjacent:
+                num_cells += 1
+                y_abs, r_abs, g = adjacent
+                if cells.occupied(y_abs, r_abs, g):
+                    num_occupied += 1
+        return num_occupied == num_cells
 
     def gen_pieces_list(self, max_num_pieces:int=0) -> Generator:
         """

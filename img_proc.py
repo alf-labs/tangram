@@ -698,7 +698,6 @@ class ImageProcessor:
         lines = np.array([ [p0, p1], [p2, p3] ])
         cv2.polylines(dest_img, lines, isClosed=False, color=(255, 0, 0), thickness=2)
 
-
     def triangles(self, yrg_coords:YRGCoord) -> Generator:
         n2 = coord.N//2
         for (y, r, g) in coord.VALID_YRG:

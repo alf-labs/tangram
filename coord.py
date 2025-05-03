@@ -26,6 +26,26 @@ VALID_YRG = [
                           (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
 ]
 
+VALID_YRG_TO_IDX = {}
+
+VALID_YRG_ADJACENTS = []
+
+VALID_R_PER_LINE_YG = {
+    (0, 1): { "min_r": 0, "max_r": 2, },
+    (0, 0): { "min_r": 0, "max_r": 3, },
+    (1, 1): { "min_r": 0, "max_r": 3, },
+    (1, 0): { "min_r": 0, "max_r": 4, },
+    (2, 1): { "min_r": 0, "max_r": 4, },
+    (2, 0): { "min_r": 0, "max_r": 5, },
+    # below Y symmetry, things are different
+    (3, 1): { "min_r": 0, "max_r": 5, },
+    (3, 0): { "min_r": 1, "max_r": 5, },
+    (4, 1): { "min_r": 1, "max_r": 5, },
+    (4, 0): { "min_r": 2, "max_r": 5, },
+    (5, 1): { "min_r": 2, "max_r": 5, },
+    (5, 0): { "min_r": 3, "max_r": 5, },
+}
+
 # We can rotate the puzzle cells 60 degrees clockwise by mapping any cell from ROT_60_CCW_SRC (source) to VALID_YRG (destination).
 # Example: SRC[0](0,2,1) --> That means that cell (0,2,1) becomes cell (0,0,0) because VALID_YRG[0] = (0,0,0).
 ROT_60_CCW_SRC = [
@@ -37,6 +57,7 @@ ROT_60_CCW_SRC = [
                           (2, 0, 0), (3, 0, 1), (3, 1, 0), (4, 1, 1), (4, 2, 0), (5, 2, 1), (5, 3, 0),
 ]
 
+ROT_60_CCW_SRC_TO_IDX = {}
 
 class XY:
     def __init__(self, a:np.array):
@@ -268,6 +289,46 @@ class YRGCoord:
 
         self.radials, self.radials_center_px = self.compute_distortion(y_axis, r_axis)
 
+        global VALID_YRG_TO_IDX, ROT_60_CCW_SRC_TO_IDX, VALID_YRG_ADJACENTS
+        if not VALID_YRG_TO_IDX:
+            for idx, yrg in enumerate(VALID_YRG):
+                VALID_YRG_TO_IDX[yrg] = idx
+        if not ROT_60_CCW_SRC_TO_IDX:
+            for idx, yrg in enumerate(ROT_60_CCW_SRC):
+                ROT_60_CCW_SRC_TO_IDX[yrg] = idx
+        if not VALID_YRG_ADJACENTS:
+            for y, r, g in VALID_YRG:
+                # Left
+                gl = 1 - g
+                rl = r - 1 if g == 0 else r
+                left = None
+                vr = VALID_R_PER_LINE_YG[(y, gl)]
+                if vr["min_r"] <= rl and rl <= vr["max_r"]:
+                    left = (y, rl, gl)
+
+                # Right
+                rr = r + 1 if g == 1 else r
+                right = None
+                if vr["min_r"] <= rr and rr <= vr["max_r"]:
+                    right = (y, rr, gl)
+
+                # Up
+                up = None
+                if g == 1 and y > 0:
+                    up = (y - 1, r, 1 - g)
+
+                # Down
+                down = None
+                if g == 0 and y < N - 1:
+                    down = (y + 1, r, 1 - g)
+
+                VALID_YRG_ADJACENTS.append( {
+                    "left": left,
+                    "right": right,
+                    "up": up,
+                    "down": down,
+                })
+
     def compute_distortion(self, y_axis:Axis, r_axis:Axis) -> list:
         points = [
             XY(r_axis.segment_end[1]),      # angle 0
@@ -372,7 +433,7 @@ class YRGCoord:
         yrg_src = triangle.yrg
         yrg_abs = (yrg_src.y + N2, yrg_src.r + N2, yrg_src.g)
         try:
-            index = ROT_60_CCW_SRC.index(yrg_abs)
+            index = ROT_60_CCW_SRC_TO_IDX[yrg_abs]
         except ValueError:
             print(f"Error: Invalid coordinate {yrg_abs}")
             raise
@@ -383,7 +444,7 @@ class YRGCoord:
         # Raises ValueError if the YRG coordinate is invalid.
         yrg_abs = (y_piece + N2, r_piece + N2, g_piece)
         try:
-            index = ROT_60_CCW_SRC.index(yrg_abs)
+            index = ROT_60_CCW_SRC_TO_IDX[yrg_abs]
         except ValueError:
             print(f"Error: Invalid coordinate {yrg_abs}")
             raise
