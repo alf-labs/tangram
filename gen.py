@@ -16,7 +16,7 @@ from typing import Tuple
 
 N2 = coord.N2
 DEBUG_MAX_PIECE=0
-DEBUG_SAVE=False
+DEBUG_SAVE=True
 REPORT_FILE="temp.txt"
 
 PX_CELL_SIZE = 30
@@ -31,25 +31,19 @@ PIECES = {
         ],
         "rot": 0,
     },
-    "TO": {
-        "color": "Orange",
-        "cells": [
-            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
-        ],
-    },
-    "TY": {
-        "color": "Yellow",
-        "cells": [
-            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
-        ],
-        "count": 2,
-    },
     "HR": {
         "color": "Red",
         "cells": [
             [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 1, 1), (1, 1, 0), (1, 0, 1), ],
         ],
         "rot": 0,
+    },
+    "W": {
+        "color": "Black",
+        "cells": [
+            [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+        ],
     },
     "i": {
         "color": "Red",
@@ -58,6 +52,19 @@ PIECES = {
             [ (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
         ],
         "rot": 120,
+    },
+    "P": {
+        "color": "Red",
+        "cells": [
+            [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
+            [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
+        ]
+    },
+    "VB": {
+        "color": "Black",
+        "cells": [
+            [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+        ],
     },
     "J": {
         "color": "Orange",
@@ -73,33 +80,27 @@ PIECES = {
             [ (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), ],
         ],
     },
-    "P": {
-        "color": "Red",
+    "TO": {
+        "color": "Orange",
         "cells": [
-            [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), (1, 2, 1), ],
-            [ (1, 1, 1), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1), ],
-        ]
-    },
-    "VB": {
-        "color": "Black",
-        "cells": [
-            [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
         ],
     },
-    "W": {
-        "color": "Black",
+    "TY": {
+        "color": "Yellow",
         "cells": [
-            [ (1, 1, 0), (1, 0, 1), (1, 0, 0), (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
-            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), (1, 2, 0), (1, 1, 1), (1, 1, 0), ],
+            [ (0, 0, 0), (0, 0, 1), (0, 1, 0), ],
         ],
+        "count": 2,
     },
 }
 
 
 class Cells:
     def __init__(self):
-        self.cells = None
-        self.colors = None
+        self.cells   = None     # list[Cell]
+        self.colors  = None     # list[str]
+        self.g_free = [ coord.NUM_CELLS // 2, coord.NUM_CELLS // 2 ]
 
     def init_cells(self, yrg_coords:YRGCoord) -> "Cells":
         self.cells = []
@@ -128,12 +129,17 @@ class Cells:
 
     def set_color(self, y_abs, r_abs, g, color) -> None:
         idx = 12 * y_abs + 2 * r_abs + g
+        old_color = self.colors[idx]
         self.colors[idx] = color
+        if old_color == EMPTY_CELL and old_color != color:
+            assert self.g_free[g] > 0
+            self.g_free[g] -= 1
 
     def copy(self) -> "Cells":
         new_cells = Cells()
         new_cells.cells = self.cells    # Warning: linked, not duplicated!
         new_cells.colors = self.colors.copy()
+        new_cells.g_free = self.g_free.copy()
         return new_cells
 
     def _triangles(self, yrg_coords:YRGCoord) -> Generator:
@@ -155,12 +161,18 @@ class Generator:
         self.size_px = XY( (0, 0) )
         self.img_count = 0
         self.generated_images = []
+        self.rot_cache = {}
+        self.adjacents_cache = {}
+        # Statistics
+        self.report_file = None
         self.gen_count = 0
         self.gen_failed = 0
         self.perm_count = 0
-        self.report_file = None
-        self.rot_cache = {}
-        self.adjacents_cache = {}
+        self.reject_g_count = 0
+        self.reject_yrg_invalid = 0
+        self.reject_occupied = 0
+        self.reject_adjacents = 0
+
 
     def generate(self, overwrite:bool) -> None:
         print("------")
@@ -243,7 +255,15 @@ class Generator:
         """
         color_name = piece_info["color"]
 
-        rotated = self.rotate_piece_cells(piece_cells, piece_info, angle_deg)
+        rotated, g_count = self.rotate_piece_cells(piece_cells, piece_info, angle_deg)
+
+        # Validate that the puzzle has enought empty cells to event fit the piece
+        # (we don't check whether they are adjacent here, just the global count)
+        # print("@@", piece_info["key"], color_name, "g_count", g_count, "cells", dest_cells.g_free, dest_cells.signature())
+        if g_count[0] > dest_cells.g_free[0] or g_count[1] > dest_cells.g_free[1]:
+            # The piece definitely will not fit here.
+            self.reject_g_count += 1
+            return None
 
         # Make a "deep" copy of cells only when needed
         copy_on_write = True
@@ -255,9 +275,11 @@ class Generator:
 
             if not cells.valid(y_abs, r_abs, g):
                 # The YRG coordinate is out of bounds.
+                self.reject_yrg_invalid += 1
                 return None
             if cells.occupied(y_abs, r_abs, g):
                 # That cell is already occupied.
+                self.reject_occupied += 1
                 return None
             if copy_on_write:
                 cells = cells.copy()
@@ -274,17 +296,16 @@ class Generator:
                 if cells.valid(y_abs, r_abs, g):
                     if self.is_cell_surrounded(y_abs, r_abs, g, cells):
                         # Skip this permutation.
+                        self.reject_adjacents += 1
                         return None
 
         return cells
 
-    def rotate_piece_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
+    def rotate_piece_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> Tuple[list,list]:
         """
         Rotate the (y,r,g) tuples for a given piece.
         Angle_deg must be a multiple of 60 in range [0, 360[.
         """
-        if angle_deg == 0:
-            return yrg_list
 
         cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
         cached = self.rot_cache.get(cache_key)
@@ -292,12 +313,16 @@ class Generator:
             return cached
 
         yrg_rot = []
+        g_count = [0, 0]
         for y, r, g in yrg_list:
-            for angle in range(60, angle_deg+1, 60):
+            for angle in range(60, angle_deg+1, 60): # no-op if angle_deg==0
                 y, r, g = self.yrg_coords.rot_60_ccw_yrg(y, r, g)
+            g_count[g] += 1
             yrg_rot.append( (y, r, g) )
-        self.rot_cache[cache_key] = yrg_rot
-        return yrg_rot
+
+        result = (yrg_rot, g_count)
+        self.rot_cache[cache_key] = result
+        return result
 
     def adjacents_cells(self, yrg_list:list, piece_info:dict, angle_deg:int) -> list:
         cache_key = f"{piece_info['key']}:{piece_info['idx']}@{angle_deg}"
@@ -387,7 +412,7 @@ class Generator:
         f1 = self.gen_failed
         for permutations in self.gen_pieces_list(num_debug):
             self.perm_count += 1
-            print("@@ permutation", self.perm_count, [ f"{x['key']} @ {x['angle']}" for x in permutations ] )
+            print("\n@@ found", self.img_count, "permutation", self.perm_count, [ f"{x['key']} @ {x['angle']}" for x in permutations ] )
             yield from self.place_first_piece(cells, permutations, "")
         p2 = self.perm_count - p1
         i2 = self.img_count - i1
@@ -412,25 +437,19 @@ class Generator:
         for y_abs, r_abs, g in coord.VALID_YRG:
             # Only starts on cells with the same g value
             if g == first_g:
-                # print(f"@@ gen {self.img_count} {combos}, {current} + {key} @ {angle_deg}:{y_abs}x{r_abs}")
                 new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
                 self.gen_count += 1
-                new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
-                # new_current = current
+                # new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
+                new_current = current
                 if new_cells is None:
                     self.gen_failed += 1
                 else:
                     if len(combos) == 0:
-                        print("@@ GEN", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, "FOUND")
+                        print(f"@@ GEN {self.gen_count} / {self.gen_failed} -- {self.img_count} {new_current} FOUND")
                         yield new_cells
                     else:
                         new_combos = combos.copy()
-                        # print(f"@@ gen {self.img_count} {new_combos}, {new_current}")
-                        # print(f"@@ gen {self.img_count}: {new_current}")
-                        # print("@@ gen", self.img_count, new_combos)
-                        # print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, end="\r")
-                        # print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_current, end="\r")
-                        print("@@ SUB", self.gen_failed, "/", self.gen_count, "--", self.img_count, new_cells.signature(), end="\r")
+                        print(f"@@ SUB {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
                         yield from self.place_first_piece(new_cells, new_combos, new_current)
 
 

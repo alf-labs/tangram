@@ -26,6 +26,8 @@ VALID_YRG = [
                           (5, 2, 1), (5, 3, 0), (5, 3, 1), (5, 4, 0), (5, 4, 1), (5, 5, 0), (5, 5, 1),
 ]
 
+NUM_CELLS = len(VALID_YRG)
+
 VALID_YRG_TO_IDX = {}
 
 VALID_YRG_ADJACENTS = []
