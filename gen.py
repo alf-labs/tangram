@@ -68,7 +68,6 @@ PIECES = {
     },
     "VB": {
         "color": "Black",
-        "name": [ "V1", "V2" ],
         "cells": [
             [ (1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), ],
         ],
@@ -109,6 +108,7 @@ class Cells:
     def __init__(self):
         self.cells   = None     # list[Cell]
         self.colors  = None     # list[str]
+        self.placed  = None     # list[tuple(piece,y,r)]
         self.g_free = [ coord.NUM_CELLS // 2, coord.NUM_CELLS // 2 ]
 
     def init_cells(self, yrg_coords:YRGCoord) -> "Cells":
@@ -171,6 +171,7 @@ class Generator:
         self.img_count = 0
         self.generated_images = []
         self.rot_cache = {}
+        self.pos_cache = {}
         self.adjacents_cache = {}
         # Statistics
         self.report_file = None
@@ -189,6 +190,7 @@ class Generator:
 
         with open(REPORT_FILE, "w") as self.report_file:
             self.size_px, self.yrg_coords, cells_empty = self.create_cells()
+            self.precompute_positions(cells_empty)
             for cells in self.gen_all_solutions(cells_empty):
                 img = self.draw_cells_into(cells, dest_img=None)
                 self.write_indexed_img(img)
@@ -232,7 +234,7 @@ class Generator:
             dest_img.fill(0)
 
         radius = int(cells.cells[0].triangle.inscribed_circle_radius() *.5 )
-        bg = cells.cells[0].mean_bgr
+        bg = (32, 32, 32)
 
         for cell in cells.cells:
             poly = np.int32(cell.triangle.to_np_array())
@@ -377,13 +379,12 @@ class Generator:
         for key, properties in PIECES.items():
             count = properties.get("count", 1)
             rot_max = properties.get("rot", 300)
-            name = properties.get("name", None)
+            names = properties.get("name", [ key])
             cells = properties["cells"]
             for i in range(0, count):
-                if name:
-                    key = name[i]
                 piece_info = {
                     "key": key,
+                    "names": names,
                     "cells": cells,
                     "rot": rot_max,
                     "color": properties["color"],
@@ -391,7 +392,8 @@ class Generator:
                 pieces.append(piece_info)
         if select_piece > -1:
             pieces = [ pieces[select_piece] ]
-        print("@@ Number of pieces in permutations:", len(pieces))
+        else:
+            print("@@ Number of pieces in permutations:", len(pieces))
 
         def _gen(_pieces, _current):
             if len(_pieces) == 0:
@@ -402,25 +404,27 @@ class Generator:
             _key = _first["key"]
             _cells = _first["cells"]
             _angle_max = _first["rot"]
-            for c in _cells:
+            for _i, _c in enumerate(_cells):
                 for _angle in range(0, _angle_max + 1, 60):
                     _new_current = _current.copy()
                     _info = _first.copy()
+                    _info["key"] = _info["names"][_i]
                     _info["angle"] = _angle
-                    _info["cells"] = c
+                    _info["cells"] = _c
                     _new_current.append( _info )
                     yield from _gen(_pieces, _new_current)
 
         yield from _gen(pieces, [])
 
-    def gen_all_solutions(self, cells:Cells) -> Generator:
+    def gen_all_solutions(self, cells_empty:Cells) -> Generator:
+        print("@@ Generate All Solutions")
         ts = time.time()
         spd = 0
         for permutations in self.gen_pieces_list(DEBUG_PIECE):
             self.perm_count += 1
             perms_str = " ".join([ f"{x['key']}@{x['angle']}" for x in permutations ])
             print(f"@@ perm {self.perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
-            yield from self.place_first_piece(cells, permutations, "")
+            yield from self.place_first_piece(cells_empty, permutations, [])
             nts = time.time()
             if nts > ts:
                 spd = (nts - ts)
@@ -430,36 +434,65 @@ class Generator:
         self.report_file.write("\n")
         print(r)
 
-    def place_first_piece(self, cells:Cells, combos:list, current:str) -> Generator:
+    def precompute_positions(self, cells_empty:Cells) -> None:
+        print("@@ Precompute Cached Positions")
+        for select_piece in range(0, len(PIECES)):
+            for permutations in self.gen_pieces_list(select_piece):
+                assert len(permutations) == 1
+                p = permutations[0]
+                pos_key = f"{p['key']}@{p['angle']}"
+                all_pos = []
+                for new_cells in self.place_first_piece(cells_empty, permutations, []):
+                    if new_cells is not None:
+                        piece_info, y_abs, r_abs, g = new_cells.placed[0]
+                        all_pos.append( (y_abs, r_abs, g) )
+                self.pos_cache[pos_key] = all_pos
+
+    def place_first_piece(self, cells:Cells, combos:list, placed:list) -> Generator:
         if len(combos) == 0:
             assert len(combos) > 0
+            return # exit the generator without a result
+        combos = combos.copy()
         piece_info = combos.pop(0)
         key = piece_info["key"]
         piece_cells = piece_info["cells"]
         angle_deg = piece_info["angle"]
+        pos_key = f"{key}@{angle_deg}"
 
         # g value of the first cell
         first_g = piece_cells[0][2]
 
-        for y_abs, r_abs, g in coord.VALID_YRG:
-            # Only starts on cells with the same g value
-            if g == first_g:
-                new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
-                if __debug__: self.gen_count += 1
-                # new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
-                new_current = current
-                if new_cells is None:
-                    if __debug__: self.gen_failed += 1
+        def _place_at(y_abs, r_abs, g):
+            new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
+            if __debug__: self.gen_count += 1
+            if new_cells is None:
+                # We were not able to place the piece on the board.
+                # Loop and try next position.
+                if __debug__: self.gen_failed += 1
+            else:
+                # Remember which piece was placed and where
+                new_placed = placed.copy()
+                new_placed.append( (piece_info, y_abs, r_abs, g) )
+                if len(combos) == 0:
+                    print(f"@@ GEN {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
+                    new_cells.placed = new_placed
+                    yield new_cells
                 else:
-                    if len(combos) == 0:
-                        print(f"@@ GEN {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
-                        yield new_cells
-                    else:
-                        new_combos = combos.copy()
-                        # Extra verbose
-                        if __debug__:
-                            print(f"@@ SUB {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
-                        yield from self.place_first_piece(new_cells, new_combos, new_current)
+                    if __debug__: # Extra verbose, only for debugging
+                        print(f"@@ SUB {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
+                    yield from self.place_first_piece(new_cells, combos, new_placed)
+
+        all_pos = self.pos_cache.get(pos_key)
+        if all_pos is not None:
+            # If we have precomputed all posible cell locations for this piece
+            for y_abs, r_abs, g in all_pos:
+                yield from _place_at(y_abs, r_abs, g)
+        else:
+            # Otherwise iterate over all the board, including possible invalid locations
+            for y_abs, r_abs, g in coord.VALID_YRG:
+                # Only starts on cells with the same g value
+                if g == first_g:
+                    yield from _place_at(y_abs, r_abs, g)
 
 
 # ~~
