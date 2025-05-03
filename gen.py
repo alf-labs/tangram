@@ -1,6 +1,8 @@
 # Tangram Puzzle: Generate All Possible Solutions
 #
 # (c) 2025 ralfoide at gmail
+#
+# Note: run with python -O or -OO to disable __debug__ sections.
 
 import colors
 import coord
@@ -8,6 +10,7 @@ import cv2
 import math
 import numpy as np
 import os
+import time
 
 from coord import Axis, XY, YRG, YRGCoord
 from img_proc import Cell
@@ -275,11 +278,11 @@ class Generator:
 
             if not cells.valid(y_abs, r_abs, g):
                 # The YRG coordinate is out of bounds.
-                self.reject_yrg_invalid += 1
+                if __debug__: self.reject_yrg_invalid += 1
                 return None
             if cells.occupied(y_abs, r_abs, g):
                 # That cell is already occupied.
-                self.reject_occupied += 1
+                if __debug__: self.reject_occupied += 1
                 return None
             if copy_on_write:
                 cells = cells.copy()
@@ -296,7 +299,7 @@ class Generator:
                 if cells.valid(y_abs, r_abs, g):
                     if self.is_cell_surrounded(y_abs, r_abs, g, cells):
                         # Skip this permutation.
-                        self.reject_adjacents += 1
+                        if __debug__: self.reject_adjacents += 1
                         return None
 
         return cells
@@ -405,27 +408,25 @@ class Generator:
 
     def gen_all_solutions(self, cells:Cells) -> Generator:
         num_debug = DEBUG_MAX_PIECE
-        self.img_count = 0
-        p1 = self.perm_count
-        i1 = self.img_count
-        g1 = self.gen_count
-        f1 = self.gen_failed
+        ts = time.time()
+        spd = 0
         for permutations in self.gen_pieces_list(num_debug):
             self.perm_count += 1
-            print("\n@@ found", self.img_count, "permutation", self.perm_count, [ f"{x['key']} @ {x['angle']}" for x in permutations ] )
+            perms_str = " ".join([ f"{x['key']}@{x['angle']}" for x in permutations ])
+            print(f"@@ perm {self.perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
             yield from self.place_first_piece(cells, permutations, "")
-        p2 = self.perm_count - p1
-        i2 = self.img_count - i1
-        g2 = self.gen_count - g1
-        f2 = self.gen_failed - f1
-        r = f"@@ DEBUG num permutations: pieces={num_debug} perms_count={p2} gen_count={f2} / {g2} img_count={i2}"
+            nts = time.time()
+            if nts > ts:
+                spd = (nts - ts)
+                ts = nts
+        r = f"@@ DEBUG num permutations: pieces={num_debug} perms_count={self.perm_count} gen_count={self.gen_failed} / {self.gen_count} img_count={self.img_count}"
         self.report_file.write(r)
         self.report_file.write("\n")
         print(r)
 
     def place_first_piece(self, cells:Cells, combos:list, current:str) -> Generator:
         if len(combos) == 0:
-            return
+            assert len(combos) > 0
         piece_info = combos.pop(0)
         key = piece_info["key"]
         piece_cells = piece_info["cells"]
@@ -438,18 +439,20 @@ class Generator:
             # Only starts on cells with the same g value
             if g == first_g:
                 new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
-                self.gen_count += 1
+                if __debug__: self.gen_count += 1
                 # new_current = f"{current}{key}@{angle_deg}:{y_abs}x{r_abs} "
                 new_current = current
                 if new_cells is None:
-                    self.gen_failed += 1
+                    if __debug__: self.gen_failed += 1
                 else:
                     if len(combos) == 0:
-                        print(f"@@ GEN {self.gen_count} / {self.gen_failed} -- {self.img_count} {new_current} FOUND")
+                        print(f"@@ GEN {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
                         yield new_cells
                     else:
                         new_combos = combos.copy()
-                        print(f"@@ SUB {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
+                        # Extra verbose
+                        if __debug__:
+                            print(f"@@ SUB {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
                         yield from self.place_first_piece(new_cells, new_combos, new_current)
 
 
