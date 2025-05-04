@@ -6,6 +6,7 @@ import argparse
 import glob
 import os
 import time
+import sys
 
 from gen import Generator
 from img_proc import ImageProcessor
@@ -35,15 +36,30 @@ class Main:
         parser.add_argument("-g", "--generate",
             action="store_true",
             help="Generate all possible solutions")
+        parser.add_argument("--gen-output",
+            default="render_IDX_CORES.txt",
+            help="Generator output name in output dir")
+        parser.add_argument("--gen-cores",
+            type=int,
+            default=1,
+            help="Generator number of cores")
+        parser.add_argument("--gen-index",
+            type=int,
+            default=1,
+            help="Generator core index from 0 to gen-cores-1.")
         self.args = parser.parse_args()
 
     def analyze_file(self, input_file_path:str, outout_dir_path:str) -> None:
         p = ImageProcessor(input_file_path, outout_dir_path)
         p.process_image(m.args.overwrite)
 
-    def generate_solutions(self, outout_dir_path:str) -> None:
+    def generate_solutions(self, outout_dir_path:str, gen_output_name:str) -> None:
         g = Generator(outout_dir_path)
-        g.generate(m.args.overwrite)
+        if m.args.gen_cores > 1:
+            if m.args.gen_index < 0 or m.args.gen_index >= m.args.gen_cores:
+                print(f"Error: --gen-index must be in range 0..{m.args.gen_cores-1}")
+                sys.exit(1)
+        g.generate(gen_output_name, m.args.overwrite, m.args.gen_cores, m.args.gen_index)
         return g
 
     def find_files(self, dir_input:str) -> list:
@@ -179,7 +195,7 @@ if __name__ == "__main__":
     if m.args.overwrite:
         print("Will overwrite existing files")
     if m.args.generate:
-        g = m.generate_solutions(m.args.output_dir)
+        g = m.generate_solutions(m.args.output_dir, m.args.gen_output)
         m.write_generator_index(m.args.output_dir, g)
     elif m.args.input_image:
         m.analyze_file(m.args.input_image, m.args.output_dir)

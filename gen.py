@@ -20,7 +20,6 @@ from typing import Tuple
 N2 = coord.N2
 DEBUG_PIECE=-1
 DEBUG_SAVE=True
-REPORT_FILE="temp.txt"
 
 PX_CELL_SIZE = 30
 INVALID_CELL = "INVALID"
@@ -162,6 +161,11 @@ class Cells:
         sig = "".join([ col[0] for col in self.colors if col != INVALID_CELL ])
         return sig
 
+    def placed_str(self) -> str:
+        if not self.placed:
+            return "--"
+        return ",".join([ f"{piece_info['key']}@{piece_info['angle']}:{y_abs}x{r_abs}x{g}" for piece_info, y_abs, r_abs, g in self.placed ])
+
 
 class Generator:
     def __init__(self, output_dir_path:str):
@@ -183,22 +187,26 @@ class Generator:
         self.reject_occupied = 0
         self.reject_adjacents = 0
 
-    def generate(self, overwrite:bool) -> None:
+    def generate(self, gen_output_name:str, overwrite:bool, cores_num:int, core_index:int) -> None:
+        gen_output_name = gen_output_name.replace("IDX", str(core_index))
+        gen_output_name = gen_output_name.replace("CORES", str(cores_num))
+        report_file_path = os.path.join(self.output_dir_path, gen_output_name)
         print("------")
         print(f"Generating solutions in {self.output_dir_path}")
+        print(f"File: {report_file_path}")
         print("------")
 
-        with open(REPORT_FILE, "w") as self.report_file:
+        with open(report_file_path, "w") as self.report_file:
             self.size_px, self.yrg_coords, cells_empty = self.create_cells()
             self.precompute_positions(cells_empty)
-            for cells in self.gen_all_solutions(cells_empty):
+            for cells in self.gen_all_solutions(cells_empty, cores_num, core_index):
                 img = self.draw_cells_into(cells, dest_img=None)
                 self.write_indexed_img(img)
-                sig = cells.signature()
-                r = f"@@ SIG {sig}"
+                r = f"@@ SIG {cells.signature()} {cells.placed_str()}"
                 print(r)
-                self.report_file.write(f"@@ SIG {sig}")
-                self.report_file.write("\r")
+                self.report_file.write(r)
+                self.report_file.write("\n")
+                self.report_file.flush()
 
 
         print("")
@@ -416,12 +424,16 @@ class Generator:
 
         yield from _gen(pieces, [])
 
-    def gen_all_solutions(self, cells_empty:Cells) -> Generator:
+    def gen_all_solutions(self, cells_empty:Cells, cores_num:int, core_index:int) -> Generator:
         print("@@ Generate All Solutions")
         ts = time.time()
         spd = 0
         for permutations in self.gen_pieces_list(DEBUG_PIECE):
             self.perm_count += 1
+            if cores_num > 1:
+                if self.perm_count % cores_num != core_index:
+                    if __debug__: print(f"@@ skip {self.perm_count}    ")
+                    continue
             perms_str = " ".join([ f"{x['key']}@{x['angle']}" for x in permutations ])
             print(f"@@ perm {self.perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
             yield from self.place_first_piece(cells_empty, permutations, [])
