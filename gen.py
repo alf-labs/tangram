@@ -108,6 +108,7 @@ class Cells:
         self.cells   = None     # list[Cell]
         self.colors  = None     # list[str]
         self.placed  = None     # list[tuple(piece,y,r)]
+        self.perm_index = 0
         self.g_free = [ coord.NUM_CELLS // 2, coord.NUM_CELLS // 2 ]
 
     def init_cells(self, yrg_coords:YRGCoord) -> "Cells":
@@ -148,6 +149,7 @@ class Cells:
         new_cells.cells = self.cells    # Warning: linked, not duplicated!
         new_cells.colors = self.colors.copy()
         new_cells.g_free = self.g_free.copy()
+        new_cells.perm_index = self.perm_index
         return new_cells
 
     def _triangles(self, yrg_coords:YRGCoord) -> Generator:
@@ -187,7 +189,7 @@ class Generator:
         self.reject_occupied = 0
         self.reject_adjacents = 0
 
-    def generate(self, gen_output_name:str, overwrite:bool, cores_num:int, core_index:int) -> None:
+    def generate(self, gen_output_name:str, overwrite:bool, cores_num:int, core_index:int, perm_start:int) -> None:
         gen_output_name = gen_output_name.replace("IDX", str(core_index))
         gen_output_name = gen_output_name.replace("CORES", str(cores_num))
         report_file_path = os.path.join(self.output_dir_path, gen_output_name)
@@ -199,10 +201,10 @@ class Generator:
         with open(report_file_path, "w") as self.report_file:
             self.size_px, self.yrg_coords, cells_empty = self.create_cells()
             self.precompute_positions(cells_empty)
-            for cells in self.gen_all_solutions(cells_empty, cores_num, core_index):
+            for cells in self.gen_all_solutions(cells_empty, cores_num, core_index, perm_start):
                 img = self.draw_cells_into(cells, dest_img=None)
                 self.write_indexed_img(img)
-                r = f"@@ SIG {cells.signature()} {cells.placed_str()}"
+                r = f"@@ [{cells.perm_index}] SIG {cells.signature()} {cells.placed_str()}"
                 print(r)
                 self.report_file.write(r)
                 self.report_file.write("\n")
@@ -424,24 +426,30 @@ class Generator:
 
         yield from _gen(pieces, [])
 
-    def gen_all_solutions(self, cells_empty:Cells, cores_num:int, core_index:int) -> Generator:
+    def gen_all_solutions(self, cells_empty:Cells, cores_num:int, core_index:int, perm_start:int) -> Generator:
         print("@@ Generate All Solutions")
         ts = time.time()
         spd = 0
+        perm_count = self.perm_count
         for permutations in self.gen_pieces_list(DEBUG_PIECE):
-            self.perm_count += 1
+            perm_count += 1
+            self.perm_count = perm_count
             if cores_num > 1:
-                if self.perm_count % cores_num != core_index:
-                    if __debug__: print(f"@@ skip {self.perm_count}    ")
+                if perm_count % cores_num != core_index:
+                    if __debug__: print(f"@@ skip {perm_count}    ")
                     continue
+            if perm_start > perm_count:
+                if __debug__: print(f"@@ skip {perm_count}    ")
+                continue
             perms_str = " ".join([ f"{x['key']}@{x['angle']}" for x in permutations ])
-            print(f"@@ perm {self.perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
+            print(f"@@ perm {perm_count}, {'%.2f' % spd} s/p, img {self.img_count}, {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- {perms_str}")
+            cells_empty.perm_index = perm_count
             yield from self.place_first_piece(cells_empty, permutations, [])
             nts = time.time()
             if nts > ts:
                 spd = (nts - ts)
                 ts = nts
-        r = f"@@ DEBUG num permutations: piece={DEBUG_PIECE} perms_count={self.perm_count} gen_count={self.gen_failed} / {self.gen_count} img_count={self.img_count}"
+        r = f"@@ DEBUG num permutations: piece={DEBUG_PIECE} perms_count={perm_count} gen_count={self.gen_failed} / {self.gen_count} img_count={self.img_count}"
         self.report_file.write(r)
         self.report_file.write("\n")
         print(r)
@@ -486,7 +494,7 @@ class Generator:
                 new_placed = placed.copy()
                 new_placed.append( (piece_info, y_abs, r_abs, g) )
                 if len(combos) == 0:
-                    print(f"@@ GEN {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}", end="\r")
+                    print(f"@@ GEN {self.gen_count} / {self.gen_failed} [ {self.reject_g_count} {self.reject_yrg_invalid} {self.reject_occupied} {self.reject_adjacents} ] -- img:{self.img_count}, g {new_cells.g_free[0]} {new_cells.g_free[1]}, sig {new_cells.signature()}")
                     new_cells.placed = new_placed
                     yield new_cells
                 else:

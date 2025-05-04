@@ -47,6 +47,10 @@ class Main:
             type=int,
             default=1,
             help="Generator core index from 0 to gen-cores-1.")
+        parser.add_argument("--gen-start",
+            type=int,
+            default=1,
+            help="Generator start permutation index.")
         self.args = parser.parse_args()
 
     def analyze_file(self, input_file_path:str, outout_dir_path:str) -> None:
@@ -59,7 +63,7 @@ class Main:
             if m.args.gen_index < 0 or m.args.gen_index >= m.args.gen_cores:
                 print(f"Error: --gen-index must be in range 0..{m.args.gen_cores-1}")
                 sys.exit(1)
-        g.generate(gen_output_name, m.args.overwrite, m.args.gen_cores, m.args.gen_index)
+        g.generate(gen_output_name, m.args.overwrite, m.args.gen_cores, m.args.gen_index, m.args.gen_start)
         return g
 
     def find_files(self, dir_input:str) -> list:
