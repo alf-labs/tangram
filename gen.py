@@ -198,7 +198,7 @@ class Generator:
         print(f"File: {report_file_path}")
         print("------")
 
-        with open(report_file_path, "w") as self.report_file:
+        with open(report_file_path, "a") as self.report_file:
             self.size_px, self.yrg_coords, cells_empty = self.create_cells()
             self.precompute_positions(cells_empty)
             for cells in self.gen_all_solutions(cells_empty, cores_num, core_index, perm_start):
