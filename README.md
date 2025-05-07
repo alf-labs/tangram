@@ -3,22 +3,23 @@
 This analyzer attempts to parse pictures of a
 [Tangram Puzzle](data/originals/sample/sample.jpg).
 
-<p align=center><img width="384" src="data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
+<p align=center><img width="384" src="analyzer/data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
 
 
 ## Usage
 
-1. Place all source pictures in `data/originals`.
+1. Place all source pictures in `analyzer/data/originals`.
 2. Create the destination directory:
 ```
-$ mkdir data/output
+$ mkdir analyzer/data/output
 ```
 3. Run the generator:
 ```
+cd analyzer
 python main.py -d data/originals/
 ```
 4. Open the generate index: \
-[data/output/index.html](data/output/index.html)
+[analyzer/data/output/index.html](analyzer/data/output/index.html)
 
 
 To run the generator on a different source and destination directories:
@@ -31,7 +32,7 @@ Once all the files have been processed, an `index.html` is generated listing all
 
 Each parameter has a long and a short form (e.g. `-d` and `--input-dir`).
 
-The default output directory, if not provided, is `data/output`.
+The default output directory, if not provided, is `analyzer/data/output`.
 
 It's also possible to process a single image at a time:
 ```
@@ -43,8 +44,8 @@ Inputs are only processed once. To force inputs to be processed again, use the `
 or `--overwrite` argument:
 
 ```
-python main.py -d data/originals/ --overwrite
-python main.py -d data/originals/  -y
+python main.py -d analyzer/data/originals/ --overwrite
+python main.py -d analyzer/data/originals/  -y
 ```
 
 
