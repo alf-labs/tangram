@@ -3,8 +3,8 @@ import Table from 'react-bootstrap/Table';
 import BoardImage from "./BoardImage.tsx";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
-const generatorDataUrl = "data.txt"
-const analyzerDataUrl = "index.json"
+const generatorDataUrl = "generator.txt"
+const analyzerDataUrl = "analyzer.json"
 const analyzerRelativeUrl = "../tangram/";
 
 interface TableData {
