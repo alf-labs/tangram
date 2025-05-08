@@ -2,6 +2,9 @@ import {type ReactElement, useEffect, useState} from "react";
 import Table from 'react-bootstrap/Table';
 import BoardImage from "./BoardImage.tsx";
 
+// Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
+const dataUrl = "data.txt"
+
 interface TableData {
     index: number;
     perm: number;
@@ -41,7 +44,7 @@ function TangramTable() : ReactElement {
 
     async function fetchData() {
         try {
-            const response = await fetch("/data.txt");
+            const response = await fetch(dataUrl);
             if (!response.ok) {
                 throw new Error(`Error reading data: ${response.status}`);
             }
@@ -52,10 +55,12 @@ function TangramTable() : ReactElement {
 
             setStatus("Parsing...");
             const pattern = /^@@\s+\[(\d+)]\s+SIG\s+(\S+)\s+(.+)$/;
+            let num_fetch = 0;
             for (const line of content.split("\n")) {
                 const matches = line.trim().match(pattern);
                 if (matches) {
-                    const pieces = matches[3].replace(/,/g, " ");
+                    num_fetch++;
+                    const pieces = sortStringsIgnoreCase(matches[3].split(",")).join(" ");
                     if (!piecesDuplicates.has(pieces)) {
                         const entry: TableData = {
                             index: 0,
@@ -94,10 +99,24 @@ function TangramTable() : ReactElement {
             }
 
             setTableData(tableData);
-            setStatus(`${tableData.length} entries loaded.`);
+            setStatus(`${tableData.length} unique entries out of ${num_fetch} loaded.`);
         } catch (err) {
             setStatus(stringifyError(err));
         }
+    }
+
+    function sortStringsIgnoreCase(arr: string[]): string[] {
+        return arr.sort((a, b) => {
+            const lowerA = a.toLowerCase();
+            const lowerB = b.toLowerCase();
+            if (lowerA < lowerB) {
+                return -1;
+            }
+            if (lowerA > lowerB) {
+                return 1;
+            }
+            return 0;
+        });
     }
 
     return (
@@ -107,10 +126,9 @@ function TangramTable() : ReactElement {
             <thead>
             <tr>
                 <th>#</th>
-                <th>Perm</th>
                 <th>Found</th>
+                <th>Preview</th>
                 <th>Pieces</th>
-                <th>Board</th>
                 <th>Board</th>
             </tr>
             </thead>
@@ -118,20 +136,22 @@ function TangramTable() : ReactElement {
             {
                 tableData.map((item:TableData) =>
                     <tr key={item.index}>
-                    <td id="r{item.index}"><a href="#r{item.index}">{item.index}</a></td>
-                    <td>{item.perm}</td>
-                    <td>{item.found ? "Yes" : "--"}</td>
-                    <td>{item.pieces}</td>
-                    <td className="board text-center">
-                        {
-                            item.boardLines.map((line) => (
-                                <span key={`${item.index}-${line}"`}>{line}</span>
-                            ))
-                        }
-                    </td>
-                    <td>
-                        <BoardImage board={item.board} />
-                    </td>
+                        <td id="r{item.index}" className="index">
+                            <a href="#r{item.index}">{item.index}</a><br/>
+                            {item.perm}
+                        </td>
+                        <td>{item.found ? "Yes" : "--"}</td>
+                        <td className="preview">
+                            <BoardImage board={item.board} />
+                        </td>
+                        <td className="pieces">{item.pieces}</td>
+                        <td className="board text-center">
+                            {
+                                item.boardLines.map((line) => (
+                                    <span key={`${item.index}-${line}"`}>{line}</span>
+                                ))
+                            }
+                        </td>
                     </tr>
                 )
             }
