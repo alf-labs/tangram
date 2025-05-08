@@ -19,7 +19,7 @@ from typing import Tuple
 
 N2 = coord.N2
 DEBUG_PIECE=-1
-DEBUG_SAVE=True
+DEBUG_SAVE=False
 
 PX_CELL_SIZE = 30
 INVALID_CELL = "INVALID"

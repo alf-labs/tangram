@@ -52,3 +52,18 @@ export default tseslint.config({
   },
 })
 ```
+
+### Dev vs Deployment
+
+Dev:
+```
+$ npm dev
+```
+
+Prod:
+```
+$ npm run build
+$ num run preview
+```
+
+~~

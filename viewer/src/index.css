@@ -44,3 +44,7 @@ td.board {
 td.board span {
   display: block;
 }
+
+tr.row-found td {
+  background-color: #88CC88; !important;
+}
