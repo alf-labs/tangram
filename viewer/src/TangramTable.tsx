@@ -1,6 +1,6 @@
-import {useEffect, useState} from "react";
+import {type ReactElement, useEffect, useState} from "react";
 import Table from 'react-bootstrap/Table';
-import {Image} from "react-bootstrap";
+import BoardImage from "./BoardImage.tsx";
 
 interface TableData {
     index: number;
@@ -11,7 +11,7 @@ interface TableData {
     boardLines: string[];
 }
 
-function TangramTable() {
+function TangramTable() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [status, setStatus] = useState("Loading...");
 
@@ -41,7 +41,6 @@ function TangramTable() {
 
     async function fetchData() {
         try {
-            // console(`${process.env.PUBLIC_URL}`);
             const response = await fetch("/data.txt");
             if (!response.ok) {
                 throw new Error(`Error reading data: ${response.status}`);
@@ -49,25 +48,51 @@ function TangramTable() {
             const content = await response.text();
             const tableData: TableData[] = [];
 
+            const piecesDuplicates = new Set<string>();
+
             setStatus("Parsing...");
             const pattern = /^@@\s+\[(\d+)]\s+SIG\s+(\S+)\s+(.+)$/;
-            let index: number = 1;
             for (const line of content.split("\n")) {
                 const matches = line.trim().match(pattern);
-                console.log(JSON.stringify(matches));
                 if (matches) {
-                    const entry: TableData = {
-                        index: index,
-                        perm: parseInt(matches[1], 10),
-                        found: false,
-                        board: matches[2],
-                        boardLines: splitBoard(matches[2]),
-                        pieces: matches[3].replace(/,/g, " "),
+                    const pieces = matches[3].replace(/,/g, " ");
+                    if (!piecesDuplicates.has(pieces)) {
+                        const entry: TableData = {
+                            index: 0,
+                            perm: parseInt(matches[1], 10),
+                            found: false,
+                            board: matches[2],
+                            boardLines: splitBoard(matches[2]),
+                            pieces: pieces,
+                        }
+                        piecesDuplicates.add(pieces);
+                        tableData.push(entry);
                     }
-                    tableData.push(entry);
-                    index += 1;
                 }
             }
+
+            // Sort the array first by "perm" (ascending) and then by "pieces" (ascending)
+            tableData.sort((a, b) => {
+                // First comparison: by "perm"
+                if (a.perm !== b.perm) {
+                    return a.perm - b.perm;
+                }
+
+                // If "perm" is the same, then compare by "pieces"
+                if (a.pieces < b.pieces) {
+                    return -1;
+                } else  if (a.pieces > b.pieces) {
+                    return 1;
+                }
+                return 0; // all the same
+            });
+
+            // Compute the index after sorting
+            let index: number = 1;
+            for  (const entry of tableData) {
+                entry.index = index++;
+            }
+
             setTableData(tableData);
             setStatus(`${tableData.length} entries loaded.`);
         } catch (err) {
@@ -92,7 +117,7 @@ function TangramTable() {
             <tbody>
             {
                 tableData.map((item:TableData) =>
-                    <tr>
+                    <tr key={item.index}>
                     <td id="r{item.index}"><a href="#r{item.index}">{item.index}</a></td>
                     <td>{item.perm}</td>
                     <td>{item.found ? "Yes" : "--"}</td>
@@ -100,12 +125,12 @@ function TangramTable() {
                     <td className="board text-center">
                         {
                             item.boardLines.map((line) => (
-                                <span>{line}</span>
+                                <span key={`${item.index}-${line}"`}>{line}</span>
                             ))
                         }
                     </td>
                     <td>
-                        <Image className="previewImg" src="https://github.com/alf-labs/tangram/blob/main/analyzer/data/originals/sample/sample.jpg?raw=true" />
+                        <BoardImage board={item.board} />
                     </td>
                     </tr>
                 )

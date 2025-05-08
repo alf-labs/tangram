@@ -1,9 +1,9 @@
 import Title from "./Title.tsx";
-// import TangramViewer from "./TangramViewer.tsx";
 import TangramTable from "./TangramTable.tsx";
 import {Col, Container, Row} from "react-bootstrap";
+import type {ReactElement} from "react";
 
-function App() {
+function App() : ReactElement {
 
   return (
       <Container fluid>
@@ -13,12 +13,6 @@ function App() {
                   <p/>
               </Col>
           </Row>
-          {/*<Row>*/}
-          {/*    <Col>*/}
-          {/*        <TangramViewer/>*/}
-          {/*        <p/>*/}
-          {/*    </Col>*/}
-          {/*</Row>*/}
           <Row>
               <Col>
                   <TangramTable/>
