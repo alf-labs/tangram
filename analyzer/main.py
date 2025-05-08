@@ -139,7 +139,7 @@ class Main:
             stats["num_img"] = stats["num_img"] + 1
             for alt in glob.glob(os.path.join(output_dir, basename + "_[0-9][0-9]_*.jpg"), recursive=False):
                 info["alt"].append(os.path.basename(alt))
-            max_columns = 1 + max(max_columns, len(info["alt"]))
+            max_columns = max(max_columns, 1 + len(info["alt"]))
 
         # Read template
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -158,6 +158,7 @@ class Main:
 
         # Generate HTML table
         rows = ""
+        found_json = []
         n = 0
         for info in img_infos:
             rows += f"<tr class='space'><td colspan={max_columns}>&nbsp;</td></tr>\n"
@@ -175,6 +176,8 @@ class Main:
             rows += f"<tr class='sig {sig_class}'>\n"
             rows += f"  <td colspan={max_columns}>{sig} {sig_info}</td>\n"
             rows += "</tr>\n"
+            if sig_count == 1:
+                found_json.append( f'{{ "href":"{name}", "index":{n}, "sig":"{sig}" }}' )
 
             rows += "<tr class='images'>\n"
             rows += f"  <td><img src='{info['src']}'></td>\n"
@@ -191,6 +194,13 @@ class Main:
             f.write(html)
         print(f"Generated index at {index_path}")
         print(stats_str.replace("<br/>", ""))
+
+        found_path = os.path.join(output_dir, "index.json")
+        with open(found_path, "w") as f:
+            f.write("[\n")
+            f.write(",\n".join(found_json))
+            f.write("\n]\n")
+
 
 
 if __name__ == "__main__":
