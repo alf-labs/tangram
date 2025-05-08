@@ -17,11 +17,11 @@ const VALID_YRG = [
 
 type StringToStringMap = { [key: string]: string };
 const COLORS : StringToStringMap = {
-    "Y": "#ffea00",
-    "R": "#FF0000",
-    "O": "#FF8000",
+    "Y": "#DDA044",
+    "R": "#CC0000",
+    "O": "#EE6600",
     "B": "#808080",
-    "W": "#FFFFFF",
+    "W": "#EEDDCC",
     "U": "#00FF00",  // unknown color
 }
 
