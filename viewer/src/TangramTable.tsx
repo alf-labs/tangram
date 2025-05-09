@@ -1,6 +1,6 @@
 import {type ReactElement, useEffect, useState} from "react";
 import Table from 'react-bootstrap/Table';
-import BoardImage from "./BoardImage.tsx";
+import {BoardImageInView} from "./BoardImage.tsx";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
 const generatorDataUrl = "generator.txt"
@@ -26,6 +26,7 @@ interface AnalyzerItem {
 function TangramTable() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [status, setStatus] = useState("Loading...");
+    const [numMatches, setNumMatches] = useState(-1);
 
     useEffect(() => {
         fetchData()
@@ -133,7 +134,8 @@ function TangramTable() : ReactElement {
             }
 
             setTableData(tableData);
-            setStatus(`${tableData.length} unique entries out of ${num_fetch} loaded. ${num_found} solutions found.`);
+            setStatus(`${tableData.length} unique entries loaded out of ${num_fetch}.`);
+            setNumMatches(num_found);
         } catch (err) {
             setStatus(stringifyError(err));
         }
@@ -155,7 +157,10 @@ function TangramTable() : ReactElement {
 
     return (
     <>
-        <div>{status}</div>
+        <div>
+            <span> {status} </span>
+            { numMatches < 0 ? "" : <span> {numMatches} matches with <a href="../tangram">analyzer</a> found.</span> }
+        </div>
         <Table striped bordered hover>
             <thead>
             <tr>
@@ -169,15 +174,15 @@ function TangramTable() : ReactElement {
             <tbody>
             {
                 tableData.map((item:TableData) =>
-                    <tr key={item.index}
+                    <tr key={item.index} id={ `r${item.index}` }
                         className={ item.found_href ? "row-found" : "" } >
-                        <td id={ `#r${item.index}` } className="index">
+                        <td className="index">
                             <a href={ `#r${item.index}` }>{item.index}</a><br/>
                             {item.perm}
                         </td>
                         <td>{ item.found_href ? <a href={ `${analyzerRelativeUrl}#${item.found_href}` } target="_blank">{item.found_idx}</a> : "--" }</td>
-                        <td className="preview">
-                            <BoardImage board={item.board} />
+                        <td className="preview d-flex justify-content-center">
+                            <BoardImageInView board={item.board} />
                         </td>
                         <td className="pieces">{item.pieces}</td>
                         <td className="board text-center">

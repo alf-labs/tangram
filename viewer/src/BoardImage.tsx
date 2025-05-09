@@ -1,4 +1,5 @@
 import {type ReactElement, useEffect, useRef} from "react";
+import {useInView} from "react-intersection-observer";
 
 // Let's call X'Y' the pixel coordinate system.
 // The board uses an "YRG" coordinate system:
@@ -29,8 +30,14 @@ const STROKE_COLOR = "#404040";
 
 const boardSize = 6;
 const boardImgWidth = 120;
+const boardImgHeight = computeHeight(boardImgWidth);
 const cachedBoardCells: BoardCellPoints[] = [];
 
+
+function computeHeight(width: number): number {
+    // Height = Width * sin(60 degrees). pi/3=60 degrees.
+    return Math.ceil(width * Math.sin(Math.PI / 3));
+}
 
 interface BoardImageProps {
     board: string;
@@ -45,14 +52,14 @@ interface BoardCellPoints {
     y3: number;
 }
 
-function BoardImage(props: BoardImageProps) : ReactElement {
+export function BoardImage(props: BoardImageProps) : ReactElement {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         canvas.width = boardImgWidth;
-        canvas.height = computeHeight(boardImgWidth);
+        canvas.height = boardImgHeight;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -69,11 +76,6 @@ function BoardImage(props: BoardImageProps) : ReactElement {
             drawCell(ctx, cell, color);
         }
     }, [props.board]);
-
-    function computeHeight(width: number): number {
-        // Height = Width * sin(60 degrees). pi/3=60 degrees.
-        return Math.ceil(width * Math.sin(Math.PI / 3));
-    }
 
     function computeBoardCells(width: number, height: number) {
         const cx = width / 2;
@@ -134,4 +136,15 @@ function BoardImage(props: BoardImageProps) : ReactElement {
     return <canvas ref={canvasRef} />;
 }
 
-export default BoardImage
+
+export function BoardImageInView(props: BoardImageProps) : ReactElement {
+    const { ref, inView, /*entry*/ } = useInView();
+
+    return (
+        <div ref={ref} style={{ width: `${boardImgWidth}px`, height: `${boardImgHeight}px`, }}>
+            { inView && <BoardImage board={props.board} /> }
+        </div>
+    );
+}
+
+// ~~
