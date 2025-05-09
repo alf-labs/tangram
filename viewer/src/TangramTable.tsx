@@ -134,7 +134,7 @@ function TangramTable() : ReactElement {
             }
 
             setTableData(tableData);
-            setStatus(`${tableData.length} unique entries loaded out of ${num_fetch}.`);
+            setStatus(`${tableData.length.toLocaleString()} unique entries loaded out of ${num_fetch.toLocaleString()}.`);
             setNumMatches(num_found);
         } catch (err) {
             setStatus(stringifyError(err));
@@ -178,7 +178,7 @@ function TangramTable() : ReactElement {
                         className={ item.found_href ? "row-found" : "" } >
                         <td className="index">
                             <a href={ `#r${item.index}` }>{item.index}</a><br/>
-                            {item.perm}
+                            {item.perm.toLocaleString()}
                         </td>
                         <td>{ item.found_href ? <a href={ `${analyzerRelativeUrl}#${item.found_href}` } target="_blank">{item.found_idx}</a> : "--" }</td>
                         <td className="preview d-flex justify-content-center">

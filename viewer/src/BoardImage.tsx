@@ -28,9 +28,9 @@ const COLORS : StringToStringMap = {
 
 const STROKE_COLOR = "#404040";
 
-const boardSize = 6;
-const boardImgWidth = 120;
-const boardImgHeight = computeHeight(boardImgWidth);
+const BOARD_SIZE = 6;
+const BOARD_IMG_WIDTH = 120;
+const BOARD_IMG_HEIGHT = computeHeight(BOARD_IMG_WIDTH);
 const cachedBoardCells: BoardCellPoints[] = [];
 
 
@@ -58,8 +58,8 @@ export function BoardImage(props: BoardImageProps) : ReactElement {
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        canvas.width = boardImgWidth;
-        canvas.height = boardImgHeight;
+        canvas.width = BOARD_IMG_WIDTH;
+        canvas.height = BOARD_IMG_HEIGHT;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -81,7 +81,7 @@ export function BoardImage(props: BoardImageProps) : ReactElement {
         const cx = width / 2;
         const cy = height / 2;
         const radius = width / 2;
-        const N2 = boardSize / 2;
+        const N2 = BOARD_SIZE / 2;
 
         // Compute the YRG Y and R vectors. pi/3*2=120 degrees.
         const rx = radius / N2;
@@ -141,7 +141,7 @@ export function BoardImageInView(props: BoardImageProps) : ReactElement {
     const { ref, inView, /*entry*/ } = useInView();
 
     return (
-        <div ref={ref} style={{ width: `${boardImgWidth}px`, height: `${boardImgHeight}px`, }}>
+        <div ref={ref} style={{ width: `${BOARD_IMG_WIDTH}px`, height: `${BOARD_IMG_HEIGHT}px`, }}>
             { inView && <BoardImage board={props.board} /> }
         </div>
     );
