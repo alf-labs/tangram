@@ -159,7 +159,7 @@ function TangramTable() : ReactElement {
     <>
         <div>
             <span> {status} </span>
-            { numMatches < 0 ? "" : <span> {numMatches} matches with <a href="../tangram">analyzer</a> found.</span> }
+            { numMatches < 0 ? "" : <span> {numMatches} matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span> }
         </div>
         <Table striped bordered hover>
             <thead>
