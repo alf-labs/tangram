@@ -78,12 +78,11 @@ function TangramTable() : ReactElement {
 
             setStatus("Parsing...");
             const pattern = /^@@\s+\[(\d+)]\s+SIG\s+(\S+)\s+(.+)$/;
-            let num_fetch = 0;
+            let maxPerm = 0;
             let num_found = 0;
             for (const line of generatorContent.split("\n")) {
                 const matches = line.trim().match(pattern);
                 if (matches) {
-                    num_fetch++;
                     const pieces = sortStringsIgnoreCase(matches[3].split(",")).join(" ");
                     if (!piecesDuplicates.has(pieces)) {
                         const board = matches[2];
@@ -95,10 +94,12 @@ function TangramTable() : ReactElement {
                             found_href = found_item.href;
                             num_found++;
                         }
+                        const perm = parseInt(matches[1], 10);
+                        maxPerm = Math.max(perm, maxPerm);
 
                         const entry: TableData = {
                             index: 0,
-                            perm: parseInt(matches[1], 10),
+                            perm: perm,
                             found_idx: found_idx,
                             found_href: found_href,
                             board: board,
@@ -134,7 +135,8 @@ function TangramTable() : ReactElement {
             }
 
             setTableData(tableData);
-            setStatus(`${tableData.length.toLocaleString()} unique entries loaded out of ${num_fetch.toLocaleString()}.`);
+            const numEntries = tableData.length;
+            setStatus(`${numEntries.toLocaleString()} unique ${ pluralize(numEntries, "entry", "entries") } loaded out of ${maxPerm.toLocaleString()} permutations.`);
             setNumMatches(num_found);
         } catch (err) {
             setStatus(stringifyError(err));
@@ -155,11 +157,15 @@ function TangramTable() : ReactElement {
         });
     }
 
+    function pluralize(count: number, singular: string, plural: string): string {
+        return count === 1 ? singular : plural;
+    }
+
     return (
     <>
         <div>
             <span> {status} </span>
-            { numMatches < 0 ? "" : <span> {numMatches} matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span> }
+            { numMatches < 0 ? "" : <span> {numMatches} { pluralize(numMatches, "match", "matches" ) } with <a href="../tangram/" target="_blank">analyzer</a> found.</span> }
         </div>
         <Table striped bordered hover>
             <thead>
