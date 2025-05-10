@@ -31,7 +31,7 @@ VERSION_MAJOR=$(grep VERSION_MAJOR src/GitBuild.tsx | cut -d \" -f 2)
 VERSION_MINOR=$(grep VERSION_MINOR src/GitBuild.tsx | cut -d \" -f 2)
 
 if [[ "$1" != "-y" ]]; then
-  if ! git show HEAD | grep -q "VERSION_MINOR =" ; then
+  if ! (git show HEAD ; git diff) | grep -q "^+export const VERSION_MINOR =" ; then
     VERSION_MINOR=$((VERSION_MINOR + 1))
   fi
 
@@ -62,4 +62,10 @@ cat src/GitBuild.tsx
 npm run build
 
 echo
-echo "Suggestion: $ git tag viewer${VERSION_MAJOR}.${VERSION_MINOR}"
+echo "Suggestion:"
+echo "$ git ci -m \"Tangram Viewer: Version ${VERSION_MAJOR}.${VERSION_MINOR}\""
+echo "$ git tag viewer${VERSION_MAJOR}.${VERSION_MINOR}"
+echo
+
+#~~
+

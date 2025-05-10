@@ -3,9 +3,9 @@ import Table from 'react-bootstrap/Table';
 import {BoardImageInView} from "./BoardImage.tsx";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
-const generatorDataUrl = "generator.txt"
-const analyzerDataUrl = "analyzer.json"
-const analyzerRelativeUrl = "../tangram/";
+const GENERATOR_TXT_URL = "generator.txt"
+const ANALYZER_JSON_URL = "analyzer.json"
+const TANGRAM_RELATIVE_URL = "../tangram/";
 
 interface TableData {
     index: number;
@@ -40,11 +40,11 @@ function TangramTable() : ReactElement {
         }
     }
 
-    const lineLengths = [7, 9, 11, 11, 9, 7];
+    const LINE_LENGTHS = [7, 9, 11, 11, 9, 7];
     function splitBoard(board:string): string[] {
         const lines : string[] = [];
         let start = 0;
-        for (const len of lineLengths) {
+        for (const len of LINE_LENGTHS) {
             const end = start + len;
             lines.push(board.substring(start, end));
             start = end;
@@ -55,7 +55,7 @@ function TangramTable() : ReactElement {
     async function fetchData() {
         try {
             // Parse the analyzer data
-            const analyzerData = await fetch(analyzerDataUrl);
+            const analyzerData = await fetch(ANALYZER_JSON_URL);
             if (!analyzerData.ok) {
                 throw new Error(`Error reading data: ${analyzerData.status}`);
             }
@@ -67,7 +67,7 @@ function TangramTable() : ReactElement {
             }
 
             // Parse the generator data
-            const generatorData = await fetch(generatorDataUrl);
+            const generatorData = await fetch(GENERATOR_TXT_URL);
             if (!generatorData.ok) {
                 throw new Error(`Error reading data: ${generatorData.status}`);
             }
@@ -83,7 +83,7 @@ function TangramTable() : ReactElement {
             for (const line of generatorContent.split("\n")) {
                 const matches = line.trim().match(pattern);
                 if (matches) {
-                    const pieces = sortStringsIgnoreCase(matches[3].split(",")).join(" ");
+                    const pieces = sortPieces(matches[3].split(",")).join(" ");
                     if (!piecesDuplicates.has(pieces)) {
                         const board = matches[2];
                         let found_idx = 0;
@@ -136,17 +136,25 @@ function TangramTable() : ReactElement {
 
             setTableData(tableData);
             const numEntries = tableData.length;
-            setStatus(`${numEntries.toLocaleString()} unique ${ pluralize(numEntries, "entry", "entries") } loaded out of ${maxPerm.toLocaleString()} permutations.`);
+            setStatus(`${numEntries.toLocaleString()} unique ${ pluralize(numEntries, "solution", "solutions") } found in ${maxPerm.toLocaleString()} permutations.`);
             setNumMatches(num_found);
         } catch (err) {
             setStatus(stringifyError(err));
         }
     }
 
-    function sortStringsIgnoreCase(arr: string[]): string[] {
+    const PIECES_ORDER = "HiWPVJLT";
+    function sortPieces(arr: string[]): string[] {
+        // Sort all the pieces in a specific order (matching the generator)
+        const order = PIECES_ORDER.toLowerCase();
         return arr.sort((a, b) => {
             const lowerA = a.toLowerCase();
             const lowerB = b.toLowerCase();
+            const firstA = order.indexOf(lowerA.charAt(0));
+            const firstB = order.indexOf(lowerB.charAt(0));
+            if (firstA != firstB) {
+                return firstA - firstB;
+            }
             if (lowerA < lowerB) {
                 return -1;
             }
@@ -186,7 +194,7 @@ function TangramTable() : ReactElement {
                             <a href={ `#r${item.index}` }>{item.index}</a><br/>
                             {item.perm.toLocaleString()}
                         </td>
-                        <td>{ item.found_href ? <a href={ `${analyzerRelativeUrl}#${item.found_href}` } target="_blank">{item.found_idx}</a> : "--" }</td>
+                        <td>{ item.found_href ? <a href={ `${TANGRAM_RELATIVE_URL}#${item.found_href}` } target="_blank">{item.found_idx}</a> : "--" }</td>
                         <td className="preview d-flex justify-content-center">
                             <BoardImageInView board={item.board} />
                         </td>
