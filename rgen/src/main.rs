@@ -4,6 +4,7 @@ use crate::pieces::Pieces;
 
 mod pieces;
 mod gen;
+mod coord;
 
 fn main() {
     println!("Hello, world!");
