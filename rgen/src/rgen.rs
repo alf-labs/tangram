@@ -2,13 +2,13 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use crate::pieces;
 
-pub struct Gen {
+pub struct RGen {
     p: Arc<Mutex<pieces::Pieces>>,
 }
 
-impl Gen {
-    pub fn new(p : Arc<Mutex<pieces::Pieces>>) -> Gen {
-        Gen { p }
+impl RGen {
+    pub fn new(p : Arc<Mutex<pieces::Pieces>>) -> RGen {
+        RGen { p }
     }
     
     pub fn do_stuff(&mut self) {
@@ -18,7 +18,8 @@ impl Gen {
 
     fn next_pieces(&mut self) -> u64 {
         let mut p = self.p.lock().unwrap();
-        let v = p.next().unwrap();
-        v
+        // let v = p.next().unwrap();
+        // v
+        42
     }
 }

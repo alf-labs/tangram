@@ -15,9 +15,9 @@ pub struct Shape {
 }
 
 pub struct Piece {
-    name: String,
-    color: Colors,
-    max_rot: i32,
+    pub name: String,
+    pub color: Colors,
+    pub max_rot: i32,
     shape: Shape,
 }
 

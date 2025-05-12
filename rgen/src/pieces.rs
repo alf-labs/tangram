@@ -1,10 +1,22 @@
+use indexmap::IndexMap;
 use crate::coord::RelYRG;
 use crate::piece::{Colors, Piece};
 use crate::rel_yrg;
 
+pub struct Permutation {
+    key: String,
+    angle: u16,
+}
+
+pub type Permutations = Vec<Permutation>;
+
 pub struct Pieces {
-    a: u64,
-    p: Vec<Piece>,
+    pieces: IndexMap<String, Piece>,
+}
+
+struct PiecesIter {
+    level: usize,
+    rot: i32,
 }
 
 impl Pieces {
@@ -148,18 +160,18 @@ impl Pieces {
             ));
         }
 
+        let mut p_map = IndexMap::new();
+        for item in p {
+            p_map.insert(item.name.clone(), item);
+        }
 
-        Pieces { a: 0, p }
+        Pieces { pieces: p_map }
     }
+
+    // pub fn iter(&self) -> PiecesIter {
+    //
+    // }
 }
 
-impl Iterator for Pieces {
-    type Item = u64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.a += 1;
-        Some(self.a)
-    }
-}
 
 // ~~
