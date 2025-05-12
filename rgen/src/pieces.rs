@@ -1,36 +1,10 @@
 use crate::coord::RelYRG;
+use crate::piece::{Colors, Piece};
 use crate::rel_yrg;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(u8)]
-pub enum Colors {
-    Red = b'R',
-    Yellow = b'Y',
-    Orange = b'O',
-    Black = b'B',
-    White = b'W',
-}
-
-pub struct Shape {
-    cells: Vec<RelYRG>,
-}
-
-pub struct Piece {
-    name: String,
-    color: Colors,
-    max_rot: i32,
-    shape: Shape,
-}
 
 pub struct Pieces {
     a: u64,
     p: Vec<Piece>,
-}
-
-impl Piece {
-    pub fn new(name: String, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
-        Piece { name, color, max_rot, shape : Shape { cells } }
-    }
 }
 
 impl Pieces {

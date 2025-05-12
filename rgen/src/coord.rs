@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::abs_yrg;
 
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
@@ -10,25 +11,11 @@ pub struct AbsYRG {
     pub g: i8,
 }
 
-#[macro_export]
-macro_rules! abs_yrg {
-    ($y:expr, $r:expr, $g:expr) => {
-        AbsYRG { y: $y as i8, r: $r as i8, g: $g as i8 }
-    };
-}
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct RelYRG {
     pub y: i8,
     pub r: i8,
     pub g: i8,
-}
-
-#[macro_export]
-macro_rules! rel_yrg {
-    ($y:expr, $r:expr, $g:expr) => {
-        RelYRG { y: $y as i8, r: $r as i8, g: $g as i8 }
-    };
 }
 
 impl AbsYRG {

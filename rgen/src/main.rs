@@ -2,9 +2,11 @@ use std::sync::{Arc, Mutex};
 use crate::gen::Gen;
 use crate::pieces::Pieces;
 
+mod macros;
+mod coord;
+mod piece;
 mod pieces;
 mod gen;
-mod coord;
 
 fn main() {
     println!("Hello, world!");
