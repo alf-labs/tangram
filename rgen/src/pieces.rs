@@ -10,9 +10,11 @@ pub enum Colors {
     Black = b'B',
     White = b'W',
 }
+
 pub struct Shape {
     cells: Vec<RelYRG>,
 }
+
 pub struct Piece {
     name: String,
     color: Colors,
