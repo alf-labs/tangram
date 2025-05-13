@@ -1,39 +1,11 @@
-use std::cell::{RefCell, RefMut};
-use std::fmt;
-use std::fmt::Formatter;
-use std::ops::RangeInclusive;
-use std::time::Instant;
-use indexmap::IndexMap;
-use itertools::Itertools;
 use crate::coord::RelYRG;
 use crate::piece::{Colors, Piece};
 use crate::rel_yrg;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Permutation {
-    key: String,
-    angle: i32,
-}
-
-impl fmt::Display for Permutation {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}@{}", self.key, self.angle)
-    }
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Permutations {
-    perms: Vec<Permutation>,
-    index: i32,
-}
-
-impl fmt::Display for Permutations {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}] {}", self.index, self.perms.iter().join(","))
-    }
-}
-
+use indexmap::IndexMap;
+use std::cell::RefCell;
+use std::ops::RangeInclusive;
+use std::time::Instant;
+use crate::permutations::{Permutation, Permutations};
 
 #[derive(Debug)]
 pub struct Pieces {
@@ -218,8 +190,8 @@ impl Pieces {
                 let now = Instant::now();
                 let duration = now.duration_since(start_ts);
                 let sec = duration.as_secs_f64();
-                let fps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
-                print!("{0:.2} fps : {1}           \r", fps, item);
+                let pps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
+                print!("{0:.2} pps : {1}           \r", pps, item);
 
             }
         }
@@ -228,8 +200,8 @@ impl Pieces {
         let now = Instant::now();
         let duration = now.duration_since(start_ts);
         let sec = duration.as_secs_f64();
-        let fps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
-        println!("Speed: {0:.2} fps", fps)
+        let pps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
+        println!("Speed: {0:.2} pps", pps)
     }
 }
 
@@ -412,7 +384,7 @@ impl PieceIteratorState<'_> {
     }
 
     fn inc(&mut self) -> bool {
-        /// Returns true if wraps around.
+        // Returns true if wraps around.
         if self.r_index < self.max_rot {
             self.r_index += 60;
         } else if self.p_index < self.pieces.len() - 1 {

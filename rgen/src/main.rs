@@ -1,12 +1,10 @@
-use std::ops::RangeInclusive;
-use std::sync::{Arc, Mutex};
-use std::time::Instant;
-use clap::Parser;
-use crate::rgen::RGen;
 use crate::pieces::Pieces;
+use clap::Parser;
+use std::ops::RangeInclusive;
 
 mod macros;
 mod coord;
+mod permutations;
 mod piece;
 mod pieces;
 mod rgen;
