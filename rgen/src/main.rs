@@ -7,6 +7,7 @@ mod coord;
 mod permutations;
 mod piece;
 mod pieces;
+mod board;
 mod rgen;
 
 #[derive(Parser, Debug)]
