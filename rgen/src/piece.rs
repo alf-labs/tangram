@@ -10,10 +10,12 @@ pub enum Colors {
     White = b'W',
 }
 
+#[derive(Debug)]
 pub struct Shape {
     cells: Vec<RelYRG>,
 }
 
+#[derive(Debug)]
 pub struct Piece {
     pub name: String,
     pub color: Colors,
