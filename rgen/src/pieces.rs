@@ -1,6 +1,8 @@
 use std::cell::{RefCell, RefMut};
 use std::fmt;
 use std::fmt::Formatter;
+use std::ops::RangeInclusive;
+use std::time::Instant;
 use indexmap::IndexMap;
 use itertools::Itertools;
 use crate::coord::RelYRG;
@@ -185,8 +187,49 @@ impl Pieces {
         Pieces { pieces: p_map }
     }
 
-    pub fn iter(&self) -> PiecesIteratorState {
-        PiecesIteratorState::new(self)
+    pub fn iter(&self, piece_selector: i32) -> PiecesIteratorState {
+        PiecesIteratorState::new(self, piece_selector)
+    }
+
+    pub(crate) fn dump(&self,
+                       piece_selector: &i32,
+                       perm_range: RangeInclusive<i32>,
+                       print_all: bool) {
+        let pmin = *perm_range.start();
+        let pmax = *perm_range.end();
+        let start_ts = Instant::now();
+        let mut count = 0;
+        let mut do_print_all = print_all;
+        let mut print_range =true;
+        for item in self.iter(*piece_selector) {
+            count += 1;
+            let index = item.index;
+            if index > pmax {
+                break
+            }
+            if pmin > 0 && index == pmin {
+                do_print_all = true;
+                println!();
+            }
+
+            if do_print_all {
+                println!("{}", item);
+            } else if print_range && count % 16384 == 0 {
+                let now = Instant::now();
+                let duration = now.duration_since(start_ts);
+                let sec = duration.as_secs_f64();
+                let fps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
+                print!("{0:.2} fps : {1}           \r", fps, item);
+
+            }
+        }
+
+        println!("\nNumber of permutations: {}", count);
+        let now = Instant::now();
+        let duration = now.duration_since(start_ts);
+        let sec = duration.as_secs_f64();
+        let fps: f64 = if sec <= 0.0 { 0.0 } else { (count as f64) / sec };
+        println!("Speed: {0:.2} fps", fps)
     }
 }
 
@@ -198,7 +241,7 @@ pub struct PiecesIteratorState<'a> {
 }
 
 impl PiecesIteratorState<'_> {
-    fn new(pieces: &Pieces) -> PiecesIteratorState {
+    fn new(pieces: &Pieces, piece_selector: i32) -> PiecesIteratorState {
         let mut state = Vec::new();
 
         state.push(
@@ -278,6 +321,15 @@ impl PiecesIteratorState<'_> {
                         ])));
         }
 
+        if piece_selector >= 0 {
+            // Limit the list of pieces to that single index.
+            // Swap the desired element to the beginning of the vector then truncate it to length 1.
+            if piece_selector > 0 {
+                state.swap(piece_selector as usize, 0);
+            }
+            state.truncate(1);
+        }
+
         PiecesIteratorState {
             state,
             index: 0,
@@ -301,6 +353,8 @@ impl<'a> Iterator for PiecesIteratorState<'a> {
             perms.push( s.current() );
         }
 
+        self.index += 1;
+
         let result = Some( Permutations {
             perms,
             index: self.index,
@@ -313,7 +367,6 @@ impl<'a> Iterator for PiecesIteratorState<'a> {
         // reached the end of its count and we're done.
         // Implementation detail: some pieces like HR or TW have only one state and
         // thus they "carry" at every single iteration.
-        self.index += 1;
         let mut carry = false;
         for item in self.state.iter().rev() {
             // Obtain a mutable borrow of the RefCell's content

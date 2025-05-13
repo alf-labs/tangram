@@ -17,7 +17,7 @@ impl RGen {
     }
 
     fn next_pieces(&mut self) -> u64 {
-        let mut p = self.p.lock().unwrap();
+        let p = self.p.lock().unwrap();
         // let v = p.next().unwrap();
         // v
         42
