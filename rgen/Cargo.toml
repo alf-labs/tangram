@@ -2,6 +2,7 @@
 name = "rgen"
 version = "0.1.0"
 # Our Debian stable requirement is rustc 1.63, which is ~2021
+# Instead install Rustup manually (or use Debian testing) with 1.86 ~2024.
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

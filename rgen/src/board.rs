@@ -17,6 +17,7 @@ macro_rules! yrg_to_idx {
     }
 }
 
+/// A board contains a model of all "colors" associated with each board physical cell.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Board {
     colors: [Colors; BOARD_SIZE],
@@ -26,10 +27,10 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
+    pub fn new(perm_index: i32) -> Board {
         Board {
             colors: [Colors::Invalid; BOARD_SIZE],
-            perm_index: 0,
+            perm_index,
         }
     }
 

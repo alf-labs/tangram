@@ -7,6 +7,7 @@ use std::ops::RangeInclusive;
 use std::time::Instant;
 use crate::permutations::{Permutation, Permutations};
 
+/// The static definition of all pieces possible (one per symmetry).
 #[derive(Debug)]
 pub struct Pieces {
     pieces: IndexMap<String, Piece>,

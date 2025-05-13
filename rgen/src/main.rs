@@ -1,6 +1,8 @@
 use crate::pieces::Pieces;
 use clap::Parser;
 use std::ops::RangeInclusive;
+use crate::coord::Coords;
+use crate::rgen::RGen;
 
 mod macros;
 mod coord;
@@ -29,6 +31,11 @@ enum Cli {
         help = "Print everything (very verbose).")]
         print_all: bool,
     },
+    Gen {
+        #[arg(short, long, default_value_t = -1,
+        help = "Piece selector. Default: use all pieces.")]
+        piece: i32,
+    }
 }
 
 fn main() {
@@ -37,12 +44,17 @@ fn main() {
     let cli = Cli::parse();
 
     let pieces = Pieces::new();
-    // let pieces_ptr = Arc::new(Mutex::new(pieces));
 
     match &cli {
         Cli::Dump { piece, min_perm, max_perm, print_all  } => {
             let range = RangeInclusive::new(*min_perm, *max_perm);
             pieces.dump(piece, range, *print_all)
+        },
+        Cli::Gen { piece } => {
+            let coord = Coords::new();
+
+            let rgen = RGen::new(&pieces, &coord);
+            rgen.run(piece)
         }
     }
 

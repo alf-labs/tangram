@@ -2,6 +2,7 @@ use itertools::Itertools;
 use std::fmt;
 use std::fmt::Formatter;
 
+/// A permutation for a single piece: piece name + rotation.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Permutation {
     pub key: String,
@@ -15,6 +16,7 @@ impl fmt::Display for Permutation {
 }
 
 
+/// A set of permutation (all pieces and their specific rotations) in a specific order.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Permutations {
     pub perms: Vec<Permutation>,
@@ -24,6 +26,23 @@ pub struct Permutations {
 impl fmt::Display for Permutations {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "[{}] {}", self.index, self.perms.iter().join(","))
+    }
+}
+
+impl Permutations {
+    pub fn split_first(&self) -> Option<(Permutation, Permutations)> {
+        if self.perms.is_empty() {
+            None
+        } else {
+            let first = self.perms.get(0).unwrap();
+            Some((
+                first.clone(),
+                Permutations {
+                    perms: self.perms[1..].to_vec(),
+                    index: self.index,
+                }
+                ))
+        }
     }
 }
 

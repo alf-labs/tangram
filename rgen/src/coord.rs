@@ -4,6 +4,7 @@ use crate::abs_yrg;
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
 
+/// An absolute YRG coordinate: Y/R in range [0...N-1], G in range [0,1].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct AbsYRG {
     pub y: i8,
@@ -11,6 +12,7 @@ pub struct AbsYRG {
     pub g: i8,
 }
 
+/// A center-relative YRG coordinate: Y/R in range [-N/2...N/2-1], G in range [0,1].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct RelYRG {
     pub y: i8,
@@ -38,6 +40,7 @@ impl RelYRG {
     }
 }
 
+/// Static YRG coordinates helpers: valid YRG coordinates, rotation lookup table.
 pub struct Coords {
     pub valid_yrg: Vec<AbsYRG>,
     valid_yrg_to_idx: HashMap<AbsYRG, usize>,

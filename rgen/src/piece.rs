@@ -2,6 +2,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use crate::coord::RelYRG;
 
+/// All possible colors for a board cell.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Colors {
@@ -28,6 +29,7 @@ pub struct Shape {
     cells: Vec<RelYRG>,
 }
 
+/// The static definition for one piece: name, color, shape. Symmetry creates multiple pieces.
 #[derive(Debug)]
 pub struct Piece {
     pub name: String,
