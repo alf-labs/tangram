@@ -1,17 +1,18 @@
 use itertools::Itertools;
 use std::fmt;
 use std::fmt::Formatter;
+use crate::piece::PieceKey;
 
 /// A permutation for a single piece: piece name + rotation.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Permutation {
-    pub key: String,
+    pub key: PieceKey,
     pub angle: i32,
 }
 
 impl fmt::Display for Permutation {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}@{}", self.key, self.angle)
+        write!(f, "{}{}@{}", self.key[0], self.key[1], self.angle)
     }
 }
 

@@ -43,20 +43,30 @@ impl Shape {
 }
 
 
+/// The type of a piece key/name is a 2-character ASCII.
+pub type PieceKey = [char; 2];
+
+
 /// The static definition for one piece: name, color, shape. Symmetry creates multiple pieces.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Piece {
-    pub name: String,
+    pub key: PieceKey,
     pub color: Colors,
     pub max_rot: i32,
     shapes: HashMap<i32, Shape>,
 }
 
 impl Piece {
-    pub fn new(name: &str, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
+    //noinspection RsSelfConvention
+    pub fn to_key(name: &str) -> PieceKey {
+        let mut char_iter = name.chars();
+        [char_iter.next().unwrap(), char_iter.next().unwrap()]
+    }
+
+    pub fn new(key: PieceKey, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
         let mut map = HashMap::new();
         map.insert(0, Shape { cells });
-        Piece { name: name.to_string(), color, max_rot, shapes: map }
+        Piece { key, color, max_rot, shapes: map }
     }
 
     pub fn init_rotations(&mut self, coords: &Coords) {

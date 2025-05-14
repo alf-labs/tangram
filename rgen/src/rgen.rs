@@ -3,6 +3,7 @@ use crate::coord::{AbsYRG, Coords};
 use crate::permutations::Permutations;
 use crate::piece::{Colors, Shape};
 use crate::pieces::Pieces;
+use crate::solutions::Solutions;
 
 pub struct RGen<'a> {
     pieces: &'a Pieces,
@@ -21,18 +22,18 @@ impl RGen<'_> {
     pub(crate) fn run(&self, piece_selector: &i32) {
         for permutations in self.pieces.iter(*piece_selector) {
             let empty_board = Board::new(permutations.index);
-            self.place_pieces(empty_board, permutations);
+            self.place_pieces(empty_board, permutations, Solutions::new());
         }
     }
 
-    fn place_pieces(&self, board: Board, permutations: Permutations, /* solutions */) {
+    fn place_pieces(&self, board: Board, permutations: Permutations, solutions: Solutions) {
         let split = permutations.split_first();
         if split.is_none() {
             return;
         }
         let (first, rest) = split.unwrap();
 
-        let piece = self.pieces.get(&*first.key).unwrap();
+        let piece = self.pieces.by_key(&first.key).unwrap();
         let shape = piece.shape(first.angle);
         let color = piece.color;
 
@@ -46,6 +47,14 @@ impl RGen<'_> {
             //   if rest is empty, record solution in board and emit
             //   else recurse place_piece(new board, rest, new solutions)
             let result = self.place_piece(&board, shape, color, yrg);
+            match result {
+                None => {
+                    continue;
+                }
+                Some(_) => {
+
+                }
+            }
         }
     }
 
@@ -61,6 +70,7 @@ impl RGen<'_> {
             if new_board.occupied(&yrg) {
                 return None;
             }
+            // TBD: optimize by only cloning board here
             new_board.set_color(&yrg, color);
         }
 

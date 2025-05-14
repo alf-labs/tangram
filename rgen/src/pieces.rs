@@ -1,5 +1,5 @@
 use crate::coord::{Coords, RelYRG};
-use crate::piece::{Colors, Piece};
+use crate::piece::{Colors, Piece, PieceKey};
 use crate::rel_yrg;
 use indexmap::IndexMap;
 use std::cell::RefCell;
@@ -7,10 +7,13 @@ use std::ops::RangeInclusive;
 use std::time::Instant;
 use crate::permutations::{Permutation, Permutations};
 
+/// The max number of pieces in one Permutations or one Solutions array.
+pub const MAX_PERM_SIZE : usize = 11;
+
 /// The static definition of all pieces possible (one per symmetry).
 #[derive(Debug)]
 pub struct Pieces {
-    pieces: IndexMap<String, Piece>,
+    pieces: IndexMap<PieceKey, Piece>,
 }
 
 impl Pieces {
@@ -18,7 +21,7 @@ impl Pieces {
         let mut p: Vec<Piece> = Vec::new();
 
         p.push( Piece::new(
-            "HR",
+            Piece::to_key("HR"),
             Colors::Red,
             0,
             vec![
@@ -27,7 +30,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "i1",
+            Piece::to_key("i1"),
             Colors::Red,
             120,
             vec![
@@ -36,7 +39,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "i2",
+            Piece::to_key("i2"),
             Colors::Red,
             120,
             vec![
@@ -45,7 +48,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "W1",
+            Piece::to_key("W1"),
             Colors::Black,
             300,
             vec![
@@ -54,7 +57,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "W2",
+            Piece::to_key("W2"),
             Colors::Black,
             300,
             vec![
@@ -63,7 +66,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "P1",
+            Piece::to_key("P1"),
             Colors::Red,
             300,
             vec![
@@ -72,7 +75,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "P2",
+            Piece::to_key("P2"),
             Colors::Red,
             300,
             vec![
@@ -81,7 +84,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "VB",
+            Piece::to_key("VB"),
             Colors::Black,
             300,
             vec![
@@ -90,7 +93,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "J1",
+            Piece::to_key("J1"),
             Colors::Orange,
             300,
             vec![
@@ -99,7 +102,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "J2",
+            Piece::to_key("J2"),
             Colors::Orange,
             300,
             vec![
@@ -108,7 +111,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "L1",
+            Piece::to_key("L1"),
             Colors::Yellow,
             300,
             vec![
@@ -117,7 +120,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "L2",
+            Piece::to_key("L2"),
             Colors::Yellow,
             300,
             vec![
@@ -126,7 +129,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "TW",
+            Piece::to_key("TW"),
             Colors::White,
             0,
             vec![
@@ -135,7 +138,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "TO",
+            Piece::to_key("TO"),
             Colors::Orange,
             300,
             vec![
@@ -144,7 +147,7 @@ impl Pieces {
         ));
 
         p.push(Piece::new(
-            "TY",
+            Piece::to_key("TY"),
             Colors::Yellow,
             300,
             vec![
@@ -155,14 +158,19 @@ impl Pieces {
         let mut p_map = IndexMap::new();
         for mut item in p {
             item.init_rotations(coords);
-            p_map.insert(item.name.clone(), item);
+            p_map.insert(item.key, item);
         }
 
         Pieces { pieces: p_map }
     }
     
-    pub fn get(&self, key: &str) -> Option<&Piece> {
+    pub fn by_key(&self, key: &PieceKey) -> Option<&Piece> {
         self.pieces.get(key)
+    }
+
+    pub fn by_str(&self, key: &str) -> Option<&Piece> {
+        let k = Piece::to_key(key);
+        self.pieces.get(&k)
     }
 
     pub fn iter(&self, piece_selector: i32) -> PiecesIteratorState {
@@ -226,68 +234,68 @@ impl PiecesIteratorState<'_> {
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("HR").unwrap(),
+                        pieces.by_str("HR").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("i1").unwrap(),
-                        pieces.pieces.get("i2").unwrap(),
+                        pieces.by_str("i1").unwrap(),
+                        pieces.by_str("i2").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("W1").unwrap(),
-                        pieces.pieces.get("W2").unwrap(),
+                        pieces.by_str("W1").unwrap(),
+                        pieces.by_str("W2").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("P1").unwrap(),
-                        pieces.pieces.get("P2").unwrap(),
+                        pieces.by_str("P1").unwrap(),
+                        pieces.by_str("P2").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("VB").unwrap(),
+                        pieces.by_str("VB").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("J1").unwrap(),
-                        pieces.pieces.get("J2").unwrap(),
+                        pieces.by_str("J1").unwrap(),
+                        pieces.by_str("J2").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("L1").unwrap(),
-                        pieces.pieces.get("L2").unwrap(),
+                        pieces.by_str("L1").unwrap(),
+                        pieces.by_str("L2").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("TW").unwrap(),
+                        pieces.by_str("TW").unwrap(),
                     ])));
 
         state.push(
             RefCell::new(
                 PieceIteratorState::new(
                     vec![
-                        pieces.pieces.get("TO").unwrap(),
+                        pieces.by_str("TO").unwrap(),
                     ])));
 
         for i in 1..=2 {
@@ -295,7 +303,7 @@ impl PiecesIteratorState<'_> {
                 RefCell::new(
                     PieceIteratorState::new(
                         vec![
-                            pieces.pieces.get("TY").unwrap(),
+                            pieces.by_str("TY").unwrap(),
                         ])));
         }
 
@@ -384,7 +392,7 @@ impl PieceIteratorState<'_> {
     fn current(&self) -> Permutation {
         let p = self.pieces[self.p_index];
         Permutation {
-            key: p.name.clone(),
+            key: p.key,
             angle: self.r_index,
         }
     }
