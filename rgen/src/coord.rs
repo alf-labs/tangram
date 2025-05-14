@@ -47,6 +47,10 @@ impl RelYRG {
     pub fn to_abs(&self) -> AbsYRG {
         AbsYRG { y: self.y + N2, r: self.r + N2, g: self.g }
     }
+
+    pub fn offset_by(&self, offset: &AbsYRG) -> AbsYRG {
+        AbsYRG { y: self.y + offset.y, r: self.r + offset.r, g: self.g }
+    }
 }
 
 /// Static YRG coordinates helpers: valid YRG coordinates, rotation lookup table.

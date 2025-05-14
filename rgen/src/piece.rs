@@ -27,7 +27,7 @@ impl fmt::Display for Colors {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Shape {
-    cells: Vec<RelYRG>,
+    pub cells: Vec<RelYRG>,
 }
 
 impl Shape {

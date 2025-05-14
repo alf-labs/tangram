@@ -40,13 +40,13 @@ impl Board {
         }
     }
 
-    fn valid(&self, yrg: &AbsYRG) -> bool {
+    pub fn valid(&self, yrg: &AbsYRG) -> bool {
         // It is expected this may get called with invalid YRG values.
         let idx: i8 = yrg_to_idx!(yrg);
         idx >= 0 && idx < BOARD_SIZE as i8 && self.colors[idx as usize] != Colors::Invalid
     }
 
-    fn occupied(&self, yrg: &AbsYRG) -> bool {
+    pub fn occupied(&self, yrg: &AbsYRG) -> bool {
         // It is expected this may get called with invalid YRG values.
         let idx: i8 = yrg_to_idx!(yrg);
         if idx >= 0 && idx < BOARD_SIZE as i8 {
@@ -57,13 +57,13 @@ impl Board {
         }
     }
 
-    fn get_color(&self, yrg: &AbsYRG) -> Colors {
+    pub fn get_color(&self, yrg: &AbsYRG) -> Colors {
         // Callers should validate YRG is valid before calling this. No checks here.
         let idx: i8 = yrg_to_idx!(yrg);
         self.colors[idx as usize]
     }
 
-    fn set_color(&mut self, yrg: &AbsYRG, c: Colors) {
+    pub fn set_color(&mut self, yrg: &AbsYRG, c: Colors) {
         // Callers should validate YRG is valid before calling this. No checks here.
         let idx: i8 = yrg_to_idx!(yrg);
         self.colors[idx as usize] = c;

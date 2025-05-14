@@ -1,6 +1,7 @@
 use crate::board::Board;
-use crate::coord::Coords;
+use crate::coord::{AbsYRG, Coords};
 use crate::permutations::Permutations;
+use crate::piece::{Colors, Shape};
 use crate::pieces::Pieces;
 
 pub struct RGen<'a> {
@@ -31,11 +32,9 @@ impl RGen<'_> {
         }
         let (first, rest) = split.unwrap();
 
-        // TBD: get cells for first piece in the expected rotation
-        // cells = first.cells(&pieces)
-
         let piece = self.pieces.get(&*first.key).unwrap();
         let shape = piece.shape(first.angle);
+        let color = piece.color;
 
 
         for yrg in self.coords.valid_yrg.iter() {
@@ -46,6 +45,25 @@ impl RGen<'_> {
             //   accumulate solution
             //   if rest is empty, record solution in board and emit
             //   else recurse place_piece(new board, rest, new solutions)
+            let result = self.place_piece(&board, shape, color, yrg);
         }
+    }
+
+    fn place_piece(&self, board: &Board, shape: &Shape, color: Colors, offset: &AbsYRG) -> Option<Board> {
+        let mut new_board = board.clone();
+
+        for cell in shape.cells.iter() {
+            let yrg = cell.offset_by(offset);
+
+            if !new_board.valid(&yrg) {
+                return None;
+            }
+            if new_board.occupied(&yrg) {
+                return None;
+            }
+            new_board.set_color(&yrg, color);
+        }
+
+        Some(new_board)
     }
 }
