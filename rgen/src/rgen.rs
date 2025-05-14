@@ -11,16 +11,23 @@ use std::io::Write;
 pub struct RGen<'a> {
     pieces: &'a Pieces,
     coords: &'a Coords,
-    output_file: File,
+    output_file: Option<File>,
     output_count: i32,
 }
 
 impl RGen<'_> {
-    pub fn new<'a>(pieces: &'a Pieces, coords: &'a Coords) -> RGen<'a> {
-        let file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open("rgen_output.txt").expect("Could not open output file");
+    pub fn new<'a>(pieces: &'a Pieces,
+                   coords: &'a Coords,
+                   file_path: Option<&str>) -> RGen<'a> {
+        let file = match file_path {
+            None => { None }
+            Some(path) => Option::from({
+                OpenOptions::new()
+                    .append(true)
+                    .create(true)
+                    .open(path).expect("Could not open output file")
+            })
+        };
         RGen {
             pieces,
             coords,
@@ -50,12 +57,16 @@ impl RGen<'_> {
     }
 
     fn emit_solution(&mut self, new_board: &Board, new_sol: &BoardSolution) {
-        let mut file = &self.output_file;
-        writeln!(file, "@@ [{}] SIG {} {}", new_board.perm_index, new_board, new_sol)
-            .expect("Failed to write to output file");
-        file.sync_all()
-            .expect("Failed to sync output file");
-        self.output_count += 1;
+        match self.output_file {
+            None => {}
+            Some(ref mut file) => {
+                writeln!(file, "@@ [{}] SIG {} {}", new_board.perm_index, new_board, new_sol)
+                    .expect("Failed to write to output file");
+                file.sync_all()
+                    .expect("Failed to sync output file");
+                self.output_count += 1;
+            }
+        }
     }
 
     fn place_pieces(&mut self,
@@ -126,3 +137,24 @@ impl RGen<'_> {
         Some(new_board)
     }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_place_piece() {
+        let coord = Coords::new();
+        let pieces = Pieces::new(&coord);
+        let _rgen = RGen::new(
+            &pieces,
+            &coord,
+            None);
+
+        assert_eq!("TBD", "TBD");
+    }
+}
+
+// ~~

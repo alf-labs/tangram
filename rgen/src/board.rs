@@ -81,4 +81,17 @@ impl fmt::Display for Board {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_board_display_empty() {
+        let coord = Coords::new();
+        let b = Board::new(42, &coord);
+        assert_eq!(format!("{}", b), "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+    }
+}
+
 // ~~
