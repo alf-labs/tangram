@@ -7,6 +7,7 @@ use crate::rgen::RGen;
 mod macros;
 mod coord;
 mod permutations;
+mod solutions;
 mod piece;
 mod pieces;
 mod board;
@@ -43,7 +44,8 @@ fn main() {
 
     let cli = Cli::parse();
 
-    let pieces = Pieces::new();
+    let coord = Coords::new();
+    let pieces = Pieces::new(&coord);
 
     match &cli {
         Cli::Dump { piece, min_perm, max_perm, print_all  } => {
@@ -51,8 +53,6 @@ fn main() {
             pieces.dump(piece, range, *print_all)
         },
         Cli::Gen { piece } => {
-            let coord = Coords::new();
-
             let rgen = RGen::new(&pieces, &coord);
             rgen.run(piece)
         }
