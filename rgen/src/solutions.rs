@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use crate::abs_yrg;
 use crate::coord::AbsYRG;
+use crate::permutations::Permutation;
 use crate::pieces::MAX_PERM_SIZE;
 
 /// A solution for a single piece: piece name + rotation + its location on the board.
@@ -45,10 +46,14 @@ impl Solutions {
         }
     }
 
-    pub fn append(&self, solution: Solution) -> Solutions {
+    pub fn append(&self, permutation: &Permutation, yrg: &AbsYRG) -> Solutions {
         // Caller should check we have room for append first.
         let mut new_sol = self.clone();
-        new_sol.sol[new_sol.size] = solution;
+        new_sol.sol[new_sol.size] = Solution {
+            key: permutation.key,
+            angle: permutation.angle,
+            yrg: yrg.clone(),
+        };
         new_sol.size += 1;
         new_sol
     }

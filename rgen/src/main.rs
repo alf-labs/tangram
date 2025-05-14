@@ -53,8 +53,10 @@ fn main() {
             pieces.dump(piece, range, *print_all)
         },
         Cli::Gen { piece } => {
-            let rgen = RGen::new(&pieces, &coord);
+            let mut rgen = RGen::new(&pieces, &coord);
             rgen.run(piece)
         }
     }
 }
+
+// ~~

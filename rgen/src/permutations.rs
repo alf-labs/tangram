@@ -31,6 +31,10 @@ impl fmt::Display for Permutations {
 }
 
 impl Permutations {
+    pub fn is_empty(&self) -> bool {
+        self.perms.is_empty()
+    }
+
     pub fn split_first(&self) -> Option<(Permutation, Permutations)> {
         if self.perms.is_empty() {
             None

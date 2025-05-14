@@ -21,23 +21,22 @@ macro_rules! yrg_to_idx {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Board {
     colors: [Colors; BOARD_SIZE],
-    perm_index: i32,
+    pub perm_index: i32,
     // TBD solution: Option<Solution>
     // TBD g0free, g1free
 }
 
 impl Board {
-    pub fn new(perm_index: i32) -> Board {
-        Board {
+    pub fn new(perm_index: i32, coords: &Coords) -> Board {
+        let mut board = Board {
             colors: [Colors::Invalid; BOARD_SIZE],
             perm_index,
-        }
-    }
-
-    pub fn init_cells(&mut self, coords: &Coords) {
+        };
         for yrg in coords.valid_yrg.iter() {
-            self.set_color(yrg, Colors::Empty);
+            board.set_color(yrg, Colors::Empty);
         }
+
+        board
     }
 
     pub fn valid(&self, yrg: &AbsYRG) -> bool {
@@ -73,7 +72,11 @@ impl Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.colors.iter().join(""))
+        write!(f, "{}",
+               self.colors
+                   .iter()
+                   .filter(|&c| *c != Colors::Invalid)
+                   .join(""))
     }
 }
 

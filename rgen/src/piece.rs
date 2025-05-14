@@ -13,9 +13,9 @@ pub enum Colors {
     Black = b'B',
     White = b'W',
     // Special marker for a cell not filled yet in a board
-    Empty = b'E',
+    Empty = b'e',
     // Special marker for an out-of-bounds board cell
-    Invalid = b'!',
+    Invalid = b'.',
 }
 
 impl fmt::Display for Colors {
