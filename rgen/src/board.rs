@@ -56,6 +56,7 @@ impl Board {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_color(&self, yrg: &AbsYRG) -> Colors {
         // Callers should validate YRG is valid before calling this. No checks here.
         let idx: i8 = yrg_to_idx!(yrg);

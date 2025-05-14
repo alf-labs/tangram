@@ -1,8 +1,7 @@
+use crate::abs_yrg;
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
-use crate::abs_yrg;
-use crate::solutions::Solution;
 
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
@@ -30,6 +29,7 @@ impl fmt::Display for AbsYRG {
 }
 
 impl AbsYRG {
+    #[allow(dead_code)]
     pub fn new(y: i8, r: i8, g: i8) -> AbsYRG {
         AbsYRG { y, r, g }
     }
@@ -40,6 +40,7 @@ impl AbsYRG {
 }
 
 impl RelYRG {
+    #[allow(dead_code)]
     pub fn new(y: i8, r: i8, g: i8) -> RelYRG {
         RelYRG { y, r, g }
     }
@@ -56,7 +57,9 @@ impl RelYRG {
 /// Static YRG coordinates helpers: valid YRG coordinates, rotation lookup table.
 pub struct Coords {
     pub valid_yrg: Vec<AbsYRG>,
+    #[allow(dead_code)]
     valid_yrg_to_idx: HashMap<AbsYRG, usize>,
+    #[allow(dead_code)]
     rot60ccw_src: Vec<AbsYRG>,
     rot60ccw_src_to_idx: HashMap<AbsYRG, usize>,
 }

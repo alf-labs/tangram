@@ -186,7 +186,7 @@ impl Pieces {
         let start_ts = Instant::now();
         let mut count = 0;
         let mut do_print_all = print_all;
-        let mut print_range =true;
+        let print_range =true;
         for item in self.iter(*piece_selector) {
             count += 1;
             let index = item.index;
@@ -298,7 +298,7 @@ impl PiecesIteratorState<'_> {
                         pieces.by_str("TO").unwrap(),
                     ])));
 
-        for i in 1..=2 {
+        for _i in 1..=2 {
             state.push(
                 RefCell::new(
                     PieceIteratorState::new(

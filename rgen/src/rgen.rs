@@ -3,7 +3,7 @@ use crate::coord::{AbsYRG, Coords};
 use crate::permutations::Permutations;
 use crate::piece::{Colors, Shape};
 use crate::pieces::Pieces;
-use crate::solutions::Solutions;
+use crate::solutions::BoardSolution;
 use std::fs::{File, OpenOptions};
 use std::time::Instant;
 use std::io::Write;
@@ -40,7 +40,7 @@ impl RGen<'_> {
                 index, spd, self.output_count, permutations);
 
             let empty_board = Board::new(permutations.index, self.coords);
-            self.place_pieces(empty_board, permutations, Solutions::new());
+            self.place_pieces(empty_board, permutations, BoardSolution::new());
 
             perm_count += 1;
             let now_ts = Instant::now();
@@ -49,7 +49,7 @@ impl RGen<'_> {
         }
     }
 
-    fn emit_solution(&mut self, new_board: &Board, new_sol: &Solutions) {
+    fn emit_solution(&mut self, new_board: &Board, new_sol: &BoardSolution) {
         let mut file = &self.output_file;
         writeln!(file, "@@ [{}] SIG {} {}", new_board.perm_index, new_board, new_sol)
             .expect("Failed to write to output file");
@@ -61,7 +61,7 @@ impl RGen<'_> {
     fn place_pieces(&mut self,
                     board: Board,
                     permutations: Permutations,
-                    solutions: Solutions) {
+                    solutions: BoardSolution) {
         let split = permutations.split_first();
         if split.is_none() {
             return;

@@ -10,6 +10,12 @@ pub struct Permutation {
     pub angle: i32,
 }
 
+impl Permutation {
+    pub fn new(key: PieceKey, angle: i32) -> Permutation {
+        Permutation { key, angle }
+    }
+}
+
 impl fmt::Display for Permutation {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}@{}", self.key[0], self.key[1], self.angle)
