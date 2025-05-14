@@ -142,18 +142,109 @@ impl RGen<'_> {
 
 #[cfg(test)]
 mod tests {
+    use crate::abs_yrg;
     use super::*;
 
     #[test]
     fn test_place_piece() {
-        let coord = Coords::new();
-        let pieces = Pieces::new(&coord);
-        let _rgen = RGen::new(
+        let coords = Coords::new();
+        let pieces = Pieces::new(&coords);
+        let rgen = RGen::new(
             &pieces,
-            &coord,
+            &coords,
             None);
 
-        assert_eq!("TBD", "TBD");
+        // Simulate this permutation:
+        // HR@0:2x4x0 i1@0:2x1x0 W1@0:0x0x0 P1@0:4x3x1 VB@300:0x3x0 J1@0:1x1x1
+        // L2@0:3x2x1 TO@180:4x2x0 TW@0:5x4x0 TY@240:5x4x0 TY@300:4x2x0
+
+        let empty_board = Board::new(156954, &coords);
+
+        // HR@0:2x4x0
+        let mut piece = pieces.by_str("HR").unwrap();
+        let mut shape = piece.shape(0);
+        let mut result = rgen.place_piece(&empty_board, shape, piece.color, &abs_yrg!(2, 4, 0)).unwrap();
+        assert_eq!(format!("{}", result), "eeeeeeeeeeeeeeeeeeeeeeeeRRReeeeeeeeRRReeeeeeeeeeeeeeee");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // i1@0:2x1x0
+        piece = pieces.by_str("i1").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(2, 1, 0)).unwrap();
+        assert_eq!(format!("{}", result), "eeeeeeeeeeeeeeeeRRRRRReeRRReeeeeeeeRRReeeeeeeeeeeeeeee");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // W1@0:0x0x0
+        piece = pieces.by_str("W1").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBeeeeBBBeeeeeeRRRRRReeRRReeeeeeeeRRReeeeeeeeeeeeeeee");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // P1@0:4x3x1
+        piece = pieces.by_str("P1").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(4, 3, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBeeeeBBBeeeeeeRRRRRReeRRReeeeeeeeRRReeeeRRRRReeeeeeR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // VB@300:0x3x0
+        piece = pieces.by_str("VB").unwrap();
+        shape = piece.shape(300);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(0, 3, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBeeeeBBRRRRRReeRRReeeeeeeeRRReeeeRRRRReeeeeeR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // J1@0:1x1x1
+        piece = pieces.by_str("J1").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(1, 1, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBOOOOBBRRRRRROORRReeeeeeeeRRReeeeRRRRReeeeeeR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // L2@0:3x2x1
+        piece = pieces.by_str("L2").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(3, 2, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBOOOOBBRRRRRROORRReeeYYYYYRRReeYeRRRRReeeeeeR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // TW@0:5x4x0
+        piece = pieces.by_str("TW").unwrap();
+        shape = piece.shape(0);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(5, 4, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBOOOOBBRRRRRROORRReeeYYYYYRRReeYeRRRRReeeWWWR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // TO@180:4x2x0
+        piece = pieces.by_str("TO").unwrap();
+        shape = piece.shape(180);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(4, 2, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRReeYeRRRRReeeWWWR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // TY@240:5x4x0
+        piece = pieces.by_str("TY").unwrap();
+        shape = piece.shape(240);
+        result = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(5, 4, 0)).unwrap();
+        assert_eq!(format!("{}", result), "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRReeYYRRRRReYYWWWR");
+        assert_board_overlaps(result,     "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+
+        // TY@300:4x2x0
+        piece = pieces.by_str("TY").unwrap();
+        shape = piece.shape(300);
+        let finalb = rgen.place_piece(&result, shape, piece.color, &abs_yrg!(4, 2, 0)).unwrap();
+        assert_eq!(format!("{}", finalb), "BBBBBBBBBBOOOOBBRRRRRROORRROOOYYYYYRRRYYYYRRRRRYYYWWWR");
+    }
+
+    fn assert_board_overlaps(board: Board, expected: &str) {
+        let actual = &format!("{}", board)[..];
+        assert_eq!(actual.len(), expected.len());
+        for (a, e) in actual.chars().zip(expected.chars()) {
+            if a != 'e' {
+                assert_eq!(a, e);
+            }
+        }
     }
 }
 
