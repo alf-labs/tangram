@@ -1,4 +1,4 @@
-use crate::coord::RelYRG;
+use crate::coord::{Coords, RelYRG};
 use crate::piece::{Colors, Piece};
 use crate::rel_yrg;
 use indexmap::IndexMap;
@@ -14,11 +14,11 @@ pub struct Pieces {
 }
 
 impl Pieces {
-    pub fn new() -> Pieces {
+    pub fn new(coords: &Coords) -> Pieces {
         let mut p: Vec<Piece> = Vec::new();
 
         p.push( Piece::new(
-            "HR".to_string(),
+            "HR",
             Colors::Red,
             0,
             vec![
@@ -27,7 +27,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "i1".to_string(),
+            "i1",
             Colors::Red,
             120,
             vec![
@@ -36,7 +36,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "i2".to_string(),
+            "i2",
             Colors::Red,
             120,
             vec![
@@ -45,7 +45,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "W1".to_string(),
+            "W1",
             Colors::Black,
             300,
             vec![
@@ -54,7 +54,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "W2".to_string(),
+            "W2",
             Colors::Black,
             300,
             vec![
@@ -63,7 +63,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "P1".to_string(),
+            "P1",
             Colors::Red,
             300,
             vec![
@@ -72,7 +72,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "P2".to_string(),
+            "P2",
             Colors::Red,
             300,
             vec![
@@ -81,7 +81,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "VB".to_string(),
+            "VB",
             Colors::Black,
             300,
             vec![
@@ -90,7 +90,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "J1".to_string(),
+            "J1",
             Colors::Orange,
             300,
             vec![
@@ -99,7 +99,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "J2".to_string(),
+            "J2",
             Colors::Orange,
             300,
             vec![
@@ -108,7 +108,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "L1".to_string(),
+            "L1",
             Colors::Yellow,
             300,
             vec![
@@ -117,7 +117,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "L2".to_string(),
+            "L2",
             Colors::Yellow,
             300,
             vec![
@@ -126,7 +126,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "TW".to_string(),
+            "TW",
             Colors::White,
             0,
             vec![
@@ -135,7 +135,7 @@ impl Pieces {
         ));
 
         p.push( Piece::new(
-            "TO".to_string(),
+            "TO",
             Colors::Orange,
             300,
             vec![
@@ -144,7 +144,7 @@ impl Pieces {
         ));
 
         p.push(Piece::new(
-            "TY".to_string(),
+            "TY",
             Colors::Yellow,
             300,
             vec![
@@ -153,11 +153,16 @@ impl Pieces {
         ));
 
         let mut p_map = IndexMap::new();
-        for item in p {
+        for mut item in p {
+            item.init_rotations(coords);
             p_map.insert(item.name.clone(), item);
         }
 
         Pieces { pieces: p_map }
+    }
+    
+    pub fn get(&self, key: &str) -> Option<&Piece> {
+        self.pieces.get(key)
     }
 
     pub fn iter(&self, piece_selector: i32) -> PiecesIteratorState {

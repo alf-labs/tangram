@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
-use crate::coord::RelYRG;
+use crate::coord::{Coords, RelYRG};
 
 /// All possible colors for a board cell.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -24,10 +25,23 @@ impl fmt::Display for Colors {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Shape {
     cells: Vec<RelYRG>,
 }
+
+impl Shape {
+    pub fn rotate_60_ccw(&self, coords: &Coords) -> Shape {
+        let mut rot_cells = Vec::new();
+        for src in self.cells.iter() {
+            let dst = coords.rot_60_ccw_yrg(src);
+            rot_cells.push(dst);
+        }
+
+        Shape { cells: rot_cells }
+    }
+}
+
 
 /// The static definition for one piece: name, color, shape. Symmetry creates multiple pieces.
 #[derive(Debug)]
@@ -35,12 +49,30 @@ pub struct Piece {
     pub name: String,
     pub color: Colors,
     pub max_rot: i32,
-    shape: Shape,
+    shapes: HashMap<i32, Shape>,
 }
 
 impl Piece {
-    pub fn new(name: String, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
-        Piece { name, color, max_rot, shape : Shape { cells } }
+    pub fn new(name: &str, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
+        let mut map = HashMap::new();
+        map.insert(0, Shape { cells });
+        Piece { name: name.to_string(), color, max_rot, shapes: map }
+    }
+
+    pub fn init_rotations(&mut self, coords: &Coords) {
+        if self.max_rot > 0 {
+            let mut shape = self.shapes.get(&0).unwrap().clone();
+
+            for angle in (60..=self.max_rot).step_by(60) {
+                let new_shape = shape.rotate_60_ccw(coords);
+                self.shapes.insert(angle, new_shape.clone());
+                shape = new_shape;
+            }
+        }
+    }
+
+    pub fn shape(&self, angle: i32) -> &Shape {
+        self.shapes.get(&angle).unwrap()
     }
 }
 

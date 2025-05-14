@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Formatter;
 use crate::abs_yrg;
+use crate::solutions::Solution;
 
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
@@ -18,6 +21,12 @@ pub struct RelYRG {
     pub y: i8,
     pub r: i8,
     pub g: i8,
+}
+
+impl fmt::Display for AbsYRG {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}x{}x{}", self.y, self.r, self.g)
+    }
 }
 
 impl AbsYRG {

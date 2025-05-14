@@ -34,6 +34,10 @@ impl RGen<'_> {
         // TBD: get cells for first piece in the expected rotation
         // cells = first.cells(&pieces)
 
+        let piece = self.pieces.get(&*first.key).unwrap();
+        let shape = piece.shape(first.angle);
+
+
         for yrg in self.coords.valid_yrg.iter() {
             // TBD: place piece "first" in board at offset yrg
             // match place piece option<new board>:
