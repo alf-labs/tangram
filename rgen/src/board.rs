@@ -82,11 +82,9 @@ impl Board {
             let yrg = cell.offset_by(offset);
 
             if !new_board.valid(&yrg) {
-                println!("@@ -- not valid yrg rel {} + abs {} = {}", cell, offset, yrg); // DEBUG
                 return None;
             }
             if new_board.occupied(&yrg) {
-                println!("@@ -- occupied yrg {} -> {}", yrg, new_board.get_color(&yrg)); // DEBUG
                 return None;
             }
             // TBD: optimize by only cloning board here

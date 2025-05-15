@@ -91,10 +91,8 @@ impl RGen<'_> {
         let piece = self.pieces.by_key(&first.key).unwrap();
         let shape = piece.shape(first.angle);
         let color = piece.color;
-        let first_g = shape.cells[0].g;
 
         for yrg in shape.positions.iter() {
-            println!("@@ IN piece {}:{} ok {} -- rest {}", first, yrg, first_g, rest); // DEBUG
 
             let result = board.place_piece(shape, color, yrg);
             match result {
@@ -103,7 +101,6 @@ impl RGen<'_> {
                 }
                 Some(new_board) => {
                     let new_sol = solutions.append(&first, yrg);
-                    println!("@@ -- OUT --> NEW sol {}, rest {}", new_sol, rest); // DEBUG
                     if rest.is_empty() {
                         self.emit_solution(&new_board, &new_sol);
                         return;
