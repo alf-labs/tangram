@@ -76,22 +76,34 @@ impl Board {
             return None;
         }
 
-        let mut new_board = self.clone();
+        // Micro-optimization: only clone the board once we have at least one new color to add.
+        // Not sure if there's a better way to write this. This only provides a modest 2~3%
+        // increase in pps.
+        let mut new_board : Option<Board> = None;
 
         for cell in shape.cells.iter() {
             let yrg = cell.offset_by(offset);
 
-            if !new_board.valid(&yrg) {
+            if !self.valid(&yrg) {
                 return None;
             }
-            if new_board.occupied(&yrg) {
+            if self.occupied(&yrg) {
                 return None;
             }
-            // TBD: optimize by only cloning board here
-            new_board.set_color(&yrg, color);
+
+            match &mut new_board {
+                None => {
+                    new_board = Some(self.clone());
+                    let board = new_board.as_mut().unwrap();
+                    board.set_color(&yrg, color);
+                }
+                Some(board) => {
+                    board.set_color(&yrg, color);
+                }
+            };
         }
 
-        Some(new_board)
+        new_board
     }
 }
 
