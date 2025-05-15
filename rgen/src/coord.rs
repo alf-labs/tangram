@@ -5,6 +5,8 @@ use std::fmt::Formatter;
 
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
+#[allow(dead_code)]
+pub const LINES_LEN: [i32; 6] = [7, 9, 11, 11, 9, 7];
 
 /// An absolute YRG coordinate: Y/R in range [0...N-1], G in range [0,1].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
