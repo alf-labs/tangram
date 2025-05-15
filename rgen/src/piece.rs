@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
 use itertools::Itertools;
-use crate::coord::{Coords, RelYRG};
-use crate::rel_yrg;
+use crate::board::Board;
+use crate::coord::{AbsYRG, Coords, RelYRG, N};
+use crate::{abs_yrg, rel_yrg};
 
 /// All possible colors for a board cell.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -30,9 +31,15 @@ impl fmt::Display for Colors {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Shape {
     pub cells: Vec<RelYRG>,
+    pub positions: Vec<AbsYRG>,
 }
 
 impl Shape {
+
+    pub fn new(cells: Vec<RelYRG>) -> Shape {
+        Shape { cells, positions: vec![] }
+    }
+
     /// Recompute the shape such that the first cell always has Y=0/R=0.
     /// The G coordinates are untouched.
     pub fn recenter(&self) -> Shape {
@@ -45,7 +52,8 @@ impl Shape {
             new_cells.push(dst);
         }
 
-        Shape { cells: new_cells }
+        // This shape does not have its valid positions computed yet.
+        Shape::new(new_cells)
     }
 
     /// Rotates the shape by 60 degrees CCW.
@@ -56,7 +64,34 @@ impl Shape {
             rot_cells.push(dst);
         }
 
-        Shape { cells: rot_cells }
+        // This shape does not have its valid positions computed yet.
+        Shape::new(rot_cells)
+    }
+
+    /// Precomputes all the positions where this shape can fit on a board.
+    /// This is a fairly expensive operation so we don't do it automatically
+    /// in the new() method. It needs to be invoked once the shape is rotated
+    /// and centered.
+    pub fn precompute_positions(&self, coords: &Coords) -> Shape {
+        let board = Board::new(0, &coords);
+        let mut positions = Vec::new();
+
+        for y in 0..N {
+            for r in 0..N {
+                for g in 0..=1i8 {
+                    let yrg = abs_yrg!(y, r, g);
+                    let result = board.place_piece(self, Colors::Black, &yrg);
+                    match result {
+                        None => {}
+                        Some(_) => {
+                            positions.push(yrg);
+                        }
+                    }
+                }
+            }
+        }
+
+        Shape { cells: self.cells.clone(), positions }
     }
 }
 
@@ -89,21 +124,21 @@ impl Piece {
 
     pub fn new(key: PieceKey, color: Colors, max_rot: i32, cells: Vec<RelYRG>) -> Piece {
         let mut map = HashMap::new();
-        map.insert(0, Shape { cells });
+        map.insert(0, Shape::new(cells));
         Piece { key, color, max_rot, shapes: map }
     }
 
-    /// Precompute shapes for each possible rotation. Also adjust shapes offsets
-    /// such that the first cell is always on an Y=0/R=0 relative coordinate.
+    /// Precompute shapes for each possible rotation, as well as all valid positions
+    /// for the rotated shape on the board.
     pub fn precompute_shapes(&mut self, coords: &Coords) {
         let mut shape = self.shapes.get(&0).unwrap().clone();
-        self.shapes.insert(0, shape.recenter());
+        self.shapes.insert(0, shape.recenter().precompute_positions(coords));
 
         if self.max_rot > 0 {
 
             for angle in (60..=self.max_rot).step_by(60) {
                 let new_shape = shape.rotate_60_ccw(coords);
-                self.shapes.insert(angle, new_shape.recenter());
+                self.shapes.insert(angle, new_shape.recenter().precompute_positions(coords));
                 shape = new_shape;
             }
         }
@@ -145,12 +180,22 @@ mod tests {
 
         let mut s = p.shape(0);
         assert_eq!(format!("{}", s), "0.0.0,0.0.1,0.1.0,0.1.1,0.2.0,0.2.1");
+        assert_eq!(s.positions, vec![
+            abs_yrg!(0, 0, 0),
+            abs_yrg!(1, 0, 0), abs_yrg!(1, 1, 0),
+            abs_yrg!(2, 0, 0), abs_yrg!(2, 1, 0), abs_yrg!(2, 2, 0),
+            abs_yrg!(3, 1, 0), abs_yrg!(3, 2, 0), abs_yrg!(3, 3, 0),
+                               abs_yrg!(4, 2, 0), abs_yrg!(4, 3, 0),
+                                                  abs_yrg!(5, 3, 0),
+        ]);
 
         s = p.shape(60);
         assert_eq!(format!("{}", s), "0.0.1,-1.0.0,-1.0.1,-2.0.0,-2.0.1,-3.0.0");
+        assert_eq!(s.positions.len(), 1+2+3+3+2+1);
 
         s = p.shape(120);
         assert_eq!(format!("{}", s), "0.0.0,0.-1.1,-1.-1.0,-1.-2.1,-2.-2.0,-2.-3.1");
+        assert_eq!(s.positions.len(), 1+2+3+3+2+1);
     }
 
     //noinspection DuplicatedCode

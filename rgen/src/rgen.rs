@@ -93,22 +93,9 @@ impl RGen<'_> {
         let color = piece.color;
         let first_g = shape.cells[0].g;
 
-        for yrg in self.coords.valid_yrg.iter() {
-            // We can only place a piece on a cell that has the same G coordinate
-            // as the first cell in the shape.
-            if yrg.g != first_g {
-                println!("@@ IN piece {}:{} KO {} -- rest {}", first, yrg, first_g, rest); // DEBUG
-                continue;
-            }
+        for yrg in shape.positions.iter() {
             println!("@@ IN piece {}:{} ok {} -- rest {}", first, yrg, first_g, rest); // DEBUG
 
-            // TBD: place piece "first" in board at offset yrg
-            // match place piece option<new board>:
-            // none --> continue
-            // ok -->
-            //   accumulate solution
-            //   if rest is empty, record solution in board and emit
-            //   else recurse place_piece(new board, rest, new solutions)
             let result = board.place_piece(shape, color, yrg);
             match result {
                 None => {

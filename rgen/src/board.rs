@@ -211,15 +211,19 @@ mod tests {
         let coords = Coords::new();
         let pieces = Pieces::new(&coords);
 
-        // Simulate this permutation:
+        // Simulate this Python gen permutation:
         // HR@0:2x4x0 i1@0:2x1x0 W1@0:0x0x0 P1@0:4x3x1 VB@300:0x3x0 J1@0:1x1x1
         // L2@0:3x2x1 TO@180:4x2x0 TW@0:5x4x0 TY@240:5x4x0 TY@300:4x2x0
+        //
+        // Note that the coordinates are slightly different in rgen because each piece shape
+        // is recentered to start on a (0,0) relative cell.
 
         let empty = Board::new(156954, &coords);
 
         // HR@0:2x4x0
         let mut piece = pieces.by_str("HR").unwrap();
         let mut shape = piece.shape(0);
+        assert!(shape.positions.contains(&abs_yrg!(2, 4, 0)));
         let mut result = empty.place_piece(shape, piece.color, &abs_yrg!(2, 4, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "eeeeeee.eeeeeeeee.eeeeeeeeRRR.eeeeeeeeRRR.eeeeeeeee.eeeeeee");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
@@ -227,48 +231,55 @@ mod tests {
         // i1@0:2x1x0
         piece = pieces.by_str("i1").unwrap();
         shape = piece.shape(0);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(2, 1, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(2, 0, 0)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(2, 0, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "eeeeeee.eeeeeeeee.RRRRRReeRRR.eeeeeeeeRRR.eeeeeeeee.eeeeeee");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // W1@0:0x0x0
         piece = pieces.by_str("W1").unwrap();
         shape = piece.shape(0);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(1, 1, 0)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(1, 1, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBeeee.BBBeeeeee.RRRRRReeRRR.eeeeeeeeRRR.eeeeeeeee.eeeeeee");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // P1@0:4x3x1
         piece = pieces.by_str("P1").unwrap();
         shape = piece.shape(0);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(4, 3, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(4, 3, 1)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(4, 3, 1)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBeeee.BBBeeeeee.RRRRRReeRRR.eeeeeeeeRRR.eeeeRRRRR.eeeeeeR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // VB@300:0x3x0
         piece = pieces.by_str("VB").unwrap();
         shape = piece.shape(300);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(0, 3, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(0, 1, 1)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(0, 1, 1)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBeeeeBB.RRRRRReeRRR.eeeeeeeeRRR.eeeeRRRRR.eeeeeeR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // J1@0:1x1x1
         piece = pieces.by_str("J1").unwrap();
         shape = piece.shape(0);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(1, 1, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(1, 1, 1)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(1, 1, 1)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.eeeeeeeeRRR.eeeeRRRRR.eeeeeeR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // L2@0:3x2x1
         piece = pieces.by_str("L2").unwrap();
         shape = piece.shape(0);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(3, 2, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(4, 2, 1)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(4, 2, 1)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.eeeYYYYYRRR.eeYeRRRRR.eeeeeeR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // TW@0:5x4x0
         piece = pieces.by_str("TW").unwrap();
         shape = piece.shape(0);
+        assert!(shape.positions.contains(&abs_yrg!(5, 4, 0)));
         result = result.place_piece(shape, piece.color, &abs_yrg!(5, 4, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.eeeYYYYYRRR.eeYeRRRRR.eeeWWWR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
@@ -276,21 +287,24 @@ mod tests {
         // TO@180:4x2x0
         piece = pieces.by_str("TO").unwrap();
         shape = piece.shape(180);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(4, 2, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(3, 1, 1)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(3, 1, 1)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.eeYeRRRRR.eeeWWWR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // TY@240:5x4x0
         piece = pieces.by_str("TY").unwrap();
         shape = piece.shape(240);
-        result = result.place_piece(shape, piece.color, &abs_yrg!(5, 4, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(4, 3, 0)));
+        result = result.place_piece(shape, piece.color, &abs_yrg!(4, 3, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.eeYYRRRRR.eYYWWWR");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 
         // TY@300:4x2x0
         piece = pieces.by_str("TY").unwrap();
         shape = piece.shape(300);
-        let finalb = result.place_piece(shape, piece.color, &abs_yrg!(4, 2, 0)).unwrap();
+        assert!(shape.positions.contains(&abs_yrg!(4, 1, 1)));
+        let finalb = result.place_piece(shape, piece.color, &abs_yrg!(4, 1, 1)).unwrap();
         assert_eq!(format!("{:?}", finalb), "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
     }
 
