@@ -28,6 +28,12 @@ impl fmt::Display for AbsYRG {
     }
 }
 
+impl fmt::Display for RelYRG {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}.{}", self.y, self.r, self.g)
+    }
+}
+
 impl AbsYRG {
     #[allow(dead_code)]
     pub fn new(y: i8, r: i8, g: i8) -> AbsYRG {

@@ -177,7 +177,7 @@ impl Pieces {
         PiecesIteratorState::new(self, piece_selector)
     }
 
-    pub(crate) fn dump(&self,
+    pub fn dump(&self,
                        piece_selector: &i32,
                        perm_range: RangeInclusive<i32>,
                        print_all: bool) {
@@ -413,7 +413,6 @@ impl PieceIteratorState<'_> {
         false
     }
 }
-
 
 
 

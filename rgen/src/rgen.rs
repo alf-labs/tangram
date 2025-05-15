@@ -7,6 +7,7 @@ use crate::solutions::BoardSolution;
 use std::fs::{File, OpenOptions};
 use std::time::Instant;
 use std::io::Write;
+use std::ops::RangeInclusive;
 
 pub struct RGen<'a> {
     pieces: &'a Pieces,
@@ -36,13 +37,22 @@ impl RGen<'_> {
         }
     }
 
-    pub fn run(&mut self, piece_selector: &i32) {
+    pub fn run(&mut self,
+               piece_selector: &i32,
+               perm_range: RangeInclusive<i32>) {
+        let pmin = *perm_range.start();
+        let pmax = *perm_range.end();
         let start_ts = Instant::now();
         let mut spd = 0.0;
         let mut perm_count = 0;
 
         for permutations in self.pieces.iter(*piece_selector) {
             let index = permutations.index;
+            if index < pmin {
+                continue
+            } else if index > pmax {
+                break
+            }
             println!("@@ perm {0}, {1:.2} pps, img {2}, {3}",
                 index, spd, self.output_count, permutations);
 
@@ -88,8 +98,10 @@ impl RGen<'_> {
             // We can only place a piece on a cell that has the same G coordinate
             // as the first cell in the shape.
             if yrg.g != first_g {
+                println!("@@ IN piece {}:{} KO {} -- rest {}", first, yrg, first_g, rest); // DEBUG
                 continue;
             }
+            println!("@@ IN piece {}:{} ok {} -- rest {}", first, yrg, first_g, rest); // DEBUG
 
             // TBD: place piece "first" in board at offset yrg
             // match place piece option<new board>:
@@ -105,13 +117,13 @@ impl RGen<'_> {
                 }
                 Some(new_board) => {
                     let new_sol = solutions.append(&first, yrg);
+                    println!("@@ -- OUT --> NEW sol {}, rest {}", new_sol, rest); // DEBUG
                     if rest.is_empty() {
                         self.emit_solution(&new_board, &new_sol);
                         return;
                     } else {
                         // Place next piece
-                        self.place_pieces(new_board, rest, new_sol);
-                        return;
+                        self.place_pieces(new_board, rest.clone(), new_sol);
                     }
                 }
             }
@@ -125,9 +137,11 @@ impl RGen<'_> {
             let yrg = cell.offset_by(offset);
 
             if !new_board.valid(&yrg) {
+                println!("@@ -- not valid yrg rel {} + abs {} = {}", cell, offset, yrg); // DEBUG
                 return None;
             }
             if new_board.occupied(&yrg) {
+                println!("@@ -- occupied yrg {} -> {}", yrg, new_board.get_color(&yrg)); // DEBUG
                 return None;
             }
             // TBD: optimize by only cloning board here

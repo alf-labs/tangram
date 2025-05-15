@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
+use itertools::Itertools;
 use crate::coord::{Coords, RelYRG};
 
 /// All possible colors for a board cell.
@@ -39,6 +40,12 @@ impl Shape {
         }
 
         Shape { cells: rot_cells }
+    }
+}
+
+impl fmt::Display for Shape {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.cells.iter().join(","))
     }
 }
 
@@ -83,6 +90,88 @@ impl Piece {
 
     pub fn shape(&self, angle: i32) -> &Shape {
         self.shapes.get(&angle).unwrap()
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::rel_yrg;
+    use super::*;
+
+    //noinspection DuplicatedCode
+    #[test]
+    fn test_piece_vb_rotation() {
+        let coord = Coords::new();
+
+        let mut p = Piece::new(
+            Piece::to_key("VB"),
+            Colors::Black,
+            300,
+            vec![
+                rel_yrg!(1, 0, 0), rel_yrg!(1, 0, 1), rel_yrg!(0, 0, 0), rel_yrg!(0, 0, 1), rel_yrg!(0, 1, 0), rel_yrg!(0, 1, 1),
+            ],
+        );
+
+        p.init_rotations(&coord);
+
+        // Python gen validation:
+        // @@ ROT VB@0 ([(1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1)], [3, 3])
+        // @@ ROT VB@60 ([(1, 1, 1), (0, 1, 0), (0, 0, 1), (-1, 0, 0), (-1, 0, 1), (-2, 0, 0)], [3, 3])
+        // @@ ROT VB@120 ([(-1, 1, 0), (-1, 0, 1), (-1, 0, 0), (-1, -1, 1), (-2, -1, 0), (-2, -2, 1)], [3, 3])
+        // @@ ROT VB@180 ([(-2, -1, 1), (-2, -1, 0), (-1, -1, 1), (-1, -1, 0), (-1, -2, 1), (-1, -2, 0)], [3, 3])
+        // @@ ROT VB@240 ([(-2, -2, 0), (-1, -2, 1), (-1, -1, 0), (0, -1, 1), (0, -1, 0), (1, -1, 1)], [3, 3])
+        // @@ ROT VB@300 ([(0, -2, 1), (0, -1, 0), (0, -1, 1), (0, 0, 0), (1, 0, 1), (1, 1, 0)], [3, 3])
+
+        let mut s = p.shape(0);
+        assert_eq!(format!("{}", s), "1.0.0,1.0.1,0.0.0,0.0.1,0.1.0,0.1.1");
+
+        s = p.shape(60);
+        assert_eq!(format!("{}", s), "1.1.1,0.1.0,0.0.1,-1.0.0,-1.0.1,-2.0.0");
+
+        s = p.shape(120);
+        assert_eq!(format!("{}", s), "-1.1.0,-1.0.1,-1.0.0,-1.-1.1,-2.-1.0,-2.-2.1");
+
+        s = p.shape(180);
+        assert_eq!(format!("{}", s), "-2.-1.1,-2.-1.0,-1.-1.1,-1.-1.0,-1.-2.1,-1.-2.0");
+
+        s = p.shape(240);
+        assert_eq!(format!("{}", s), "-2.-2.0,-1.-2.1,-1.-1.0,0.-1.1,0.-1.0,1.-1.1");
+
+        s = p.shape(300);
+        assert_eq!(format!("{}", s), "0.-2.1,0.-1.0,0.-1.1,0.0.0,1.0.1,1.1.0");
+    }
+
+    //noinspection DuplicatedCode
+    #[test]
+    fn test_piece_i1_rotation() {
+        let coord = Coords::new();
+
+        let mut p = Piece::new(
+            Piece::to_key("i1"),
+            Colors::Red,
+            120,
+            vec![
+                rel_yrg!(0, -1, 0), rel_yrg!(0, -1, 1), rel_yrg!(0, 0, 0), rel_yrg!(0, 0, 1), rel_yrg!(0, 1, 0), rel_yrg!(0, 1, 1),
+            ],
+        );
+
+        p.init_rotations(&coord);
+
+        // Python gen validation:
+        // @@ ROT i1@0 ([(0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1)], [3, 3])
+        // @@ ROT i1@60 ([(1, 0, 1), (0, 0, 0), (0, 0, 1), (-1, 0, 0), (-1, 0, 1), (-2, 0, 0)], [3, 3])
+        // @@ ROT i1@120 ([(0, 1, 0), (0, 0, 1), (-1, 0, 0), (-1, -1, 1), (-2, -1, 0), (-2, -2, 1)], [3, 3])
+
+        let mut s = p.shape(0);
+        assert_eq!(format!("{}", s), "0.-1.0,0.-1.1,0.0.0,0.0.1,0.1.0,0.1.1");
+
+        s = p.shape(60);
+        assert_eq!(format!("{}", s), "1.0.1,0.0.0,0.0.1,-1.0.0,-1.0.1,-2.0.0");
+
+        s = p.shape(120);
+        assert_eq!(format!("{}", s), "0.1.0,0.0.1,-1.0.0,-1.-1.1,-2.-1.0,-2.-2.1");
     }
 }
 

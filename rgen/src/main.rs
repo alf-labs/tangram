@@ -1,5 +1,5 @@
 use crate::pieces::Pieces;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::ops::RangeInclusive;
 use crate::coord::Coords;
 use crate::rgen::RGen;
@@ -13,29 +13,33 @@ mod pieces;
 mod board;
 mod rgen;
 
-#[derive(Parser, Debug)]
-enum Cli {
-    Dump {
-        #[arg(short, long, default_value_t = -1,
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long, default_value_t = -1,
         help = "Piece selector. Default: use all pieces.")]
-        piece: i32,
+    piece: i32,
 
-        #[arg(long, default_value_t = 0,
-            help = "Min permutation index to print.")]
-        min_perm: i32,
+    #[arg(long, default_value_t = 0,
+        help = "Min permutation index to print.")]
+    min_perm: i32,
 
-        #[arg(long, default_value_t = i32::MAX,
+    #[arg(long, default_value_t = i32::MAX,
         help = "Max permutation index to print.")]
-        max_perm: i32,
+    max_perm: i32,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Dump {
 
         #[arg(long,
         help = "Print everything (very verbose).")]
         print_all: bool,
     },
     Gen {
-        #[arg(short, long, default_value_t = -1,
-        help = "Piece selector. Default: use all pieces.")]
-        piece: i32,
     }
 }
 
@@ -43,22 +47,23 @@ fn main() {
     println!("Hello, world!");
 
     let cli = Cli::parse();
+    let range = RangeInclusive::new(cli.min_perm, cli.max_perm);
 
     let coord = Coords::new();
     let pieces = Pieces::new(&coord);
 
-    match &cli {
-        Cli::Dump { piece, min_perm, max_perm, print_all  } => {
-            let range = RangeInclusive::new(*min_perm, *max_perm);
-            pieces.dump(piece, range, *print_all)
+    match &cli.command {
+        Some( Commands::Dump { print_all  } ) => {
+            pieces.dump(&cli.piece, range, *print_all)
         },
-        Cli::Gen { piece } => {
+        Some( Commands::Gen { } ) => {
             let mut rgen = RGen::new(
                 &pieces,
                 &coord,
                 Some("rgen_output.txt"));
-            rgen.run(piece)
-        }
+            rgen.run(&cli.piece, range)
+        },
+        &None => {}
     }
 }
 

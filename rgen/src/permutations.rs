@@ -11,6 +11,7 @@ pub struct Permutation {
 }
 
 impl Permutation {
+    #[allow(dead_code)]
     pub fn new(key: PieceKey, angle: i32) -> Permutation {
         Permutation { key, angle }
     }
