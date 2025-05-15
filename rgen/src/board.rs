@@ -217,6 +217,30 @@ mod tests {
     }
 
     #[test]
+    fn test_place_piece_gap() {
+        let coords = Coords::new();
+        let pieces = Pieces::new(&coords);
+
+        // One of the heuristics is to detect whether placing a piece creates a gap of
+        // one cell that will be impossible to fill later.
+
+        let empty = Board::new(42, &coords);
+
+        // HR@0:0x0x0
+        let mut piece = pieces.by_str("HR").unwrap();
+        let mut shape = piece.shape(0);
+        let mut board = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
+        assert_eq!(format!("{:?}", board), "RRReeee.eRRReeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
+
+        piece = pieces.by_str("TW").unwrap();
+        shape = piece.shape(0);
+        board = board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0)).unwrap();
+        assert_eq!(format!("{:?}", board), "RRReWWW.eRRReeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
+
+        // TDD write the heuristic check and make this test fail
+    }
+
+    #[test]
     fn test_place_piece_all_permutations() {
         let coords = Coords::new();
         let pieces = Pieces::new(&coords);
