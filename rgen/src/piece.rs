@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Formatter;
 use itertools::Itertools;
 use crate::coord::{Coords, RelYRG};
+use crate::rel_yrg;
 
 /// All possible colors for a board cell.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -32,6 +33,22 @@ pub struct Shape {
 }
 
 impl Shape {
+    /// Recompute the shape such that the first cell always has Y=0/R=0.
+    /// The G coordinates are untouched.
+    pub fn recenter(&self) -> Shape {
+        let y_offset = self.cells[0].y;
+        let r_offset = self.cells[0].r;
+
+        let mut new_cells = Vec::new();
+        for src in self.cells.iter() {
+            let dst = rel_yrg!(src.y - y_offset, src.r - r_offset, src.g);
+            new_cells.push(dst);
+        }
+
+        Shape { cells: new_cells }
+    }
+
+    /// Rotates the shape by 60 degrees CCW.
     pub fn rotate_60_ccw(&self, coords: &Coords) -> Shape {
         let mut rot_cells = Vec::new();
         for src in self.cells.iter() {
@@ -76,13 +93,17 @@ impl Piece {
         Piece { key, color, max_rot, shapes: map }
     }
 
-    pub fn init_rotations(&mut self, coords: &Coords) {
+    /// Precompute shapes for each possible rotation. Also adjust shapes offsets
+    /// such that the first cell is always on an Y=0/R=0 relative coordinate.
+    pub fn precompute_shapes(&mut self, coords: &Coords) {
+        let mut shape = self.shapes.get(&0).unwrap().clone();
+        self.shapes.insert(0, shape.recenter());
+
         if self.max_rot > 0 {
-            let mut shape = self.shapes.get(&0).unwrap().clone();
 
             for angle in (60..=self.max_rot).step_by(60) {
                 let new_shape = shape.rotate_60_ccw(coords);
-                self.shapes.insert(angle, new_shape.clone());
+                self.shapes.insert(angle, new_shape.recenter());
                 shape = new_shape;
             }
         }
@@ -102,49 +123,6 @@ mod tests {
 
     //noinspection DuplicatedCode
     #[test]
-    fn test_piece_vb_rotation() {
-        let coord = Coords::new();
-
-        let mut p = Piece::new(
-            Piece::to_key("VB"),
-            Colors::Black,
-            300,
-            vec![
-                rel_yrg!(1, 0, 0), rel_yrg!(1, 0, 1), rel_yrg!(0, 0, 0), rel_yrg!(0, 0, 1), rel_yrg!(0, 1, 0), rel_yrg!(0, 1, 1),
-            ],
-        );
-
-        p.init_rotations(&coord);
-
-        // Python gen validation:
-        // @@ ROT VB@0 ([(1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1)], [3, 3])
-        // @@ ROT VB@60 ([(1, 1, 1), (0, 1, 0), (0, 0, 1), (-1, 0, 0), (-1, 0, 1), (-2, 0, 0)], [3, 3])
-        // @@ ROT VB@120 ([(-1, 1, 0), (-1, 0, 1), (-1, 0, 0), (-1, -1, 1), (-2, -1, 0), (-2, -2, 1)], [3, 3])
-        // @@ ROT VB@180 ([(-2, -1, 1), (-2, -1, 0), (-1, -1, 1), (-1, -1, 0), (-1, -2, 1), (-1, -2, 0)], [3, 3])
-        // @@ ROT VB@240 ([(-2, -2, 0), (-1, -2, 1), (-1, -1, 0), (0, -1, 1), (0, -1, 0), (1, -1, 1)], [3, 3])
-        // @@ ROT VB@300 ([(0, -2, 1), (0, -1, 0), (0, -1, 1), (0, 0, 0), (1, 0, 1), (1, 1, 0)], [3, 3])
-
-        let mut s = p.shape(0);
-        assert_eq!(format!("{}", s), "1.0.0,1.0.1,0.0.0,0.0.1,0.1.0,0.1.1");
-
-        s = p.shape(60);
-        assert_eq!(format!("{}", s), "1.1.1,0.1.0,0.0.1,-1.0.0,-1.0.1,-2.0.0");
-
-        s = p.shape(120);
-        assert_eq!(format!("{}", s), "-1.1.0,-1.0.1,-1.0.0,-1.-1.1,-2.-1.0,-2.-2.1");
-
-        s = p.shape(180);
-        assert_eq!(format!("{}", s), "-2.-1.1,-2.-1.0,-1.-1.1,-1.-1.0,-1.-2.1,-1.-2.0");
-
-        s = p.shape(240);
-        assert_eq!(format!("{}", s), "-2.-2.0,-1.-2.1,-1.-1.0,0.-1.1,0.-1.0,1.-1.1");
-
-        s = p.shape(300);
-        assert_eq!(format!("{}", s), "0.-2.1,0.-1.0,0.-1.1,0.0.0,1.0.1,1.1.0");
-    }
-
-    //noinspection DuplicatedCode
-    #[test]
     fn test_piece_i1_rotation() {
         let coord = Coords::new();
 
@@ -157,21 +135,66 @@ mod tests {
             ],
         );
 
-        p.init_rotations(&coord);
+        p.precompute_shapes(&coord);
 
         // Python gen validation:
         // @@ ROT i1@0 ([(0, -1, 0), (0, -1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1)], [3, 3])
         // @@ ROT i1@60 ([(1, 0, 1), (0, 0, 0), (0, 0, 1), (-1, 0, 0), (-1, 0, 1), (-2, 0, 0)], [3, 3])
         // @@ ROT i1@120 ([(0, 1, 0), (0, 0, 1), (-1, 0, 0), (-1, -1, 1), (-2, -1, 0), (-2, -2, 1)], [3, 3])
+        // Note that the new versions always start on (0,0,0) or (0,0,1).
 
         let mut s = p.shape(0);
-        assert_eq!(format!("{}", s), "0.-1.0,0.-1.1,0.0.0,0.0.1,0.1.0,0.1.1");
+        assert_eq!(format!("{}", s), "0.0.0,0.0.1,0.1.0,0.1.1,0.2.0,0.2.1");
 
         s = p.shape(60);
-        assert_eq!(format!("{}", s), "1.0.1,0.0.0,0.0.1,-1.0.0,-1.0.1,-2.0.0");
+        assert_eq!(format!("{}", s), "0.0.1,-1.0.0,-1.0.1,-2.0.0,-2.0.1,-3.0.0");
 
         s = p.shape(120);
-        assert_eq!(format!("{}", s), "0.1.0,0.0.1,-1.0.0,-1.-1.1,-2.-1.0,-2.-2.1");
+        assert_eq!(format!("{}", s), "0.0.0,0.-1.1,-1.-1.0,-1.-2.1,-2.-2.0,-2.-3.1");
+    }
+
+    //noinspection DuplicatedCode
+    #[test]
+    fn test_piece_vb_rotation() {
+        let coord = Coords::new();
+
+        let mut p = Piece::new(
+            Piece::to_key("VB"),
+            Colors::Black,
+            300,
+            vec![
+                rel_yrg!(1, 0, 0), rel_yrg!(1, 0, 1), rel_yrg!(0, 0, 0), rel_yrg!(0, 0, 1), rel_yrg!(0, 1, 0), rel_yrg!(0, 1, 1),
+            ],
+        );
+
+        p.precompute_shapes(&coord);
+
+        // Python gen validation:
+        // @@ ROT VB@0 ([(1, 0, 0), (1, 0, 1), (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1)], [3, 3])
+        // @@ ROT VB@60 ([(1, 1, 1), (0, 1, 0), (0, 0, 1), (-1, 0, 0), (-1, 0, 1), (-2, 0, 0)], [3, 3])
+        // @@ ROT VB@120 ([(-1, 1, 0), (-1, 0, 1), (-1, 0, 0), (-1, -1, 1), (-2, -1, 0), (-2, -2, 1)], [3, 3])
+        // @@ ROT VB@180 ([(-2, -1, 1), (-2, -1, 0), (-1, -1, 1), (-1, -1, 0), (-1, -2, 1), (-1, -2, 0)], [3, 3])
+        // @@ ROT VB@240 ([(-2, -2, 0), (-1, -2, 1), (-1, -1, 0), (0, -1, 1), (0, -1, 0), (1, -1, 1)], [3, 3])
+        // @@ ROT VB@300 ([(0, -2, 1), (0, -1, 0), (0, -1, 1), (0, 0, 0), (1, 0, 1), (1, 1, 0)], [3, 3])
+        // Note that the new versions always start on (0,0,0) or (0,0,1).
+
+        let mut s = p.shape(0);
+        assert_eq!(format!("{}", s), "0.0.0,0.0.1,-1.0.0,-1.0.1,-1.1.0,-1.1.1");
+
+        s = p.shape(60);
+        assert_eq!(format!("{}", s), "0.0.1,-1.0.0,-1.-1.1,-2.-1.0,-2.-1.1,-3.-1.0");
+
+        s = p.shape(120);
+        assert_eq!(format!("{}", s), "0.0.0,0.-1.1,0.-1.0,0.-2.1,-1.-2.0,-1.-3.1");
+
+        s = p.shape(180);
+        assert_eq!(format!("{}", s), "0.0.1,0.0.0,1.0.1,1.0.0,1.-1.1,1.-1.0");
+
+        s = p.shape(240);
+        assert_eq!(format!("{}", s), "0.0.0,1.0.1,1.1.0,2.1.1,2.1.0,3.1.1");
+
+        s = p.shape(300);
+        assert_eq!(format!("{}", s), "0.0.1,0.1.0,0.1.1,0.2.0,1.2.1,1.3.0");
     }
 }
 

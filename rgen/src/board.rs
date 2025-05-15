@@ -144,61 +144,65 @@ mod tests {
         let coords = Coords::new();
         let pieces = Pieces::new(&coords);
 
-        let empty_board = Board::new(42, &coords);
+        let empty = Board::new(42, &coords);
 
         let piece = pieces.by_str("VB").unwrap();
         let mut shape = piece.shape(0);
 
         // The VB piece at its default rotation can only fit on the top line in 2 spots,
-        // at 000 and 010. It's out of bounds at 020 and 030. It cannot fit on any starting
-        // position G=1 as it's oriented for G=0.
+        // at 100 and 110. It's out of bounds anywhere on the first row, and at 120, 130, and 140.
+        // It cannot fit on any starting position G=1 as it's oriented for G=0.
 
-        let mut result = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
+        let mut invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0));
+        assert_eq!(invalid, None);
+
+        let mut result = empty.place_piece(shape, piece.color, &abs_yrg!(1, 0, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "BBBBeee.BBeeeeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
 
-        let mut invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 0, 1));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(1, 0, 1));
         assert_eq!(invalid, None);
 
-        result = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 1, 0)).unwrap();
+        result = empty.place_piece(shape, piece.color, &abs_yrg!(1, 1, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "eeBBBBe.eeBBeeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 1, 1));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(1, 1, 1));
         assert_eq!(invalid, None);
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(1, 2, 0));
         assert_eq!(invalid, None);
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 1));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(1, 2, 1));
         assert_eq!(invalid, None);
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 3, 0));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(1, 3, 0));
         assert_eq!(invalid, None);
 
         // Now try again with the VB piece rotated by 300 degrees.
-        // This time it can only fit on cells with G=1, at locations 011 and 021.
-        // It's out of bounds at 001.
+        // This time it can only fit on cells with G=1, at locations 001 and 011,
+        // it's out of bounds at 021.
 
         shape = piece.shape(300);
 
-        let mut invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0));
         assert_eq!(invalid, None);
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 0, 1));
+        result = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 1)).unwrap();
+        assert_eq!(format!("{:?}", result), "eBBBBee.eeeeeBBee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
+
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 1, 0));
         assert_eq!(invalid, None);
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 1, 0));
+        result = empty.place_piece(shape, piece.color, &abs_yrg!(0, 1, 1)).unwrap();
+        assert_eq!(format!("{:?}", result), "eeeBBBB.eeeeeeeBB.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
+
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0));
         assert_eq!(invalid, None);
 
-        let mut result = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 1, 1)).unwrap();
-        assert_eq!(format!("{:?}", result), "BBBBeee.BBeeeeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
 
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 2, 1));
         assert_eq!(invalid, None);
 
-        result = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 1)).unwrap();
-        assert_eq!(format!("{:?}", result), "eeBBBBe.eeBBeeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
-
-        invalid = empty_board.place_piece(shape, piece.color, &abs_yrg!(0, 3, 0));
+        invalid = empty.place_piece(shape, piece.color, &abs_yrg!(0, 3, 0));
         assert_eq!(invalid, None);
     }
 
@@ -211,12 +215,12 @@ mod tests {
         // HR@0:2x4x0 i1@0:2x1x0 W1@0:0x0x0 P1@0:4x3x1 VB@300:0x3x0 J1@0:1x1x1
         // L2@0:3x2x1 TO@180:4x2x0 TW@0:5x4x0 TY@240:5x4x0 TY@300:4x2x0
 
-        let empty_board = Board::new(156954, &coords);
+        let empty = Board::new(156954, &coords);
 
         // HR@0:2x4x0
         let mut piece = pieces.by_str("HR").unwrap();
         let mut shape = piece.shape(0);
-        let mut result = empty_board.place_piece(shape, piece.color, &abs_yrg!(2, 4, 0)).unwrap();
+        let mut result = empty.place_piece(shape, piece.color, &abs_yrg!(2, 4, 0)).unwrap();
         assert_eq!(format!("{:?}", result), "eeeeeee.eeeeeeeee.eeeeeeeeRRR.eeeeeeeeRRR.eeeeeeeee.eeeeeee");
         assert_board_overlaps(result,       "BBBBBBB.BBBOOOOBB.RRRRRROORRR.OOOYYYYYRRR.YYYYRRRRR.YYYWWWR");
 

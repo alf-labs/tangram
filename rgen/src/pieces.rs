@@ -157,7 +157,7 @@ impl Pieces {
 
         let mut p_map = IndexMap::new();
         for mut item in p {
-            item.init_rotations(coords);
+            item.precompute_shapes(coords);
             p_map.insert(item.key, item);
         }
 
