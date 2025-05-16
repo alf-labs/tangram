@@ -191,7 +191,7 @@ function TangramTable() : ReactElement {
                 <a href={`#r${item.index}`}>{item.index}</a><br/>
                 {item.perm.toLocaleString()}
             </td>
-            <td>{found_prev}{found_link}{found_next}</td>
+            <td className="found">{found_prev}{found_link}{found_next}</td>
             <td className="preview d-flex justify-content-center">
                 <BoardImageInView board={item.board}/>
             </td>

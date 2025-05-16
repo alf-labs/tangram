@@ -31,6 +31,10 @@ body {
   height: auto;
 }
 
+td.index a, td.found a {
+  text-decoration: none;
+}
+
 td.pieces {
   font-family: monospace;
   font-size: smaller;
