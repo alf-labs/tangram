@@ -35,6 +35,10 @@ td.index a, td.found a {
   text-decoration: none;
 }
 
+.prev, .next {
+  font-size: smaller;
+}
+
 td.pieces {
   font-family: monospace;
   font-size: smaller;

@@ -14,9 +14,19 @@ Currently based on Rust 1.86, 2024 edition.
 ```
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
 or
-$ wget https://static.rust-lang.org/rustup/rustup-init.sh
+$ wget -O rustup-init.sh https://static.rust-lang.org/rustup/rustup-init.sh
+$ chmod +x rustup-init.sh
+$ ./rustup-init.sh
+$ . "$HOME/.cargo/env"
+$ rustc --version
 ```
 
+Build and run:
+```
+$ cd rgen
+$ cargo build --release
+$ target/release/rgen gen --gen-cores 4
+```
 
 
 ## License

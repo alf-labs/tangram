@@ -55,6 +55,7 @@ function TangramTable() : ReactElement {
     async function fetchData() {
         try {
             // Parse the analyzer data
+            console.log("@@ Fetching analyzer data");
             const analyzerData = await fetch(ANALYZER_JSON_URL);
             if (!analyzerData.ok) {
                 throw new Error(`Error reading data: ${analyzerData.status}`);
@@ -67,6 +68,7 @@ function TangramTable() : ReactElement {
             }
 
             // Parse the generator data
+            console.log("@@ Fetching generator data");
             const generatorData = await fetch(GENERATOR_TXT_URL);
             if (!generatorData.ok) {
                 throw new Error(`Error reading data: ${generatorData.status}`);
@@ -77,6 +79,7 @@ function TangramTable() : ReactElement {
 
             const piecesDuplicates = new Set<string>();
 
+            console.log("@@ Parsing generator data");
             setStatus("Parsing...");
             const pattern = /^@@\s+\[(\d+)]\s+SIG\s+(\S+)\s+(.+)$/;
             let maxPerm = 0;
@@ -109,6 +112,7 @@ function TangramTable() : ReactElement {
                 }
             }
 
+            console.log("@@ Sorting results");
             // Sort the array first by "perm" (ascending) and then by "pieces" (ascending)
             tableData.sort((a, b) => {
                 // First comparison: by "perm"
@@ -125,12 +129,14 @@ function TangramTable() : ReactElement {
                 return 0; // all the same
             });
 
+            console.log("@@ Indexing results");
             // Compute the index after sorting
             let index: number = 1;
             for  (const entry of tableData) {
                 entry.index = index++;
             }
 
+            console.log("@@ Update state");
             setTableData(tableData);
             setTableAnalyzer(analyzerFound);
             const numEntries = tableData.length;
@@ -167,21 +173,41 @@ function TangramTable() : ReactElement {
         return count === 1 ? singular : plural;
     }
 
+    function generateStatusLine() {
+        let line1 = <span> {status} </span>;
+        let line2 = <></>;
+        if (numMatches == 0) {
+            line2 = <span> 0 matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span>;
+        } else if (numMatches > 0) {
+            let a_href = tableAnalyzer[0].href;
+            line2 = <span> <a
+                href={`#f${a_href}`}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
+                href="../tangram/" target="_blank">analyzer</a> found.</span>;
+        }
+
+        return <>
+            {line1}
+            {line2}
+        </>;
+    }
+
     function generateTableRow(item: TableData) {
         let found = item.found_idx >= 0 ? tableAnalyzer[item.found_idx] : null;
         let found_prev = <></>;
         let found_link = <>--</>;
         let found_next = <></>;
+        let found_id = undefined;
         if (found) {
-            let index = item.found_idx;
+            let found_idx = item.found_idx;
+            found_id = `f${found.href}`;
             found_link = <a href={`${TANGRAM_RELATIVE_URL}#${found.href}`}
-                                                          target="_blank">{index}</a>;
+                            target="_blank">{found_idx + 1}</a>;
 
-            if (index > 0) {
-                found_prev = <><a href={`#${tableAnalyzer[index - 1].href}`}>⇑</a><br/></>;
+            if (found_idx > 0) {
+                found_prev = <><a href={`#f${tableAnalyzer[found_idx - 1].href}`} className="prev">⇑ prev</a><br/></>;
             }
-            if (index < tableAnalyzer.length - 1) {
-                found_next = <><br/><a href={`#${tableAnalyzer[index + 1].href}`}>⇓</a></>;
+            if (found_idx < tableAnalyzer.length - 1) {
+                found_next = <><br/><a href={`#f${tableAnalyzer[found_idx + 1].href}`} className="next">⇓ next</a></>;
             }
         }
 
@@ -191,37 +217,19 @@ function TangramTable() : ReactElement {
                 <a href={`#r${item.index}`}>{item.index}</a><br/>
                 {item.perm.toLocaleString()}
             </td>
-            <td className="found">{found_prev}{found_link}{found_next}</td>
+            <td className="found" id={found_id}>{found_prev}{found_link}{found_next}</td>
             <td className="preview d-flex justify-content-center">
                 <BoardImageInView board={item.board}/>
             </td>
             <td className="pieces">{item.pieces}</td>
             <td className="board text-center">
                 {
-                    item.boardLines.map((line) => (
-                        <span key={`${item.index}-${line}"`}>{line}</span>
+                    item.boardLines.map((line, index) => (
+                        <span key={`${item.index}-${index}"`}>{line}</span>
                     ))
                 }
             </td>
         </tr>;
-    }
-
-    function generateStatusLine() {
-        let line1 = <span> {status} </span>;
-        let line2 = <></>;
-        if (numMatches == 0) {
-            line2 = <span> 0 matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span>;
-        } else if (numMatches > 0) {
-            let a_href = tableAnalyzer[0].href;
-            line2 = <span> <a
-                href={`#r${a_href}`}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
-                href="../tangram/" target="_blank">analyzer</a> found.</span>;
-        }
-
-        return <>
-            {line1}
-            {line2}
-        </>;
     }
 
     return (
