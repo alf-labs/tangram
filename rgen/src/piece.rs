@@ -38,7 +38,11 @@ pub struct Shape {
 impl Shape {
 
     pub fn new(cells: Vec<RelYRG>) -> Shape {
-        Shape { cells, positions: vec![], adjacents: vec![] }
+        Shape {
+            cells,
+            positions: vec![],
+            adjacents: vec![],
+        }
     }
 
     /// Recompute the shape such that the first cell always has Y=0/R=0.
@@ -73,7 +77,7 @@ impl Shape {
     /// This is a fairly expensive operation so we don't do it automatically
     /// in the new() method. It needs to be invoked once the shape is rotated
     /// and centered.
-    pub fn precompute_positions(&mut self, coords: &Coords) {
+    pub fn precompute_positions(&self, coords: &Coords) -> Shape {
         let board = Board::new(0, &coords);
         let mut positions = Vec::new();
 
@@ -92,55 +96,37 @@ impl Shape {
             }
         }
 
-        self.positions = positions;
+        Shape {
+            cells: self.cells.clone(),
+            positions,
+            adjacents: self.adjacents.clone(),
+        }
     }
 
     /// Precomputes all the adjacents cells to the shape.
     /// This is a fairly expensive operation so we don't do it automatically
     /// in the new() method. It needs to be invoked once the shape is rotated
     /// and centered.
-    pub fn precompute_adjacents(&mut self, coords: &Coords) {
-        // Convert cell shape to absolute YRG coordinates
-        let mut abs_cells = Vec::new();
-        for rel_pos in self.cells.iter() {
-            abs_cells.push(rel_pos.to_abs());
-        }
+    pub fn precompute_adjacents(&mut self) -> Shape {
+        let mut adjacents = Vec::new();
 
-        let mut abs_adjacents = Vec::new();
-        for yrg in abs_cells.iter() {
+        for yrg in self.cells.iter() {
 
-            // DEBUG
-            match coords.valid_yrg_to_idx.get(yrg) {
-                None => {
-                    panic!("@@ DEBUG YRG {} NOT FOUND.\nShape {:?}\nabs_cells: {:?}", yrg, self, abs_cells);
-                }
-                Some( idx ) => {
-                    println!("@@ DEBUG YRG {} --> index {}", yrg, idx);
-                }
-            };
-
-            let idx = coords.valid_yrg_to_idx.get(yrg).unwrap();
-            let adj_list = coords.adjacents_to_yrg.get(*idx).unwrap();
+            let adj_list = Coords::compute_adjacents(yrg);
             for adj_yrg in adj_list {
-                if adj_yrg.y < 0 {
-                    // skip invalid adjacent cells (out of the board bounds)
-                    continue;
-                }
-                if abs_adjacents.contains(adj_yrg) || abs_cells.contains(adj_yrg) {
+                if adjacents.contains(&adj_yrg) || self.cells.contains(&adj_yrg) {
                     // Skip cells already visited or part of the shape itself.
                     continue;
                 }
-                abs_adjacents.push(*adj_yrg);
+                adjacents.push(adj_yrg);
             }
         }
 
-        // Convert back to relative YRG coordiantes
-        let mut adjacents = Vec::new();
-        for abs_pos in abs_adjacents.iter() {
-            adjacents.push(abs_pos.to_rel());
+        Shape {
+            cells: self.cells.clone(),
+            positions: self.positions.clone(),
+            adjacents: adjacents.clone(),
         }
-
-        self.adjacents = adjacents;
     }
 }
 
@@ -181,19 +167,21 @@ impl Piece {
     /// for the rotated shape on the board.
     pub fn precompute_shapes(&mut self, coords: &Coords) {
         let mut shape = self.shapes.get(&0).unwrap().clone();
-        let mut new_shape = shape.recenter();
-        new_shape.precompute_positions(coords);
-        new_shape.precompute_adjacents(coords);
-        self.shapes.insert(0, new_shape);
+        self.shapes.insert(0,
+                           shape
+                               .recenter()
+                               .precompute_positions(coords)
+                               .precompute_adjacents());
 
         if self.max_rot > 0 {
 
             for angle in (60..=self.max_rot).step_by(60) {
-                let mut new_shape = shape.rotate_60_ccw(coords);
-                new_shape = new_shape.recenter();
-                new_shape.precompute_positions(coords);
-                new_shape.precompute_adjacents(coords);
-                self.shapes.insert(angle, new_shape.clone());
+                let new_shape = shape.rotate_60_ccw(coords);
+                self.shapes.insert(angle,
+                                   new_shape
+                                       .recenter()
+                                       .precompute_positions(coords)
+                                       .precompute_adjacents());
                 shape = new_shape;
             }
         }
@@ -203,7 +191,6 @@ impl Piece {
         self.shapes.get(&angle).unwrap()
     }
 }
-
 
 
 #[cfg(test)]
@@ -249,6 +236,19 @@ mod tests {
             abs_yrg!(3, 1, 0), abs_yrg!(3, 2, 0), abs_yrg!(3, 3, 0),
             abs_yrg!(4, 2, 0), abs_yrg!(4, 3, 0),
             abs_yrg!(5, 3, 0),
+        ]);
+    }
+
+    //noinspection DuplicatedCode
+    #[test]
+    fn test_piece_i1_adjacents() {
+        let coord = Coords::new();
+        let pieces = Pieces::new(&coord);
+        let p = pieces.by_str("i1").unwrap();
+        let s = p.shape(0);
+        assert_eq!(s.adjacents, vec![
+            rel_yrg!(0, -1, 1), rel_yrg!(1, 0, 1), rel_yrg!(-1, 0, 0), rel_yrg!(1, 1, 1),
+            rel_yrg!(-1, 1, 0), rel_yrg!(1, 2, 1), rel_yrg!(0, 3, 0), rel_yrg!(-1, 2, 0),
         ]);
     }
 

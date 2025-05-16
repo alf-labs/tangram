@@ -1,8 +1,7 @@
-use crate::abs_yrg;
+use crate::{abs_yrg, rel_yrg};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Formatter;
-use std::ops::RangeInclusive;
 
 pub const N: i8 = 6;
 pub const N2: i8 = N/2;
@@ -75,16 +74,16 @@ impl RelYRG {
     }
 }
 
-type YRGAdjacents = [AbsYRG; 4];
+type YRGAdjacents = [RelYRG; 3];
 
 /// Static YRG coordinates helpers: valid YRG coordinates, rotation lookup table.
 pub struct Coords {
     pub valid_yrg: Vec<AbsYRG>,
-    pub valid_yrg_to_idx: HashMap<AbsYRG, usize>,
+    #[allow(dead_code)] // TBD remove if not use in this new version
+    valid_yrg_to_idx: HashMap<AbsYRG, usize>,
     #[allow(dead_code)]
     rot60ccw_src: Vec<AbsYRG>,
     rot60ccw_src_to_idx: HashMap<AbsYRG, usize>,
-    pub adjacents_to_yrg: Vec<YRGAdjacents>,
 }
 
 impl Coords {
@@ -119,14 +118,11 @@ abs_yrg!(0, 0, 0), abs_yrg!(1, 0, 1), abs_yrg!(1, 1, 0), abs_yrg!(2, 1, 1), abs_
             rot60_idx.insert(yrg.clone(), index);
         }
 
-        let adjacents = Coords::compute_adjacents(&valid_yrg);
-
         Coords {
             valid_yrg,
             valid_yrg_to_idx: valid_idx,
             rot60ccw_src,
             rot60ccw_src_to_idx: rot60_idx,
-            adjacents_to_yrg: adjacents,
         }
     }
 
@@ -137,65 +133,28 @@ abs_yrg!(0, 0, 0), abs_yrg!(1, 0, 1), abs_yrg!(1, 1, 0), abs_yrg!(2, 1, 1), abs_
         yrg_dst.to_rel()
     }
 
-    fn compute_adjacents(valid_yrg: &Vec<AbsYRG>) -> Vec<YRGAdjacents> {
-        let mut adjacents = Vec::new();
+    pub fn compute_adjacents(yrg: &RelYRG) -> YRGAdjacents {
+        let y = yrg.y;
+        let r = yrg.r;
+        let g = yrg.g;
 
-        let mut valid_r_per_line_yg: HashMap<AbsYRG, RangeInclusive<i8>> = HashMap::new();
-        valid_r_per_line_yg.insert(abs_yrg!(0, 0, 1), RangeInclusive::new(0, 2));
-        valid_r_per_line_yg.insert(abs_yrg!(0, 0, 0), RangeInclusive::new(0, 3));
-        valid_r_per_line_yg.insert(abs_yrg!(1, 0, 1), RangeInclusive::new(0, 3));
-        valid_r_per_line_yg.insert(abs_yrg!(1, 0, 0), RangeInclusive::new(0, 4));
-        valid_r_per_line_yg.insert(abs_yrg!(2, 0, 1), RangeInclusive::new(0, 4));
-        valid_r_per_line_yg.insert(abs_yrg!(2, 0, 0), RangeInclusive::new(0, 5));
-        // below Y symmetry, things are different
-        valid_r_per_line_yg.insert(abs_yrg!(3, 0, 1), RangeInclusive::new(0, 5));
-        valid_r_per_line_yg.insert(abs_yrg!(3, 0, 0), RangeInclusive::new(1, 5));
-        valid_r_per_line_yg.insert(abs_yrg!(4, 0, 1), RangeInclusive::new(1, 5));
-        valid_r_per_line_yg.insert(abs_yrg!(4, 0, 0), RangeInclusive::new(2, 5));
-        valid_r_per_line_yg.insert(abs_yrg!(5, 0, 1), RangeInclusive::new(2, 5));
-        valid_r_per_line_yg.insert(abs_yrg!(5, 0, 0), RangeInclusive::new(3, 5));
+        // Left
+        let gl = 1 - g;
+        let rl = if g == 0 { r - 1 } else { r };
+        let left = rel_yrg!(y, rl, gl);
 
-        for yrg in valid_yrg.iter() {
-            let y = yrg.y;
-            let r = yrg.r;
-            let g = yrg.g;
+        // Right
+        let rr = if g == 1 { r + 1 } else { r };
+        let right = rel_yrg!(y, rr, gl);
 
-            // Left
-            let gl = 1 - g;
-            let rl = if g == 0 { r - 1 } else { r };
-            let vr = valid_r_per_line_yg.get(&abs_yrg!(y, 0, gl)).unwrap();
-            let left = if vr.contains(&rl) {
-                abs_yrg!(y, rl, gl)
-            } else {
-                abs_yrg!(-1, -1, -1)    // an invalid cell (out of the board bounds)
-            };
+        // Up or Down (can't have both)
+        let up_down = if g == 1 {
+            rel_yrg!(y - 1, r, 0)
+        } else {
+            rel_yrg!(y + 1, r, 1)
+        };
 
-            // Right
-            let rr = if g == 1 { r + 1 } else { r };
-            let right = if vr.contains(&rr) {
-                abs_yrg!(y, rr, gl)
-            } else {
-                abs_yrg!(-1, -1, -1)    // an invalid cell (out of the board bounds)
-            };
-
-            // Up
-            let up = if g == 1 && y > 0 {
-                abs_yrg!(y - 1, r, 1 - g)
-            } else {
-                abs_yrg!(-1, -1, -1)    // an invalid cell (out of the board bounds)
-            };
-
-            // Down
-            let down = if g == 0 && y < N - 1 {
-                abs_yrg!(y + 1, r, 1 - g)
-            } else {
-                abs_yrg!(-1, -1, -1)    // an invalid cell (out of the board bounds)
-            };
-
-            adjacents.push( [ left, right, up, down ] )
-        }
-
-        adjacents
+        [ left, right, up_down ]
     }
 }
 

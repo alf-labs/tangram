@@ -1,9 +1,9 @@
-use std::fmt;
-use std::fmt::Formatter;
-use itertools::Itertools;
-use regex::Regex;
 use crate::coord::{AbsYRG, Coords, N};
 use crate::piece::{Colors, Shape};
+use itertools::Itertools;
+use regex::Regex;
+use std::fmt;
+use std::fmt::Formatter;
 
 pub const BOARD_SIZE: usize = (2 * N * N) as usize;
 
@@ -103,7 +103,44 @@ impl Board {
             };
         }
 
+        match &new_board {
+            None => {}
+            Some(board  ) => {
+                // The piece fits at the desired location.
+                // Now validate that we are not leaving 1-single empty cells around.
+                for yrg in shape.adjacents.iter() {
+                    let abs = yrg.offset_by(offset);
+                    if board.valid(&abs) {
+                        if !board.occupied(&abs) {
+                            if board.surrounded(&abs) {
+                                return None;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
         new_board
+    }
+
+    /// Checks whether all valid surrounding cells are occupied.
+    fn surrounded(&self, abs_yrg: &AbsYRG) -> bool {
+        let mut num_occupied = 0;
+        let mut num_cells = 0;
+
+        for adj in Coords::compute_adjacents(&abs_yrg.to_rel()) {
+            let abs_adj = adj.to_abs();
+            if self.valid(&abs_adj) {
+                num_cells += 1;
+                if self.occupied(&abs_adj) {
+                    num_occupied += 1;
+                }
+            }
+        }
+
+        // All valid surrounding cells are occupied.
+        num_occupied == num_cells
     }
 }
 
@@ -133,9 +170,9 @@ impl fmt::Debug for Board {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::abs_yrg;
     use crate::pieces::Pieces;
-    use super::*;
 
     #[test]
     fn test_board_display_empty() {
@@ -229,15 +266,14 @@ mod tests {
         // HR@0:0x0x0
         let mut piece = pieces.by_str("HR").unwrap();
         let mut shape = piece.shape(0);
-        let mut board = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
+        let board = empty.place_piece(shape, piece.color, &abs_yrg!(0, 0, 0)).unwrap();
         assert_eq!(format!("{:?}", board), "RRReeee.eRRReeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
 
         piece = pieces.by_str("TW").unwrap();
         shape = piece.shape(0);
-        board = board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0)).unwrap();
-        assert_eq!(format!("{:?}", board), "RRReWWW.eRRReeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee");
-
-        // TDD write the heuristic check and make this test fail
+        let invalid = board.place_piece(shape, piece.color, &abs_yrg!(0, 2, 0));
+        assert_eq!(invalid, None);
+        // The board would look like this: "RRReWWW.eRRReeeee.eeeeeeeeeee.eeeeeeeeeee.eeeeeeeee.eeeeeee"
     }
 
     #[test]
