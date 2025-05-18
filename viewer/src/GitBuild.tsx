@@ -1,4 +1,4 @@
-export const GIT_HASH_STR = "main @ 420ceac";
-export const GIT_LONG_STR = "Build main @ 420ceac, 2025-05-16 16:15:11 -0700";
+export const GIT_HASH_STR = "dev @ 9cd650f";
+export const GIT_LONG_STR = "Build dev @ 9cd650f, 2025-05-17 21:59:56 -0700";
 export const VERSION_MAJOR = "1";
-export const VERSION_MINOR = "6";
+export const VERSION_MINOR = "7";
