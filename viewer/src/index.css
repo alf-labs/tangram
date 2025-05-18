@@ -61,7 +61,11 @@ body {
   background-color: #88CC88 !important;
 }
 
-.gridContainer {
+.gridHeaderContainer {
+
+}
+
+.gridDataContainer {
   flex-grow: 1;
 }
 

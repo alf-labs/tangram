@@ -193,48 +193,6 @@ function TangramTable() : ReactElement {
         </>;
     }
 
-    function generateTableRow(item: TableData) {
-        let found = item.found_idx >= 0 ? tableAnalyzer[item.found_idx] : null;
-        let found_prev = <></>;
-        let found_link = <>--</>;
-        let found_next = <></>;
-        let found_id = undefined;
-        if (found) {
-            let found_idx = item.found_idx;
-            found_id = `f${found.href}`;
-            found_link = <a href={`${TANGRAM_RELATIVE_URL}#${found.href}`}
-                            target="_blank">{found_idx + 1}</a>;
-
-            if (found_idx > 0) {
-                found_prev = <><a href={`#f${tableAnalyzer[found_idx - 1].href}`} className="prev">⇑ prev</a><br/></>;
-            }
-            if (found_idx < tableAnalyzer.length - 1) {
-                found_next = <><br/><a href={`#f${tableAnalyzer[found_idx + 1].href}`} className="next">⇓ next</a></>;
-            }
-        }
-
-        return <tr key={item.index} id={`r${item.index}`}
-                   className={found ? "row-found" : ""}>
-            <td className="index">
-                <a href={`#r${item.index}`}>{item.index}</a><br/>
-                {item.perm.toLocaleString()}
-            </td>
-            <td className="found" id={found_id}>{found_prev}{found_link}{found_next}</td>
-            <td className="preview d-flex justify-content-center">
-                <BoardImageInView board={item.board}/>
-            </td>
-            <td className="pieces">{item.pieces}</td>
-            <td className="board text-center">
-                {
-                    item.boardLines.map((line, index) => (
-                        <span key={`${item.index}-${index}"`}>{line}</span>
-                    ))
-                }
-            </td>
-        </tr>;
-    }
-
-    // New version: dynamic grid
     const columnsWidths = [100, 80, 150, 400, 100];
     const columnNames = [ "#", "Found", "Preview", "Pieces", "Board" ];
     const columnCenter = [ "", "text-center", "text-center", "", "text-center" ];
@@ -242,21 +200,22 @@ function TangramTable() : ReactElement {
     const rowHeight = 120;
     const fixedWidth = columnsWidths.reduce((acc, val) => acc + val, 0) + 20;
 
-    function DynamicCell(cellProps: GridChildComponentProps) : ReactElement {
+    function DynamicHeaderCell(cellProps: GridChildComponentProps) : ReactElement {
+        const col = cellProps.columnIndex;
+        return (
+            <div className={`gridHead gridItemEven ${columnCenter[col]}`} style={cellProps.style}>
+                {columnNames[col]}
+            </div>
+        )
+    }
+
+    function DynamicDataCell(cellProps: GridChildComponentProps) : ReactElement {
         const row = cellProps.rowIndex;
         const col = cellProps.columnIndex;
-        if (row === 0) {
-            return (
-                <div className={`gridHead gridItemEven ${columnCenter[col]}`} style={cellProps.style}>
-                    {columnNames[col]}
-                </div>
-            )
-        }
-
-        const item = tableData[row - 1];
+        const item = tableData[row];
         let content = undefined;
         let colClass = "";
-        let bgColorClass = cellProps.rowIndex % 2 === 0 ? "gridItemOdd" : "gridItemEven";
+        let bgColorClass = cellProps.rowIndex % 2 === 1 ? "gridItemOdd" : "gridItemEven";
 
         let found = item.found_idx >= 0 ? tableAnalyzer[item.found_idx] : null;
         if (found) {
@@ -268,7 +227,7 @@ function TangramTable() : ReactElement {
             content = <>
                 <a href={`#r${item.index}`}>{item.index}</a><br/>
                 {item.perm.toLocaleString()}
-                </>;
+            </>;
         } else if (col === 1) {
             colClass = "found";
             let found_prev = <></>;
@@ -312,55 +271,40 @@ function TangramTable() : ReactElement {
         )
     }
 
-
     return (
     <div className="d-flex flex-column flex-grow-1">
         <div>
             {generateStatusLine()}
         </div>
-        <div className="gridContainer">
-        <AutoSizer defaultWidth={fixedWidth}>
-            {({ height /*, width*/ }) => (
-                    <Grid
-                        width={fixedWidth}
-                        height={height}
-                        columnCount={5}
-                        rowCount={tableData.length + 1}
-                        columnWidth={index => columnsWidths[index]}
-                        rowHeight={index => index === 0 ? headHeight : rowHeight}
-                    >
-                        {DynamicCell}
-                    </Grid>
-                )}
-        </AutoSizer>
+        <div className="gridHeaderContainer">
+            <Grid
+                width={fixedWidth}
+                height={headHeight}
+                columnCount={5}
+                rowCount={1}
+                columnWidth={index => columnsWidths[index]}
+                rowHeight={_index => headHeight}
+            >
+                {DynamicHeaderCell}
+            </Grid>
+        </div>
+        <div className="gridDataContainer">
+            <AutoSizer defaultWidth={fixedWidth}>
+                {({ height /*, width*/ }) => (
+                        <Grid
+                            width={fixedWidth}
+                            height={height}
+                            columnCount={5}
+                            rowCount={tableData.length}
+                            columnWidth={index => columnsWidths[index]}
+                            rowHeight={_index => rowHeight}
+                        >
+                            {DynamicDataCell}
+                        </Grid>
+                    )}
+            </AutoSizer>
         </div>
     </div>
-    );
-
-
-    // Old version: table.
-    return (
-    <>
-        <div>
-            {generateStatusLine()}
-        </div>
-        <Table striped bordered hover>
-            <thead>
-            <tr>
-                <th>#</th>
-                <th>Found</th>
-                <th>Preview</th>
-                <th>Pieces</th>
-                <th>Board</th>
-            </tr>
-            </thead>
-            <tbody>
-            {
-                tableData.map((item: TableData) => generateTableRow(item))
-            }
-            </tbody>
-        </Table>
-    </>
     );
 }
 
