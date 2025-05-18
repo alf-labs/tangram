@@ -1,0 +1,5 @@
+#!/usr/bin/bash
+set -e
+set -x
+N=$(wc -l generator_full.txt  | cut -d " " -f 1)
+I=$((N/80)); L=1; while [[ $L -lt $N ]]; do echo $L;  sed -n "${L}p" generator_full.txt >> generator.txt ; L=$((L+I)); done

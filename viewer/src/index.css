@@ -6,6 +6,10 @@ body {
   background-color: beige;
 }
 
+.vh-container {
+  height: 98vh !important;
+}
+
 .center {
   margin: auto;
   width: 50%;
@@ -31,7 +35,7 @@ body {
   height: auto;
 }
 
-td.index a, td.found a {
+.index a, .found a {
   text-decoration: none;
 }
 
@@ -39,20 +43,48 @@ td.index a, td.found a {
   font-size: smaller;
 }
 
-td.pieces {
+.pieces {
   font-family: monospace;
   font-size: smaller;
 }
 
-td.board {
+.board {
   font-family: monospace;
   font-size: .7em;
 }
 
-td.board span {
+.board span {
   display: block;
 }
 
-tr.row-found td {
+.row-found {
   background-color: #88CC88 !important;
+}
+
+.gridContainer {
+  flex-grow: 1;
+}
+
+.gridHead {
+  border: 1px solid #D0D0D0;
+  font-weight: bold;
+  padding: 5px;
+}
+
+.gridRow {
+  border: 1px solid #D0D0D0;
+  padding: 5px;
+}
+
+.gridFound {
+  background-color: #88CC88 !important;
+}
+
+.gridItemEven,
+.gridItemOdd {
+  background-color: #FFFFFF;
+}
+
+.gridItemOdd {
+  background-color: #E8E8E8;
 }

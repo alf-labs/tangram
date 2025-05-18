@@ -1,5 +1,7 @@
 import {type ReactElement, useEffect, useState} from "react";
-import Table from 'react-bootstrap/Table';
+import {type GridChildComponentProps, VariableSizeGrid as Grid} from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import Table from "react-bootstrap/Table";
 import {BoardImageInView} from "./BoardImage.tsx";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
@@ -232,6 +234,111 @@ function TangramTable() : ReactElement {
         </tr>;
     }
 
+    // New version: dynamic grid
+    const columnsWidths = [100, 80, 150, 400, 100];
+    const columnNames = [ "#", "Found", "Preview", "Pieces", "Board" ];
+    const columnCenter = [ "", "text-center", "text-center", "", "text-center" ];
+    const headHeight = 30;
+    const rowHeight = 120;
+    const fixedWidth = columnsWidths.reduce((acc, val) => acc + val, 0) + 20;
+
+    function DynamicCell(cellProps: GridChildComponentProps) : ReactElement {
+        const row = cellProps.rowIndex;
+        const col = cellProps.columnIndex;
+        if (row === 0) {
+            return (
+                <div className={`gridHead gridItemEven ${columnCenter[col]}`} style={cellProps.style}>
+                    {columnNames[col]}
+                </div>
+            )
+        }
+
+        const item = tableData[row - 1];
+        let content = undefined;
+        let colClass = "";
+        let bgColorClass = cellProps.rowIndex % 2 === 0 ? "gridItemOdd" : "gridItemEven";
+
+        let found = item.found_idx >= 0 ? tableAnalyzer[item.found_idx] : null;
+        if (found) {
+            bgColorClass = "row-found";
+        }
+
+        if (col === 0) {
+            colClass = "index";
+            content = <>
+                <a href={`#r${item.index}`}>{item.index}</a><br/>
+                {item.perm.toLocaleString()}
+                </>;
+        } else if (col === 1) {
+            colClass = "found";
+            let found_prev = <></>;
+            let found_link = <>--</>;
+            let found_next = <></>;
+            let found_id = undefined;
+            if (found) {
+                let found_idx = item.found_idx;
+                found_id = `f${found.href}`;
+                found_link = <a href={`${TANGRAM_RELATIVE_URL}#${found.href}`}
+                                target="_blank">{found_idx + 1}</a>;
+
+                if (found_idx > 0) {
+                    found_prev = <><a href={`#f${tableAnalyzer[found_idx - 1].href}`} className="prev">⇑ prev</a><br/></>;
+                }
+                if (found_idx < tableAnalyzer.length - 1) {
+                    found_next = <><br/><a href={`#f${tableAnalyzer[found_idx + 1].href}`} className="next">⇓ next</a></>;
+                }
+            }
+            content = <div id={found_id}>{found_prev}{found_link}{found_next}</div>;
+        } else if (col === 2) {
+            colClass = "preview d-flex justify-content-center";
+            content = <BoardImageInView board={item.board}/>;
+        } else if (col === 3) {
+            colClass = "pieces";
+            content = <>{item.pieces}</>;
+        } else if (col === 4) {
+            colClass = "board";
+            content = <>{
+                item.boardLines.map((line, index) => (
+                    <span key={`${item.index}-${index}"`}>{line}</span>
+                ))
+            }</>;
+        }
+
+        return (
+            <div className={`gridRow ${colClass} ${bgColorClass} ${columnCenter[col]}`}
+                 style={cellProps.style}>
+                {content}
+            </div>
+        )
+    }
+
+
+    return (
+    <div className="d-flex flex-column flex-grow-1">
+        <div>
+            {generateStatusLine()}
+        </div>
+        <div className="gridContainer">
+        <AutoSizer defaultWidth={fixedWidth}>
+            {({ height /*, width*/ }) => (
+                    <Grid
+                        width={fixedWidth}
+                        height={height}
+                        columnCount={5}
+                        rowCount={tableData.length + 1}
+                        columnWidth={index => columnsWidths[index]}
+                        rowHeight={index => index === 0 ? headHeight : rowHeight}
+                    >
+                        {DynamicCell}
+                    </Grid>
+                )}
+        </AutoSizer>
+        </div>
+    </div>
+    );
+
+
+    // Old version: table.
     return (
     <>
         <div>
@@ -254,7 +361,7 @@ function TangramTable() : ReactElement {
             </tbody>
         </Table>
     </>
-    )
+    );
 }
 
 export default TangramTable
