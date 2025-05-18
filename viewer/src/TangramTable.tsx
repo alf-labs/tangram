@@ -1,7 +1,6 @@
-import {type ReactElement, useEffect, useState} from "react";
+import {type ReactElement, useEffect, useRef, useState} from "react";
 import {type GridChildComponentProps, VariableSizeGrid as Grid} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
-import Table from "react-bootstrap/Table";
 import {BoardImageInView} from "./BoardImage.tsx";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
@@ -21,7 +20,8 @@ interface TableData {
 interface AnalyzerItem {
     href: string;
     index: number;
-    sig: string
+    sig: string;
+    table_index: number;
 }
 
 function TangramTable() : ReactElement {
@@ -29,6 +29,7 @@ function TangramTable() : ReactElement {
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
     const [status, setStatus] = useState("Loading...");
     const [numMatches, setNumMatches] = useState(-1);
+    const gridDataRef = useRef<Grid>(null);
 
     useEffect(() => {
         fetchData()
@@ -77,7 +78,6 @@ function TangramTable() : ReactElement {
             }
             const generatorContent = await generatorData.text();
             const tableData: TableData[] = [];
-            const analyzerFound: AnalyzerItem[] = [];
 
             const piecesDuplicates = new Set<string>();
 
@@ -91,19 +91,13 @@ function TangramTable() : ReactElement {
                     const pieces = sortPieces(matches[3].split(",")).join(" ");
                     if (!piecesDuplicates.has(pieces)) {
                         const board = matches[2];
-                        let found_idx = -1;
-                        let analyzerListIdx = analyzerMap.get(board) ?? -1;
-                        if (analyzerListIdx >= 0) {
-                            found_idx = analyzerFound.length;
-                            analyzerFound.push( analyzerList[analyzerListIdx] );
-                        }
                         const perm = parseInt(matches[1], 10);
                         maxPerm = Math.max(perm, maxPerm);
 
                         const entry: TableData = {
                             index: 0,
                             perm: perm,
-                            found_idx: found_idx,
+                            found_idx: -1, // post-processed below
                             board: board,
                             boardLines: splitBoard(board),
                             pieces: pieces,
@@ -132,10 +126,18 @@ function TangramTable() : ReactElement {
             });
 
             console.log("@@ Indexing results");
-            // Compute the index after sorting
+            // Compute the index after sorting, managed found items
+            const analyzerFound: AnalyzerItem[] = [];
             let index: number = 1;
             for  (const entry of tableData) {
                 entry.index = index++;
+
+                let analyzerListIdx = analyzerMap.get(entry.board) ?? -1;
+                if (analyzerListIdx >= 0) {
+                    entry.found_idx = analyzerFound.length;
+                    analyzerList[analyzerListIdx].table_index = entry.index;
+                    analyzerFound.push( analyzerList[analyzerListIdx] );
+                }
             }
 
             console.log("@@ Update state");
@@ -181,9 +183,10 @@ function TangramTable() : ReactElement {
         if (numMatches == 0) {
             line2 = <span> 0 matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span>;
         } else if (numMatches > 0) {
-            let a_href = tableAnalyzer[0].href;
+            let t_idx = tableAnalyzer[0].table_index;
             line2 = <span> <a
-                href={`#f${a_href}`}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
+                href={`#f${t_idx}`}
+                onClick={() => jumpToDataRow(t_idx)}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
                 href="../tangram/" target="_blank">analyzer</a> found.</span>;
         }
 
@@ -236,15 +239,23 @@ function TangramTable() : ReactElement {
             let found_id = undefined;
             if (found) {
                 let found_idx = item.found_idx;
-                found_id = `f${found.href}`;
+                found_id = `f${found.table_index}`;
                 found_link = <a href={`${TANGRAM_RELATIVE_URL}#${found.href}`}
                                 target="_blank">{found_idx + 1}</a>;
 
                 if (found_idx > 0) {
-                    found_prev = <><a href={`#f${tableAnalyzer[found_idx - 1].href}`} className="prev">⇑ prev</a><br/></>;
+                    let t_idx = tableAnalyzer[found_idx - 1].table_index;
+                    found_prev = <><a
+                        href={`#f${t_idx}`}
+                        onClick={() => jumpToDataRow(t_idx)}
+                        className="prev">⇑ prev</a><br/></>;
                 }
                 if (found_idx < tableAnalyzer.length - 1) {
-                    found_next = <><br/><a href={`#f${tableAnalyzer[found_idx + 1].href}`} className="next">⇓ next</a></>;
+                    let t_idx = tableAnalyzer[found_idx + 1].table_index;
+                    found_next = <><br/><a
+                        href={`#f${t_idx}`}
+                        onClick={() => jumpToDataRow(t_idx)}
+                        className="next">⇓ next</a></>;
                 }
             }
             content = <div id={found_id}>{found_prev}{found_link}{found_next}</div>;
@@ -271,6 +282,17 @@ function TangramTable() : ReactElement {
         )
     }
 
+    function jumpToDataRow(rowIndex: number) {
+        console.log(`@@ jump to row ${rowIndex}`);
+        if (gridDataRef.current) {
+            gridDataRef.current.scrollToItem({
+                columnIndex: 0,
+                rowIndex: rowIndex,
+                align: "start",
+            });
+        }
+    }
+
     return (
     <div className="d-flex flex-column flex-grow-1">
         <div>
@@ -292,6 +314,7 @@ function TangramTable() : ReactElement {
             <AutoSizer defaultWidth={fixedWidth}>
                 {({ height /*, width*/ }) => (
                         <Grid
+                            ref={gridDataRef}
                             width={fixedWidth}
                             height={height}
                             columnCount={5}
