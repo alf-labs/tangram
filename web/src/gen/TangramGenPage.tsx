@@ -24,7 +24,7 @@ interface AnalyzerItem {
     table_index: number;
 }
 
-function TangramTable() : ReactElement {
+function TangramGenPage() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
     const [status, setStatus] = useState("Loading...");
@@ -331,4 +331,4 @@ function TangramTable() : ReactElement {
     );
 }
 
-export default TangramTable
+export default TangramGenPage
