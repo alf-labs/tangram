@@ -16,7 +16,7 @@ function AppHeader() {
   return (
     <>
         <Navbar bg="primary"  >
-            <Navbar.Brand as={Link} to="/" className="ms-3 pe-3">
+            <Navbar.Brand className="ms-3 pe-3">
                 Tangram Viewer <br/>
                 <span className="navbar-brand-detail">
                 <a href="https://github.com/alf-labs/tangram" target="_blank">https://github.com/alf-labs/tangram/</a>

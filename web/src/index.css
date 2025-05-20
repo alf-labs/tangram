@@ -119,3 +119,27 @@ body {
   float: left;
   margin-right: 1em;
 }
+
+.markdown img[src*="piece_"] {
+  max-width: 128px;
+}
+
+.markdown table, .markdown tr, .markdown td, .markdown th {
+  border: lightgray solid 1px;
+  border-collapse: collapse;
+}
+
+.markdown table {
+  margin-bottom: 1em;
+}
+
+.markdown td, .markdown th {
+  white-space: nowrap;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+.markdown td:first-of-type {
+  width: 140px !important;
+}
+
