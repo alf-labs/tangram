@@ -1,69 +1,86 @@
-# React + TypeScript + Vite
+# Tangram Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is part of the https://github.com/alf-labs/tangram
+project.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Requirements
 
-## Expanding the ESLint configuration
+The project uses [Node.js](https://nodejs.org/) version 24.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+If you do not have Node.js installed, you can install it:
+* Directly from https://nodejs.org/
+* Via the [FNM node manager](https://github.com/Schniz/fnm)
+* Via the [NVM node manager](https://github.com/nvm-sh/nvm)
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+"Node managers" allow you to have different versions of Node.js
+installed on your system and switch easily between projects.
+NVM is sort of the "legacy original" node manager, and FNM is
+a newer implementation.
+ 
+If you're using Linux, MacOS, or Windows via PowerShell or
+MSYS/Cygwin/Git Bash, consider using FNM.
+
+If you're using Windows via CMD console, NVM is probably a
+better fit.
+
+
+## IDE
+
+The project should work fine out of the box with either VS Code
+or WebStorm.
+
+When using FNM, WebStorm may fail to find the proper Node.js
+binary to use. That's because it looks at it in the `PATH`,
+yet FNM does not install any Node.js in the global `PATH`,
+only  in sub-shells. You can manually run `fnm env` to find
+the current Node.js binary `PATH` and update WebStorm to use
+that, or you can start WebStorm from a shell where you already
+executed `fnm use`, thus ensuring the `PATH` is already set
+before  WebStorm inherits it.
+
+
+## Dev vs Deployment
+
+This project contains a `.nvmrc` file. If you're using FNM
+or NVM, you can activate the proper version of Node.js first:
+
+```shell
+$ fnm use
+or
+$ nvm use
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+Then install the required node packages once:
+```shell
+$ npm install
 ```
 
-### Dev vs Deployment
-
-Dev:
-```
+To build and run the Dev profile:
+```shell
 $ npm dev
 ```
 
-Prod:
-```
+The `dev` version uses the Vite shell.
+Press "o" to open the site in your current web browser instance.
+In dev mode, this has hot reload, or use "r" to force reload.
+
+
+To build for the Prod profile:
+```shell
 $ npm run build
-$ num run preview
+optional:
+$ npm run preview
 ```
+
+`preview` runs the Vite shell to preview it locally.
+
+
+## License
+
+[MIT license](../LICENSE).
+
+
+
 
 ~~
