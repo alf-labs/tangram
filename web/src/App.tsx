@@ -4,6 +4,8 @@ import type {ReactElement} from "react";
 import {HashRouter, Route, Routes} from "react-router-dom";
 import IntroPage from "./intro/IntroPage.tsx";
 import AppHeader from "./AppHeader.tsx";
+import AnalyzerPage from "./analyzer/AnalyzerPage.tsx";
+import PiecesPage from "./pieces/PiecesPage.tsx";
 
 function App() : ReactElement {
 
@@ -17,6 +19,8 @@ function App() : ReactElement {
                           <Routes>
                               <Route path="/" element={<IntroPage />} />
                               <Route path="/gn" element={<TangramGenPage />} />
+                              <Route path="/an" element={<AnalyzerPage />} />
+                              <Route path="/pc" element={<PiecesPage />} />
                           </Routes>
                       </main>
                   </Row>

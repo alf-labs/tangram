@@ -7,7 +7,7 @@ import introMd from "./intro.md?raw";
 function IntroPage() : ReactElement {
 
     return (
-        <div className="d-flex flex-column flex-grow-1 markdown">
+        <div className="intropage markdown">
             <Markdown rehypePlugins={[rehypeRaw, remarkGfm]}>{introMd}</Markdown>
         </div>
     )

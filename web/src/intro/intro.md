@@ -1,5 +1,3 @@
-# Tangram Puzzle
-
 A [Tangram](https://en.wikipedia.org/wiki/Tangram) is a "dissection puzzle"
 composed of a number of flat wooden pieces which are assembled to form a specific
 shape.
@@ -150,15 +148,20 @@ The numbers indicate the location of each's piece _first cell_ on the board.
 
 **The generator has found 84,696 unique solutions found in 161,242,856 permutations.**
 
+There are 2 versions of the generator in this repo:
+* [analyzer/gen.py](https://github.com/alf-labs/tangram/blob/main/analyzer/gen.py) is the
+  original version written in Python. It initially computed permutations at the speed of
+  one every 10 seconds, and was further optimized using various heuristics to compute
+  10 permutations per seconds.
+* [rgen](https://github.com/alf-labs/tangram/tree/main/rgen) is a rewrite of the generator
+  in Rust. It uses the same heuristics. This one computes about 500 permutations per seconds
+  on the laptop. Running it on 4 threads, it covered the 160 million permutations range in
+  about 24 hours.
+
 
 ### Tangram Puzzle Image Analyzer
 
-This analyzer attempts to parse pictures of a
-[Tangram Puzzle](data/originals/sample/sample.jpg).
-
-<p align=center><img width="384" src="analyzer/data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
-
-
+Content TBD
 
 
 ### Code and License

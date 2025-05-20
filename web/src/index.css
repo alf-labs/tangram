@@ -98,6 +98,10 @@ body {
   background-color: #7df8fc !important;
 }
 
+.header {
+  margin-bottom: 1em;
+}
+
 .navbar-brand {
   font-weight: bold;
   font-size: x-large;
@@ -125,7 +129,7 @@ body {
 }
 
 .markdown table, .markdown tr, .markdown td, .markdown th {
-  border: lightgray solid 1px;
+  border: #C0C0C0 solid 1px;
   border-collapse: collapse;
 }
 
@@ -139,7 +143,7 @@ body {
   padding-right: 1em;
 }
 
-.markdown td:first-of-type {
-  width: 140px !important;
-}
+/*.markdown td:first-of-type {*/
+/*  width: 140px !important;*/
+/*}*/
 
