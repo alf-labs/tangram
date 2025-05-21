@@ -15,7 +15,7 @@ function AppHeader() {
 
   return (
     <>
-        <Navbar bg="primary" data-bs-theme="dark" className="header" >
+        <Navbar bg="primary" data-bs-theme="dark" className="header flex-column flex-md-row" >
             <Navbar.Brand className="ms-3 pe-3">
                 Tangram Viewer <br/>
                 <span className="navbar-brand-detail">
@@ -26,7 +26,7 @@ function AppHeader() {
                 <span className="gitinfo" title={GIT_LONG_STR}>build {GIT_HASH_STR}</span>
                 </span>
             </Navbar.Brand>
-            <Nav className="me-3 flex-grow-1" variant="underline">
+            <Nav className="me-3 flex-grow-1 nav-font-size" variant="underline">
                 <Nav.Link as={Link} to="/"   active={isActive("/"  )}>Introduction</Nav.Link>
                 <Nav.Link as={Link} to="/gn" active={isActive("/gn")}>Generator</Nav.Link>
                 <Nav.Link as={Link} to="/an" active={isActive("/an")}>Analyzer</Nav.Link>

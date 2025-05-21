@@ -5,7 +5,8 @@ shape.
 <img width="128" src="https://raw.githubusercontent.com/alf-labs/tangram/refs/heads/main/analyzer/data/originals/sample/sample.jpg#left" alt="Tangram Puzzle Sample"> This
 project deals with a variant called **12 pieces hexagon tangram jigsaw**.  
 Whereas a traditional tangram seems to have only 7 pieces,  
-as the name indicates, this puzzle uses 12 pieces which fit in an enclosing hexagon.  
+this variant of the puzzle, as the name indicates, uses 12 pieces which fit in an
+enclosing hexagon.  
 There are actually 8 shapes of pieces, and 5 different colors.
 
 Solving the puzzle is rather simple -- just place the pieces till they fit.
@@ -20,11 +21,12 @@ In other words, it's a lot of fun.
 ### Analysis of the Puzzle
 
 The puzzle shape is an hexagon, with a dimension of 6 "lines" in any given direction.
-Each line is composed of equilateral triangles "cells". Lines have respectively
-7, 9, 11, 11, 9, and 7 cells each. There are 54 cells total on the board.
+Each line is composed of equilateral triangle cells.
+Lines have respectively 7, 9, 11, 11, 9, and 7 cells each.
+There are 54 cells total on the board.
 
 The most basic puzzle piece is a trapezoid composed of 3 cells.
-All the more complex are composed of two of these trapezoids and thus have 6 cells. 
+All the more complex pieces are composed of two of these trapezoids and have 6 cells. 
 
 The pieces have different colors:
   * 1 white piece,
@@ -149,7 +151,7 @@ _YRG Coordinate System_:
 
 ![YRG Coordinate System](/abs_yrg.png#center)
 
-Result: **The generator has found 84,696 unique solutions found in 161,242,856 permutations.**
+Result: **The generator has found 84,696 unique solutions in 161,242,856 permutations.**
 
 There are 2 versions of the generator in this project:
 * [analyzer/gen.py](https://github.com/alf-labs/tangram/blob/main/analyzer/gen.py) is the

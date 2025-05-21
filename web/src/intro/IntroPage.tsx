@@ -7,7 +7,7 @@ import introMd from "./intro.md?raw";
 function IntroPage() : ReactElement {
 
     return (
-        <div className="intropage markdown">
+        <div className="intro-page markdown">
             <Markdown rehypePlugins={[rehypeRaw, remarkGfm]}>{introMd}</Markdown>
         </div>
     )
