@@ -154,7 +154,7 @@ _YRG Coordinate System_:
 
 ![YRG Coordinate System](abs_yrg.png#center)
 
-Result: **The generator has found 84,696 unique solutions in 161,242,856 permutations.**
+Result: **The [generator](#/gn) has found 84,696 unique solutions in 161,242,856 permutations.**
 
 There are 2 versions of the generator in this project:
 * [analyzer/gen.py](https://github.com/alf-labs/tangram/blob/main/analyzer/gen.py) is the

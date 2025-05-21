@@ -10,14 +10,18 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          react: [
+          libs: [
             "react",
             "react-bootstrap",
             "react-dom",
             "react-intersection-observer",
             "react-markdown",
             "react-router-dom",
-            "react-virtualized-auto-sizer"],
+            "react-virtualized-auto-sizer",
+            "rehype-external-links",
+            "rehype-raw",
+            "remark-gfm",
+          ],
         }
       }
 
