@@ -44,21 +44,21 @@ rotation matters.
 
 Here is the list of pieces has handled by the generator below:
 
-| Piece                      | Name           | Colors                                                | Cells | Chiral | Rotations |
+|           Piece            | Name           | Colors                                                | Cells | Chiral | Rotations |
 |:--------------------------:|----------------|-------------------------------------------------------|-------|--------|-----------|
-| ![Piece TW](/piece_tw.png) | Tx - Trapezoid | 1x White = TW <br> 1x Orange = TO <br> 2x Yellow = TY | 3     | No     | 0°        |
-| ![Piece HR](/piece_hr.png) | HW - Hexagon   | 1x Red                                                | 6     | No     | 0°        |
-| ![Piece J1](/piece_j1.png) | J1 - J         | 1x Orange                                             | 6     | Yes    | 0°..360°  |
-| ![Piece J2](/piece_j2.png) | J2 - J         | 1x Orange                                             | 6     | Yes    | 0°..360°  |
-| ![Piece i1](/piece_i1.png) | i1 - I Beam    | 1x Red                                                | 6     | Yes    | 0°..180°  |
-| ![Piece i2](/piece_i2.png) | i2 - I Beam    | 1x Red                                                | 6     | Yes    | 0°..180°  |
-| ![Piece L1](/piece_l1.png) | L1 - L         | 1x Yellow                                             | 6     | Yes    | 0°..360°  |
-| ![Piece L2](/piece_l2.png) | L2 - L         | 1x Yellow                                             | 6     | Yes    | 0°..360°  |
-| ![Piece P1](/piece_p1.png) | &#929;1 - Rho  | 1x Red                                                | 6     | Yes    | 0°..360°  |
-| ![Piece P2](/piece_p2.png) | &#929;2 - Rho  | 1x Red                                                | 6     | Yes    | 0°..360°  |
-| ![Piece VB](/piece_vb.png) | VB - V         | 1x Black                                              | 6     | No     | 0°..360°  |
-| ![Piece W1](/piece_w1.png) | W1 - W         | 1x Black                                              | 6     | Yes    | 0°..360°  |
-| ![Piece W2](/piece_w2.png) | W2 - W         | 1x Black                                              | 6     | Yes    | 0°..360°  |
+| ![Piece TW](piece_tw.png)  | Tx - Trapezoid | 1x White = TW <br> 1x Orange = TO <br> 2x Yellow = TY | 3     | No     | 0°        |
+| ![Piece HR](piece_hr.png)  | HW - Hexagon   | 1x Red                                                | 6     | No     | 0°        |
+| ![Piece J1](piece_j1.png)  | J1 - J         | 1x Orange                                             | 6     | Yes    | 0°..360°  |
+| ![Piece J2](piece_j2.png)  | J2 - J         | 1x Orange                                             | 6     | Yes    | 0°..360°  |
+| ![Piece i1](piece_i1.png)  | i1 - I Beam    | 1x Red                                                | 6     | Yes    | 0°..180°  |
+| ![Piece i2](piece_i2.png)  | i2 - I Beam    | 1x Red                                                | 6     | Yes    | 0°..180°  |
+| ![Piece L1](piece_l1.png)  | L1 - L         | 1x Yellow                                             | 6     | Yes    | 0°..360°  |
+| ![Piece L2](piece_l2.png)  | L2 - L         | 1x Yellow                                             | 6     | Yes    | 0°..360°  |
+| ![Piece P1](piece_p1.png)  | &#929;1 - Rho  | 1x Red                                                | 6     | Yes    | 0°..360°  |
+| ![Piece P2](piece_p2.png)  | &#929;2 - Rho  | 1x Red                                                | 6     | Yes    | 0°..360°  |
+| ![Piece VB](piece_vb.png)  | VB - V         | 1x Black                                              | 6     | No     | 0°..360°  |
+| ![Piece W1](piece_w1.png)  | W1 - W         | 1x Black                                              | 6     | Yes    | 0°..360°  |
+| ![Piece W2](piece_w2.png)  | W2 - W         | 1x Black                                              | 6     | Yes    | 0°..360°  |
 
 Notes:
   * Color "Yellow" is really a wood brown color. I use the code name "Yellow" as 
@@ -84,7 +84,7 @@ way to orient any given board.
 The choice was made to rely on the white trapezoid piece, and always represent it
 with its largest side horizontal and at the bottom:
 
-![Piece TW](/piece_tw.png#center)
+![Piece TW](piece_tw.png#center)
 
 That piece was chosen because it's easily distinguishable and unique on any given board.
 This gives us an easy way to orient any given board, allowing us to compare them more
@@ -149,7 +149,7 @@ J1@300:2x3x0 L2@0:4x1x1 TO@60:3x0x1 TW@0:2x1x0 TY@0:5x4x0 TY@300:1x1x1
 The numbers indicate the location of each's piece _first cell_ on the board using the
 _YRG Coordinate System_:
 
-![YRG Coordinate System](/abs_yrg.png#center)
+![YRG Coordinate System](abs_yrg.png#center)
 
 Result: **The generator has found 84,696 unique solutions in 161,242,856 permutations.**
 
