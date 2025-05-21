@@ -15,7 +15,7 @@ function AppHeader() {
 
   return (
     <>
-        <Navbar bg="primary" className="header" >
+        <Navbar bg="primary" data-bs-theme="dark" className="header" >
             <Navbar.Brand className="ms-3 pe-3">
                 Tangram Viewer <br/>
                 <span className="navbar-brand-detail">

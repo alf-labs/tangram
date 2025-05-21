@@ -3,7 +3,7 @@
 
 body {
   margin: 0px;
-  background-color: #dff4ff;
+  background-color: beige;
 }
 
 .vh-container {
@@ -95,7 +95,7 @@ body {
 
 /* override stuff from boostrap */
 .bg-primary {
-  background-color: #7df8fc !important;
+  background-color: #2f2823 !important;
 }
 
 .header {
@@ -122,6 +122,11 @@ body {
 .markdown img[src*="#left"] {
   float: left;
   margin-right: 1em;
+}
+
+.markdown img[src*="#center"] {
+  display: block;
+  margin: auto;
 }
 
 .markdown img[src*="piece_"] {

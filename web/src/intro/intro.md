@@ -82,7 +82,7 @@ way to orient any given board.
 The choice was made to rely on the white trapezoid piece, and always represent it
 with its largest side horizontal and at the bottom:
 
-![Piece TW](/piece_tw.png)
+![Piece TW](/piece_tw.png#center)
 
 That piece was chosen because it's easily distinguishable and unique on any given board.
 This gives us an easy way to orient any given board, allowing us to compare them more
@@ -127,7 +127,7 @@ permutations:
 | W	 |                   12	 |        161,243,136 |
 
 
-Thus we have a total number of 161,243,136 permutations to try.
+Thus, we have a total number of 161,243,136 permutations to try.
 
 
 #### Solutions
@@ -144,18 +144,21 @@ HR@0:4x2x0 i1@60:5x5x1 W1@0:1x1x0 P1@120:2x3x1 VB@240:0x3x0
 J1@300:2x3x0 L2@0:4x1x1 TO@60:3x0x1 TW@0:2x1x0 TY@0:5x4x0 TY@300:1x1x1
 ```
 
-The numbers indicate the location of each's piece _first cell_ on the board.
+The numbers indicate the location of each's piece _first cell_ on the board using the
+_YRG Coordinate System_:
 
-**The generator has found 84,696 unique solutions found in 161,242,856 permutations.**
+![YRG Coordinate System](/abs_yrg.png#center)
 
-There are 2 versions of the generator in this repo:
+Result: **The generator has found 84,696 unique solutions found in 161,242,856 permutations.**
+
+There are 2 versions of the generator in this project:
 * [analyzer/gen.py](https://github.com/alf-labs/tangram/blob/main/analyzer/gen.py) is the
   original version written in Python. It initially computed permutations at the speed of
   one every 10 seconds, and was further optimized using various heuristics to compute
-  10 permutations per seconds.
+  10 permutations per second.
 * [rgen](https://github.com/alf-labs/tangram/tree/main/rgen) is a rewrite of the generator
-  in Rust. It uses the same heuristics. This one computes about 500 permutations per seconds
-  on the laptop. Running it on 4 threads, it covered the 160 million permutations range in
+  in Rust. It uses the same heuristics. This one computes about 500 permutations per second
+  on the laptop. Running it on 4 threads, it covered the 160 million permutations in
   about 24 hours.
 
 
