@@ -100,7 +100,8 @@ us _how_ we are going to arrange the pieces on the board, but not _where_.
 Here's an example of a "permutation" -- it describes each piece with its desired
 mirror image (e.g. "J1" instead of "J2" here) and each piece rotation angle:
 ```
-HR@0 i1@60 W1@0 P1@120 VB@240 J1@300 L2@0 TO@60 TW@0 TY@0 TY@300
+HR@0 i1@60 W1@0 P1@120 VB@240 J1@300
+L2@0 TO@60 TW@0 TY@0   TY@300
 ```
 
 That's useful because the number of permutations is actually fairly easy to compute.
@@ -142,8 +143,10 @@ A solution is found when all 12 pieces can be placed
 
 Here's an example of a "solution":
 ```
-HR@0:4x2x0 i1@60:5x5x1 W1@0:1x1x0 P1@120:2x3x1 VB@240:0x3x0
-J1@300:2x3x0 L2@0:4x1x1 TO@60:3x0x1 TW@0:2x1x0 TY@0:5x4x0 TY@300:1x1x1
+HR@0:4x2x0   i1@60:5x5x1  W1@0:1x1x0
+P1@120:2x3x1 VB@240:0x3x0 
+J1@300:2x3x0 L2@0:4x1x1 TO@60:3x0x1 
+TW@0:2x1x0   TY@0:5x4x0 TY@300:1x1x1
 ```
 
 The numbers indicate the location of each's piece _first cell_ on the board using the
