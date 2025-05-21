@@ -73,10 +73,8 @@ body {
 }
 
 .markdown img[src*="#left"] {
-  display: block;
-  margin: auto;
-  /*float: left;*/
-  /*margin-right: 1em;*/
+  float: left;
+  margin-right: 1em;
 }
 
 .markdown img[src*="#center"] {
