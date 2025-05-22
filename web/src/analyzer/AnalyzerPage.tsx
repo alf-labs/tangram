@@ -1,10 +1,9 @@
-import {type ReactElement, useEffect, useState} from "react";
+import {Fragment, type ReactElement, useEffect, useRef, useState} from "react";
 import {Image} from "react-bootstrap";
 
 const ANALYZER_JSON_URL = "analyzer.json"
 const ANALYZER_IMG_BASE_URL = "data"
-
-const LOADING_STR = "--";
+const ANALYZER_REL_URL = "#/an";
 
 interface AnalyzerItem {
     href: string;
@@ -37,6 +36,8 @@ const ALT_FILTER: string[] = [
 ];
 
 function AnalyzerPage() : ReactElement {
+    const [loading, setLoading] = useState(true);
+    const [status, setStatus] = useState("--");
     const [analyzerData, setAnalyzerData] = useState<AnalyzerData>( {
         images: [],
         stats: {
@@ -47,11 +48,36 @@ function AnalyzerPage() : ReactElement {
         },
         timestamp: ""
     } );
-    const [status, setStatus] = useState(LOADING_STR);
 
     useEffect(() => {
-        fetchData()
+        fetchData();
     }, []);
+
+    useEffect(() => {
+        if (!loading) {
+            const handler = setTimeout(() => {
+                jumpToAnchor();
+            }, 1000);
+
+            return () => {
+                clearTimeout(handler);
+            };
+        }
+    }, [loading]);
+
+    function jumpToAnchor() {
+        const match = window.location.hash.match(/#\/an#(.*)$/);
+
+        if (match) {
+            const anchor = match[1];
+            const element = document.getElementById(anchor);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        return undefined;
+    }
 
     function stringifyError(error: unknown) {
         if (error instanceof Error) {
@@ -75,8 +101,10 @@ function AnalyzerPage() : ReactElement {
             setAnalyzerData(analyzerData);
             const numEntries = analyzerData.images.length;
             setStatus(`${numEntries} ${ pluralize(numEntries, "entry", "entries") } loaded.`);
+            setLoading(false);
         } catch (err) {
             setStatus(stringifyError(err));
+            setLoading(false);
         }
     }
 
@@ -89,7 +117,7 @@ function AnalyzerPage() : ReactElement {
     }
 
     function generateDataContainer() {
-        if (status === LOADING_STR) {
+        if (loading) {
             return <span className="ana-loading">Loading...</span>;
         }
         const img_patterns = new RegExp(ALT_FILTER.join("|"));
@@ -113,9 +141,9 @@ function AnalyzerPage() : ReactElement {
                 </pre></td>
             </tr>
             {
-                analyzerData.images.map((item: AnalyzerItem) => <>
-                    <tr className="ana-row-href">
-                        <td colSpan={col_spans}>{item.href}</td>
+                analyzerData.images.map((item: AnalyzerItem, idx) => <Fragment key={idx}>
+                    <tr className="ana-row-href" id={item.href}>
+                        <td colSpan={col_spans}><a href={`${ANALYZER_REL_URL}#${item.href}`}>{`${idx + 1} - ${item.href}`}</a></td>
                     </tr>
                     <tr className={`ana-row-sig ${item.state}`}>
                         <td colSpan={col_spans}>{item.sig}</td>
@@ -128,11 +156,11 @@ function AnalyzerPage() : ReactElement {
                             item.alt
                                 .filter((s) => s.match(img_patterns))
                                 .map((url) =>
-                                    <td><Image src={`${ANALYZER_IMG_BASE_URL}/${url}`} /></td>
+                                    <td key={`${idx}-${url}`}><Image src={`${ANALYZER_IMG_BASE_URL}/${url}`} /></td>
                                 )
                         }
                     </tr>
-                </>)
+                </Fragment>)
             }
             </tbody>
         </table>;

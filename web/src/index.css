@@ -242,6 +242,8 @@ tr.ana-row-sig.dup td {
 tr.ana-row-img td {
   text-align: center;
   background-color: white;
+  width: 128px;
+  height: 128px;
 }
 
 .ana-row-img img {
