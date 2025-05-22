@@ -4,6 +4,7 @@
       "href": "20241225_171446041",
       "index": 1,
       "sig": "ROOORRRRROOORRRYRROOBOBBBYYRYYBBBBBRRRYYBBYYYRRYYBWWWR",
+      "state": "ok",
       "src": "20241225_171446041_src.jpg",
       "alt": [
         "20241225_171446041_01_channels.jpg",
@@ -23,6 +24,7 @@
       "href": "20241229_034628486",
       "index": 2,
       "sig": "YBBBBRRYYRRRBBRRYYYRRROOORRYYYBBBOORRRYYYBBBORROOOWWWR",
+      "state": "ok",
       "src": "20241229_034628486_src.jpg",
       "alt": [
         "20241229_034628486_01_channels.jpg",
@@ -42,6 +44,7 @@
       "href": "20241229_035010521",
       "index": 3,
       "sig": "YOOOYYYBYYYYYWWWBBOOORRRRRRBBOORRRRRYYBBOBRRRRYBBBBRRR",
+      "state": "ok",
       "src": "20241229_035010521_src.jpg",
       "alt": [
         "20241229_035010521_01_channels.jpg",
@@ -61,6 +64,7 @@
       "href": "20241229_040123439",
       "index": 4,
       "sig": "RRRRRROBBBBYYYOOBBRRRYYOOOYRRRRRYYBBYYRRRYYOBBBRWWWOOB",
+      "state": "ok",
       "src": "20241229_040123439_src.jpg",
       "alt": [
         "20241229_040123439_01_channels.jpg",
@@ -80,6 +84,7 @@
       "href": "20241229_040427146",
       "index": 5,
       "sig": "RRRRRRORRWWWRYYORRBBBBYYYOORYBYBRRROOOYYOORRRBBYYYBBBB",
+      "state": "ok",
       "src": "20241229_040427146_src.jpg",
       "alt": [
         "20241229_040427146_01_channels.jpg",
@@ -99,6 +104,7 @@
       "href": "20241229_040817836",
       "index": 6,
       "sig": "RRRRRRORRBRWWWOORRBBRRROOOORYBBRRRYYOOYYBBBBYYYYYYBBBY",
+      "state": "ok",
       "src": "20241229_040817836_src.jpg",
       "alt": [
         "20241229_040817836_01_channels.jpg",
@@ -118,6 +124,7 @@
       "href": "20241229_041253077",
       "index": 7,
       "sig": "RRRRRRYOOOYYYYYBWWWRRRRRBBBYYYRRRRYYBBBBRRROYOOBBBBOOO",
+      "state": "ok",
       "src": "20241229_041253077_src.jpg",
       "alt": [
         "20241229_041253077_01_channels.jpg",
@@ -137,6 +144,7 @@
       "href": "20250101_054339302",
       "index": 8,
       "sig": "RRRYYYYRRWWWBBYRRRRRRBBBYYRBBRRRYBRRYYBBBBYYOOROOOOOOO",
+      "state": "ok",
       "src": "20250101_054339302_src.jpg",
       "alt": [
         "20250101_054339302_01_channels.jpg",
@@ -156,6 +164,7 @@
       "href": "20250101_054858512",
       "index": 9,
       "sig": "RYYYRYYRRRRYRRYORRRBRBWWWOORYBOBRYROOOYYOOYRRBBBBBBRBB",
+      "state": "ok",
       "src": "20250101_054858512_src.jpg",
       "alt": [
         "20250101_054858512_01_channels.jpg",
@@ -175,6 +184,7 @@
       "href": "20250101_061104393",
       "index": 10,
       "sig": "RRRBBBRBRRRYYYRRBBBBBBBRYRRRRBWWWOOYORRYROOOOOORYYYYYY",
+      "state": "ok",
       "src": "20250101_061104393_src.jpg",
       "alt": [
         "20250101_061104393_01_channels.jpg",
@@ -194,6 +204,7 @@
       "href": "20250107_183009",
       "index": 11,
       "sig": "WWWYOYYBBBBRRRYYBBOOORRRYRRRROOYYOBBBBRRYROOBYBRRRRYRY",
+      "state": "ok",
       "src": "20250107_183009_src.jpg",
       "alt": [
         "20250107_183009_01_channels.jpg",
@@ -213,6 +224,7 @@
       "href": "20250107_183503",
       "index": 12,
       "sig": "RYYYYRRBBBBRRRRRBBYOOYYOOOOYYYYOYBBBOORRRRBBBRRRRRWWWR",
+      "state": "ok",
       "src": "20250107_183503_src.jpg",
       "alt": [
         "20250107_183503_01_channels.jpg",
@@ -232,6 +244,7 @@
       "href": "20250108_180133",
       "index": 13,
       "sig": "BYYRRRYBBBRWWWYYOOBBRRROORROOOORRRYYRRBBYOYYYRRBBBBYRR",
+      "state": "ok",
       "src": "20250108_180133_src.jpg",
       "alt": [
         "20250108_180133_01_channels.jpg",
@@ -251,6 +264,7 @@
       "href": "20250108_210812",
       "index": 14,
       "sig": "BBBBOYYBBOOOOYYRRRYOROOYYRRRRRRYRRRYYRBBBWWWOYRBBBRYRR",
+      "state": "ok",
       "src": "20250108_210812_src.jpg",
       "alt": [
         "20250108_210812_01_channels.jpg",
@@ -267,9 +281,29 @@
       ]
     },
     {
+      "href": "20250109_180427",
+      "index": 15,
+      "sig": "Failed to process",
+      "state": "err",
+      "src": "20250109_180427_src.jpg",
+      "alt": [
+        "20250109_180427_01_channels.jpg",
+        "20250109_180427_02_contrast.jpg",
+        "20250109_180427_03_edges.jpg",
+        "20250109_180427_04_hexagon.jpg",
+        "20250109_180427_05_yrg.jpg",
+        "20250109_180427_06_va_b_w.jpg",
+        "20250109_180427_07_vl_w.jpg",
+        "20250109_180427_08_vr_o.jpg",
+        "20250109_180427_09_vl_o_y.jpg",
+        "20250109_180427_10_bw.jpg"
+      ]
+    },
+    {
       "href": "20250109_181330",
       "index": 16,
       "sig": "BBBBRRRBBWWWRRRRBBRRRRRRRRRBBBYYOORROYBYYOOOOOOYYYYYYY",
+      "state": "ok",
       "src": "20250109_181330_src.jpg",
       "alt": [
         "20250109_181330_01_channels.jpg",
@@ -289,6 +323,7 @@
       "href": "20250110_184529",
       "index": 17,
       "sig": "RRRYOYRYRRRBBYYORYBBBBYRROOOORRRRRROOORYYYYYBBBRWWWBBB",
+      "state": "ok",
       "src": "20250110_184529_src.jpg",
       "alt": [
         "20250110_184529_01_channels.jpg",
@@ -308,6 +343,7 @@
       "href": "20250112_184811",
       "index": 18,
       "sig": "RRRRYRRYRYYRRRRRYYYYOYOYRRRYYOOOOOORRRBBBWWWOBBBBBBBBB",
+      "state": "ok",
       "src": "20250112_184811_src.jpg",
       "alt": [
         "20250112_184811_01_channels.jpg",
@@ -327,6 +363,7 @@
       "href": "20250114_184141",
       "index": 19,
       "sig": "RRBBBBRRRBBRRRYYRROOORRRYYYRRYOOBBBYYYRROBBBYYYRWWWOOO",
+      "state": "ok",
       "src": "20250114_184141_src.jpg",
       "alt": [
         "20250114_184141_01_channels.jpg",
@@ -346,6 +383,7 @@
       "href": "20250115_184408",
       "index": 20,
       "sig": "BBBBBBBBBOOBBBYYOOOOOOOYYYYYYRRYRYRYYRRRRRRRRRRRRRWWWR",
+      "state": "ok",
       "src": "20250115_184408_src.jpg",
       "alt": [
         "20250115_184408_01_channels.jpg",
@@ -365,6 +403,7 @@
       "href": "20250116_185046",
       "index": 21,
       "sig": "BBBBBBBBBOOBBBRRRRROOOOOORRYRRRRRRYORRRYYYRYYYYRYYWWWY",
+      "state": "ok",
       "src": "20250116_185046_src.jpg",
       "alt": [
         "20250116_185046_01_channels.jpg",
@@ -384,6 +423,7 @@
       "href": "20250117_185551",
       "index": 22,
       "sig": "BBBBRRRBBWWWRRROYYYYYYYYYOOYOYOOBBBYRROOOBBBRRRRRRRRRR",
+      "state": "ok",
       "src": "20250117_185551_src.jpg",
       "alt": [
         "20250117_185551_01_channels.jpg",
@@ -403,6 +443,7 @@
       "href": "20250118_212029",
       "index": 23,
       "sig": "RRYBBBBYYYYRRRBBYYBYBRRRWWWYYBBBBOORRROOOOOOORRYYRRRRR",
+      "state": "ok",
       "src": "20250118_212029_src.jpg",
       "alt": [
         "20250118_212029_01_channels.jpg",
@@ -422,6 +463,7 @@
       "href": "20250119_184736",
       "index": 24,
       "sig": "RRYRYRYRRYYYROYBYRBBBYOOOBBRRRBBBOOOBBRYOOYRRRBYWWWRRR",
+      "state": "ok",
       "src": "20250119_184736_src.jpg",
       "alt": [
         "20250119_184736_01_channels.jpg",
@@ -441,6 +483,7 @@
       "href": "20250120_182753",
       "index": 25,
       "sig": "RRRBBBBBRRRWWWBBBBBRRRRRYYYBBOOYYRYYRROOOOYYYRROOOYYRR",
+      "state": "ok",
       "src": "20250120_182753_src.jpg",
       "alt": [
         "20250120_182753_01_channels.jpg",
@@ -460,6 +503,7 @@
       "href": "20250120_184622",
       "index": 26,
       "sig": "RRRBBBBYYYYYYYBBRYOOWWWYRRRRRORBBBBRRRYRRYBOBOORRYROOO",
+      "state": "ok",
       "src": "20250120_184622_src.jpg",
       "alt": [
         "20250120_184622_01_channels.jpg",
@@ -479,6 +523,7 @@
       "href": "20250121_184458",
       "index": 27,
       "sig": "RYYYORBRRRRROYBBRRRRRROOBBRBBBBYYYYBYYBOBOOYYRROROWWWR",
+      "state": "ok",
       "src": "20250121_184458_src.jpg",
       "alt": [
         "20250121_184458_01_channels.jpg",
@@ -498,6 +543,7 @@
       "href": "20250122_181918",
       "index": 28,
       "sig": "OOOBBBBBOROOBYBOBBRRRRRYYOOBBYYYRRRYYYBWWWRRRYYRRRRRRY",
+      "state": "ok",
       "src": "20250122_181918_src.jpg",
       "alt": [
         "20250122_181918_01_channels.jpg",
@@ -517,6 +563,7 @@
       "href": "20250123_185019",
       "index": 29,
       "sig": "BBWWWOORBBBOOOOYRRRBYOYYYYYRRRRYRRRYYYRROORRRBBRRYBBBB",
+      "state": "ok",
       "src": "20250123_185019_src.jpg",
       "alt": [
         "20250123_185019_01_channels.jpg",
@@ -536,6 +583,7 @@
       "href": "20250124_183228",
       "index": 30,
       "sig": "OYYBBBBOOYYWWWBBOOOYYYYYRRROOYYRRRRRRROBYBRRRRRBBBBRRR",
+      "state": "ok",
       "src": "20250124_183228_src.jpg",
       "alt": [
         "20250124_183228_01_channels.jpg",
@@ -555,6 +603,7 @@
       "href": "20250124_183338",
       "index": 31,
       "sig": "OOOOWWWBOOBBBYYYBBRRRBBBOYYBBRRRRYYOOYBRRRRRYYYRRRRRRY",
+      "state": "ok",
       "src": "20250124_183338_src.jpg",
       "alt": [
         "20250124_183338_01_channels.jpg",
@@ -571,9 +620,29 @@
       ]
     },
     {
+      "href": "20250125_184144",
+      "index": 32,
+      "sig": "Failed to process",
+      "state": "err",
+      "src": "20250125_184144_src.jpg",
+      "alt": [
+        "20250125_184144_01_channels.jpg",
+        "20250125_184144_02_contrast.jpg",
+        "20250125_184144_03_edges.jpg",
+        "20250125_184144_04_hexagon.jpg",
+        "20250125_184144_05_yrg.jpg",
+        "20250125_184144_06_va_b_w.jpg",
+        "20250125_184144_07_vl_w.jpg",
+        "20250125_184144_08_vr_o.jpg",
+        "20250125_184144_09_vl_o_y.jpg",
+        "20250125_184144_10_bw.jpg"
+      ]
+    },
+    {
       "href": "20250125_184801",
       "index": 33,
       "sig": "RRRBBBBYRRRWWWBBOOYRRRRRROORRYYYYYOOOYRRROOYBBBRYYYBBB",
+      "state": "ok",
       "src": "20250125_184801_src.jpg",
       "alt": [
         "20250125_184801_01_channels.jpg",
@@ -593,6 +662,7 @@
       "href": "20250126_181650",
       "index": 34,
       "sig": "ROOBBBBOOROWWWBBRRRRYYYYYYYRRRRROOOYYYRRRBOBYYRRBBBBRR",
+      "state": "ok",
       "src": "20250126_181650_src.jpg",
       "alt": [
         "20250126_181650_01_channels.jpg",
@@ -609,9 +679,29 @@
       ]
     },
     {
+      "href": "20250126_183517",
+      "index": 35,
+      "sig": "Failed to process",
+      "state": "err",
+      "src": "20250126_183517_src.jpg",
+      "alt": [
+        "20250126_183517_01_channels.jpg",
+        "20250126_183517_02_contrast.jpg",
+        "20250126_183517_03_edges.jpg",
+        "20250126_183517_04_hexagon.jpg",
+        "20250126_183517_05_yrg.jpg",
+        "20250126_183517_06_va_b_w.jpg",
+        "20250126_183517_07_vl_w.jpg",
+        "20250126_183517_08_vr_o.jpg",
+        "20250126_183517_09_vl_o_y.jpg",
+        "20250126_183517_10_bw.jpg"
+      ]
+    },
+    {
       "href": "20250127_182504",
       "index": 36,
       "sig": "BBBBRRRBBYYYRRBBYRRYOOOBBBRRYRYROOOBRRRYYOOYYRRRYOWWWR",
+      "state": "ok",
       "src": "20250127_182504_src.jpg",
       "alt": [
         "20250127_182504_01_channels.jpg",
@@ -631,6 +721,7 @@
       "href": "20250127_182802",
       "index": 37,
       "sig": "BBBBYYYBBRRROOYYRRRRRYOYBYBRRRRROOBBBBRRROOOOYYRRYWWWY",
+      "state": "ok",
       "src": "20250127_182802_src.jpg",
       "alt": [
         "20250127_182802_01_channels.jpg",
@@ -650,6 +741,7 @@
       "href": "20250128_183758",
       "index": 38,
       "sig": "BBBBBBBBBORBBBRRRRROOOOYYRYRRROOORROYYYYYWWWYRRRRYYYRR",
+      "state": "ok",
       "src": "20250128_183758_src.jpg",
       "alt": [
         "20250128_183758_01_channels.jpg",
@@ -669,6 +761,7 @@
       "href": "20250130_183507",
       "index": 39,
       "sig": "RBBBBRRROOROBBRRRRROROOYYRRRRRRRYYYYYYBBBYOOOYYBBBWWWY",
+      "state": "ok",
       "src": "20250130_183507_src.jpg",
       "alt": [
         "20250130_183507_01_channels.jpg",
@@ -688,6 +781,7 @@
       "href": "20250130_183819",
       "index": 40,
       "sig": "BRRRRRBBBOROOBBBYBBOOOOYBBOYOBRRRYYYRRYYRRRYYYRRWWWYRR",
+      "state": "ok",
       "src": "20250130_183819_src.jpg",
       "alt": [
         "20250130_183819_01_channels.jpg",
@@ -707,6 +801,7 @@
       "href": "20250131_190931",
       "index": 41,
       "sig": "RRRRRRRBRORYRRRRBBYYYYRRRRRBBYYOOOOBBBBOYWWWBBBOYYOYOY",
+      "state": "ok",
       "src": "20250131_190931_src.jpg",
       "alt": [
         "20250131_190931_01_channels.jpg",
@@ -726,6 +821,7 @@
       "href": "20250131_191438",
       "index": 42,
       "sig": "YYYBBBBYOYYBOOBBYYYYBBBOWWWYRRRBBOORRRRRROOOYRRRRRRRRR",
+      "state": "ok",
       "src": "20250131_191438_src.jpg",
       "alt": [
         "20250131_191438_01_channels.jpg",
@@ -745,6 +841,7 @@
       "href": "20250203_184718",
       "index": 43,
       "sig": "RRRBBBBYRRRWWWBBRYYYYYOOOOORRYYYOOBBOORRYYYRBBBRRRRRRB",
+      "state": "ok",
       "src": "20250203_184718_src.jpg",
       "alt": [
         "20250203_184718_01_channels.jpg",
@@ -764,6 +861,7 @@
       "href": "20250204_183041",
       "index": 44,
       "sig": "RRRBBBBRRRRWWWBBRYRYYRYYYOORROOOOYBYBORRROOBBBBRRYYYYR",
+      "state": "ok",
       "src": "20250204_183041_src.jpg",
       "alt": [
         "20250204_183041_01_channels.jpg",
@@ -783,6 +881,7 @@
       "href": "20250205_185737",
       "index": 45,
       "sig": "RRRRRORRRWWWRYOBYYRRBYOYYBBRYYBBBYYYBBYOOBBRRRBOOOORRR",
+      "state": "ok",
       "src": "20250205_185737_src.jpg",
       "alt": [
         "20250205_185737_01_channels.jpg",
@@ -802,6 +901,7 @@
       "href": "20250205_190749",
       "index": 46,
       "sig": "RRRRRRRBYOOOOBRBBBOOWWWBBBBBBOOORRRRRRBYYYRYRYYRRYYYYY",
+      "state": "ok",
       "src": "20250205_190749_src.jpg",
       "alt": [
         "20250205_190749_01_channels.jpg",
@@ -821,6 +921,7 @@
       "href": "20250206_190834",
       "index": 47,
       "sig": "BBBBBBBBBBOOOOBBRYYYYOOOWWWROYYYRRRRYYYOYYRRRRRRRRRRRR",
+      "state": "ok",
       "src": "20250206_190834_src.jpg",
       "alt": [
         "20250206_190834_01_channels.jpg",
@@ -837,9 +938,29 @@
       ]
     },
     {
+      "href": "20250207_183250",
+      "index": 48,
+      "sig": "Failed to process",
+      "state": "err",
+      "src": "20250207_183250_src.jpg",
+      "alt": [
+        "20250207_183250_01_channels.jpg",
+        "20250207_183250_02_contrast.jpg",
+        "20250207_183250_03_edges.jpg",
+        "20250207_183250_04_hexagon.jpg",
+        "20250207_183250_05_yrg.jpg",
+        "20250207_183250_06_va_b_w.jpg",
+        "20250207_183250_07_vl_w.jpg",
+        "20250207_183250_08_vr_o.jpg",
+        "20250207_183250_09_vl_o_y.jpg",
+        "20250207_183250_10_bw.jpg"
+      ]
+    },
+    {
       "href": "20250208_182716",
       "index": 49,
       "sig": "BBBBOOOBBYBBBYYYRRROYBBBOYYRRRRRYYYOOYRRRWWWOOYRRRRRRR",
+      "state": "ok",
       "src": "20250208_182716_src.jpg",
       "alt": [
         "20250208_182716_01_channels.jpg",
@@ -859,6 +980,7 @@
       "href": "20250208_184611",
       "index": 50,
       "sig": "RRYRYRRYYYYRRRRRRYYYOYYOOOOOOBBBBYBBOORRRRBBBBBRRRWWWB",
+      "state": "ok",
       "src": "20250208_184611_src.jpg",
       "alt": [
         "20250208_184611_01_channels.jpg",
@@ -878,6 +1000,7 @@
       "href": "20250210_183346",
       "index": 51,
       "sig": "WWWBBBBYYYYOBOBBRYYYYYYOOBBRRYRRROOOBBRRRRRROOBRRRRRRY",
+      "state": "ok",
       "src": "20250210_183346_src.jpg",
       "alt": [
         "20250210_183346_01_channels.jpg",
@@ -897,6 +1020,7 @@
       "href": "20250211_184556",
       "index": 52,
       "sig": "YRRYRRRYYRRYYYYYRRRROYWWWBBYYROOOOOBBBBBOOORRRBBBBBRRR",
+      "state": "ok",
       "src": "20250211_184556_src.jpg",
       "alt": [
         "20250211_184556_01_channels.jpg",
@@ -916,6 +1040,7 @@
       "href": "20250211_185302",
       "index": 53,
       "sig": "OOOBBBBOOBOBRRBBRRRBBBBYRRRRRRYYYYYRYYOOYWWWYYYORRRRRR",
+      "state": "ok",
       "src": "20250211_185302_src.jpg",
       "alt": [
         "20250211_185302_01_channels.jpg",
@@ -935,6 +1060,7 @@
       "href": "20250212_185902",
       "index": 54,
       "sig": "RRRBBBBORRRWWWBBOOYYRRRROORYYYRRBBBBOORYOYBYBYOYRYYRRR",
+      "state": "ok",
       "src": "20250212_185902_src.jpg",
       "alt": [
         "20250212_185902_01_channels.jpg",
@@ -954,6 +1080,7 @@
       "href": "20250212_191043",
       "index": 55,
       "sig": "BBBRYRRYRBBBYORRYYYYWWWOORRYYYRRRYYRRRBBRRROROOBBBBOOO",
+      "state": "ok",
       "src": "20250212_191043_src.jpg",
       "alt": [
         "20250212_191043_01_channels.jpg",
@@ -973,6 +1100,7 @@
       "href": "20250213_183841",
       "index": 56,
       "sig": "RRRBBBBRRRRYOOBBOYBBBYYOWWWOOOBBBYYYRRRYYYOORRRRRRRYYR",
+      "state": "ok",
       "src": "20250213_183841_src.jpg",
       "alt": [
         "20250213_183841_01_channels.jpg",
@@ -992,6 +1120,7 @@
       "href": "20250213_184505",
       "index": 57,
       "sig": "WWWBBBBYYYYOOOBBRYYYRRROOOORRYYRRRBBOORRYYYRBBBRRRRRRB",
+      "state": "ok",
       "src": "20250213_184505_src.jpg",
       "alt": [
         "20250213_184505_01_channels.jpg",
@@ -1011,6 +1140,7 @@
       "href": "20250214_191137_levels",
       "index": 58,
       "sig": "WWWBBBBYYYYOOOBBRYRYRRROOOORRYYRRRBBOORRYYYRBBBRRRRRYB",
+      "state": "ok",
       "src": "20250214_191137_levels_src.jpg",
       "alt": [
         "20250214_191137_levels_01_channels.jpg",
@@ -1030,6 +1160,7 @@
       "href": "20250215_210724",
       "index": 59,
       "sig": "YYYYOYYOYWWWBBYBOOOOOBBBYBBYOORRRBRRBBYYRRRRRRBRRRRRRR",
+      "state": "ok",
       "src": "20250215_210724_src.jpg",
       "alt": [
         "20250215_210724_01_channels.jpg",
@@ -1049,6 +1180,7 @@
       "href": "20250215_213314",
       "index": 60,
       "sig": "YYRBBBBYYOYRRRBBBYBYYRRROOOBBBBYYOOOOORRYRRWWWYRRRRRRR",
+      "state": "ok",
       "src": "20250215_213314_src.jpg",
       "alt": [
         "20250215_213314_01_channels.jpg",
@@ -1068,6 +1200,7 @@
       "href": "20250217_185803",
       "index": 61,
       "sig": "BBBBWWWBBRRRRRROOOORRRRROOROOBBBBRYYRYORBYBYYRRYYYYYYR",
+      "state": "ok",
       "src": "20250217_185803_src.jpg",
       "alt": [
         "20250217_185803_01_channels.jpg",
@@ -1087,6 +1220,7 @@
       "href": "20250218_183049",
       "index": 62,
       "sig": "RBBBYYYYYYBBBBYRRRYYRRRBBRYROOORRRBBYYRRRRROBOORWWWOOO",
+      "state": "ok",
       "src": "20250218_183049_src.jpg",
       "alt": [
         "20250218_183049_01_channels.jpg",
@@ -1106,6 +1240,7 @@
       "href": "20250218_183559",
       "index": 63,
       "sig": "BBBBYYYBBOOOOYYYWWWOOYYBBBBRRRRRRYYBOBRRRRRYYOORRRRRRR",
+      "state": "ok",
       "src": "20250218_183559_src.jpg",
       "alt": [
         "20250218_183559_01_channels.jpg",
@@ -1125,6 +1260,7 @@
       "href": "20250219_190241",
       "index": 64,
       "sig": "RRRRRRRWWWBBBBRRYYYYYBOBRRRYYYYYYOOOOOYRRROOOBBRRRBBBB",
+      "state": "ok",
       "src": "20250219_190241_src.jpg",
       "alt": [
         "20250219_190241_01_channels.jpg",
@@ -1144,6 +1280,7 @@
       "href": "20250220_183048",
       "index": 65,
       "sig": "BBBBRRRBBBBBRRRYOOBBBYYYYYROOOORRYRRRROOOYYYRRRRYYWWWR",
+      "state": "ok",
       "src": "20250220_183048_src.jpg",
       "alt": [
         "20250220_183048_01_channels.jpg",
@@ -1163,6 +1300,7 @@
       "href": "20250220_183235",
       "index": 66,
       "sig": "BBBBRRRBBWWWYYRROOOOYYYYYRROOBBYRRROOOBBBRRRRYYBRRYRRY",
+      "state": "ok",
       "src": "20250220_183235_src.jpg",
       "alt": [
         "20250220_183235_01_channels.jpg",
@@ -1182,6 +1320,7 @@
       "href": "20250220_183433",
       "index": 67,
       "sig": "BRRRRRRBBBRYYYRYRRBBRRRYYYYRWWWRRROYYRBBOOOOOYYBBBBOOO",
+      "state": "ok",
       "src": "20250220_183433_src.jpg",
       "alt": [
         "20250220_183433_01_channels.jpg",
@@ -1201,6 +1340,7 @@
       "href": "20250221_184418",
       "index": 68,
       "sig": "BBBBYYRBBRRRYYRRROORRRYYRYRBBBBYYYRRRRBOBOORROYOOOWWWY",
+      "state": "ok",
       "src": "20250221_184418_src.jpg",
       "alt": [
         "20250221_184418_01_channels.jpg",
@@ -1220,6 +1360,7 @@
       "href": "20250222_183820",
       "index": 69,
       "sig": "BBWWWYROBBBYYYRROOOBYYRRRRRYYOOYORRRRRBBOYOYRRRBBBBYRR",
+      "state": "ok",
       "src": "20250222_183820_src.jpg",
       "alt": [
         "20250222_183820_01_channels.jpg",
@@ -1239,6 +1380,7 @@
       "href": "20250222_184422",
       "index": 70,
       "sig": "BBBBYYYBBOOOOOBBRRROOOOBBBYRRRRRWWWBYYRRRYYYYYYRRRRRRR",
+      "state": "ok",
       "src": "20250222_184422_src.jpg",
       "alt": [
         "20250222_184422_01_channels.jpg",
@@ -1258,6 +1400,7 @@
       "href": "20250223_183652",
       "index": 71,
       "sig": "BBBBBBBRRBBBOOBBRRRROOOORYRRRRYYORYRYYRRYYYYYYRRWWWOOR",
+      "state": "ok",
       "src": "20250223_183652_src.jpg",
       "alt": [
         "20250223_183652_01_channels.jpg",
@@ -1277,6 +1420,7 @@
       "href": "20250314_180051",
       "index": 72,
       "sig": "WWWBBBBYYYYRRRBBBYBYYRRRYYYBBBBYYOORRROOOOOOORRRRRRRRR",
+      "state": "ok",
       "src": "20250314_180051_src.jpg",
       "alt": [
         "20250314_180051_01_channels.jpg",
@@ -1296,6 +1440,7 @@
       "href": "20250316_183428",
       "index": 73,
       "sig": "YYYYWWWYOBBBBROORYRBOBRRRYRRRROORRYYRRBBOOOYYRRBBBBYRR",
+      "state": "ok",
       "src": "20250316_183428_src.jpg",
       "alt": [
         "20250316_183428_01_channels.jpg",
@@ -1315,6 +1460,7 @@
       "href": "20250316_183900",
       "index": 74,
       "sig": "RRRRRRRYYOROOOOBWWWOOORRRBBYYBBBBRRRBBYRBOBYYRBYRYYYYR",
+      "state": "ok",
       "src": "20250316_183900_src.jpg",
       "alt": [
         "20250316_183900_01_channels.jpg",
@@ -1334,6 +1480,7 @@
       "href": "20250317_183828",
       "index": 75,
       "sig": "BBBBWWWBBRRYROORRRRYYOOOOORRRRRRBBBOYYRRRBBBOYYRYYYYYR",
+      "state": "ok",
       "src": "20250317_183828_src.jpg",
       "alt": [
         "20250317_183828_01_channels.jpg",
@@ -1353,6 +1500,7 @@
       "href": "20250317_184311",
       "index": 76,
       "sig": "YRRBBBBRYOOWWWBBROORRRRRRRRRYYOYBRBRRRYYOBBBBOORYYYYYO",
+      "state": "ok",
       "src": "20250317_184311_src.jpg",
       "alt": [
         "20250317_184311_01_channels.jpg",
@@ -1372,6 +1520,7 @@
       "href": "20250318_182915",
       "index": 77,
       "sig": "RBBBBYYRYOBYBOYYOROOOYYOOYRROBBBBYYYRRRRRRBBRRRRRRWWWR",
+      "state": "ok",
       "src": "20250318_182915_src.jpg",
       "alt": [
         "20250318_182915_01_channels.jpg",
@@ -1391,6 +1540,7 @@
       "href": "20250318_183859",
       "index": 78,
       "sig": "BBBBYYYBBYRRYYYYOOORRRYRRRROOOOYOYBBBBORYWWWBRBRRRRRRR",
+      "state": "ok",
       "src": "20250318_183859_src.jpg",
       "alt": [
         "20250318_183859_01_channels.jpg",
@@ -1410,6 +1560,7 @@
       "href": "20250330_182538",
       "index": 79,
       "sig": "RRYOOYYRRYYWWWYBRRYYRRRYYBBRRYYRRROOBBRRRBBBOOBRBBBOOO",
+      "state": "ok",
       "src": "20250330_182538_src.jpg",
       "alt": [
         "20250330_182538_01_channels.jpg",
@@ -1429,6 +1580,7 @@
       "href": "20250330_182830",
       "index": 80,
       "sig": "BBBBYYYBBWWWBBBBRRRORRRBYBRROOORRROOYYRYORYOOYYYRRRRRY",
+      "state": "ok",
       "src": "20250330_182830_src.jpg",
       "alt": [
         "20250330_182830_01_channels.jpg",
@@ -1448,6 +1600,7 @@
       "href": "20250331_184047",
       "index": 81,
       "sig": "RRRBBBBORRRWWWBBOOYYOYYBBBBYOORRYYOBYBRRRYYOOYYRRRRRRR",
+      "state": "ok",
       "src": "20250331_184047_src.jpg",
       "alt": [
         "20250331_184047_01_channels.jpg",
@@ -1467,6 +1620,7 @@
       "href": "20250401_190529",
       "index": 82,
       "sig": "OORBBBBYYWWWYYBBRYYYYYRRRRRRYORBBBBRRRYYRRBOBOORRRROOO",
+      "state": "ok",
       "src": "20250401_190529_src.jpg",
       "alt": [
         "20250401_190529_01_channels.jpg",
@@ -1486,6 +1640,7 @@
       "href": "20250401_190925",
       "index": 83,
       "sig": "BBBBOOOBBOOOOWWWRRROORRRYYYRRRYYRRYYRYYYYBRBYRRRBBBBRR",
+      "state": "ok",
       "src": "20250401_190925_src.jpg",
       "alt": [
         "20250401_190925_01_channels.jpg",
@@ -1505,6 +1660,7 @@
       "href": "20250403_184033",
       "index": 84,
       "sig": "RRRBBBBBRRROOOBBBBBYOOOOWWWBBRYYYOYRYYRRRYYYOYYRRRRRRR",
+      "state": "ok",
       "src": "20250403_184033_src.jpg",
       "alt": [
         "20250403_184033_01_channels.jpg",
@@ -1524,6 +1680,7 @@
       "href": "20250405_190045",
       "index": 85,
       "sig": "BBBBOOOBBWWWOYOOYYYYYYYYRRRRRYYOORRRRRRRYBOBRRRRRBBBBR",
+      "state": "ok",
       "src": "20250405_190045_src.jpg",
       "alt": [
         "20250405_190045_01_channels.jpg",
@@ -1543,6 +1700,7 @@
       "href": "20250405_190748",
       "index": 86,
       "sig": "OOOOWWWBOOOOOYYYBBRRRYYYRRYBBRRRBBBRYYBYYBBBRRRYRRRRRR",
+      "state": "ok",
       "src": "20250405_190748_src.jpg",
       "alt": [
         "20250405_190748_01_channels.jpg",
@@ -1562,6 +1720,7 @@
       "href": "20250406_185406",
       "index": 87,
       "sig": "YRRRRYYRYOOBBBYOWWWOBBBOOOYRRRRRRRRYYYRYRORRRBBYYOBBBB",
+      "state": "ok",
       "src": "20250406_185406_src.jpg",
       "alt": [
         "20250406_185406_01_channels.jpg",
@@ -1581,6 +1740,7 @@
       "href": "20250408_182734",
       "index": 88,
       "sig": "ROOOYYYRRWWWYYYBRRRBBOOOOBBRRBBBYYOOBBRRBYYRRRBRRYYRRR",
+      "state": "ok",
       "src": "20250408_182734_src.jpg",
       "alt": [
         "20250408_182734_01_channels.jpg",
@@ -1600,6 +1760,7 @@
       "href": "20250408_183947",
       "index": 89,
       "sig": "WWWBBBBOOYYYYYBBROYYRRROOOYRROYRRRBBOORRYYYRBBBRRRRRRB",
+      "state": "ok",
       "src": "20250408_183947_src.jpg",
       "alt": [
         "20250408_183947_01_channels.jpg",
@@ -1619,6 +1780,7 @@
       "href": "20250411_183324",
       "index": 90,
       "sig": "WWWOOORRYYYYOORYRRBBOOOOBYYRRBBBRRYBBYRYBYRRRBBYRRRRRB",
+      "state": "ok",
       "src": "20250411_183324_src.jpg",
       "alt": [
         "20250411_183324_01_channels.jpg",
@@ -1638,6 +1800,7 @@
       "href": "20250411_184010",
       "index": 91,
       "sig": "BBBBWWWBBOOOOOOORYYORRROYYYRYBBRRRYYRYBBBRYYYRRBRRRRRR",
+      "state": "ok",
       "src": "20250411_184010_src.jpg",
       "alt": [
         "20250411_184010_01_channels.jpg",
@@ -1657,6 +1820,7 @@
       "href": "20250412_182136",
       "index": 92,
       "sig": "YYOYYYROYOYRRRRROOOORRRRRRRROOYYYYYRRRBBRWWWBBBBBBBBBB",
+      "state": "ok",
       "src": "20250412_182136_src.jpg",
       "alt": [
         "20250412_182136_01_channels.jpg",
@@ -1676,6 +1840,7 @@
       "href": "20250412_183912",
       "index": 93,
       "sig": "BBBBRYYBBRRRYYYYRRYRRRRRRYRRRYYOOOOOOORRBBBOOYYBBBWWWR",
+      "state": "ok",
       "src": "20250412_183912_src.jpg",
       "alt": [
         "20250412_183912_01_channels.jpg",
@@ -1695,6 +1860,7 @@
       "href": "20250413_184529",
       "index": 94,
       "sig": "RYYYYYORRRYWWWOORRRRRBBBBYYRRRRRRBOBYYBBRRROOYYBBBBOOO",
+      "state": "ok",
       "src": "20250413_184529_src.jpg",
       "alt": [
         "20250413_184529_01_channels.jpg",
@@ -1714,6 +1880,7 @@
       "href": "20250414_183656",
       "index": 95,
       "sig": "YRRRRYRYYWWWBBBBROOOOOOBYBYRRRRROOYYYORRRRYYYBBRRRBBBB",
+      "state": "ok",
       "src": "20250414_183656_src.jpg",
       "alt": [
         "20250414_183656_01_channels.jpg",
@@ -1733,6 +1900,7 @@
       "href": "20250415_183001",
       "index": 96,
       "sig": "RROBBBBRROOWWWBBRRYYYYYOOOORYYRRRYBBOOYYRRRRBBBYRRYRRB",
+      "state": "ok",
       "src": "20250415_183001_src.jpg",
       "alt": [
         "20250415_183001_01_channels.jpg",
@@ -1752,6 +1920,7 @@
       "href": "20250415_183350",
       "index": 97,
       "sig": "ROOBBRRBOOBBBYRRBBOORBYYYRRBBOOYYYORRYBRRRYYYRYRRRWWWR",
+      "state": "ok",
       "src": "20250415_183350_src.jpg",
       "alt": [
         "20250415_183350_01_channels.jpg",
@@ -1771,6 +1940,7 @@
       "href": "20250416_182530",
       "index": 98,
       "sig": "RRBBOORRROBBBOOBRYOOYBYOYBBRRRYOYYYYBBRRYYYRRRBRWWWRRR",
+      "state": "ok",
       "src": "20250416_182530_src.jpg",
       "alt": [
         "20250416_182530_01_channels.jpg",
@@ -1790,6 +1960,7 @@
       "href": "20250416_190037",
       "index": 99,
       "sig": "YYRBBBBRRYRRBOBBRRYYRRROOBBYYYYOOOOOBBRYYYORRRBRWWWRRR",
+      "state": "ok",
       "src": "20250416_190037_src.jpg",
       "alt": [
         "20250416_190037_01_channels.jpg",
@@ -1809,6 +1980,7 @@
       "href": "20250417_184655",
       "index": 100,
       "sig": "YBBBBYYRYRRRBBOYOOORRRBBYYYOORRROBBBRYORRYOYBRRRWWWYRR",
+      "state": "ok",
       "src": "20250417_184655_src.jpg",
       "alt": [
         "20250417_184655_01_channels.jpg",
@@ -1825,7 +1997,7 @@
       ]
     }
   ],
-  "timestamp": "Thu May 22 00:10:19 2025",
+  "timestamp": "Thu May 22 14:18:32 2025",
   "stats": {
     "num_img": 100,
     "num_sig": 96,

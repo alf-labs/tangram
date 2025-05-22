@@ -10,6 +10,7 @@ interface AnalyzerItem {
     href: string;
     index: number;
     sig: string;
+    state: string; // one of "ok", "err", or "dup".
     src: string,
     alt: string[];
 }
@@ -116,7 +117,7 @@ function AnalyzerPage() : ReactElement {
                     <tr className="ana-row-href">
                         <td colSpan={col_spans}>{item.href}</td>
                     </tr>
-                    <tr className="ana-row-sig">
+                    <tr className={`ana-row-sig ${item.state}`}>
                         <td colSpan={col_spans}>{item.sig}</td>
                     </tr>
                     <tr className="ana-row-img">

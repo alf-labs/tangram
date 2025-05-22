@@ -25,6 +25,7 @@ interface AnalyzerItem {
     href: string;
     index: number;
     sig: string;
+    state: string; // one of "ok", "err", or "dup".
     table_index: number;
 }
 
@@ -72,7 +73,9 @@ function TangramGenPage() : ReactElement {
             const analyzerMap: Map<string, number> = new Map();
             for (const [index, item] of analyzerList.entries()) {
                 const a_item = item as AnalyzerItem;
-                analyzerMap.set(a_item.sig, index);
+                if (a_item.state == "ok" || a_item.state == "dup") {
+                    analyzerMap.set(a_item.sig, index);
+                }
             }
 
             // Parse the generator data

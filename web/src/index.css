@@ -229,17 +229,14 @@ tr.ana-row-sig td {
   background-color : #8C8;
 }
 
-tr.ana-row-err td {
-  height: 2em;
-  font-family: monospace;
-  background-color : #CC8;
+tr.ana-row-sig.err td {
+  background-color : #fdac8d;
+  font-weight: bold;
 }
 
-tr.ana-row-dup td {
-  height: 2em;
-  font-family: monospace;
-  font-weight: bold;
+tr.ana-row-sig.dup td {
   background-color: #F00;
+  font-weight: bold;
 }
 
 tr.ana-row-img td {
