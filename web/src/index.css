@@ -195,9 +195,24 @@ body {
   padding-left: .5em;
 }
 
+.ana-loading {
+  font-size: x-large;
+  font-weight: bold;
+  padding: 1em;
+}
+
 table.ana-table, .ana-table th, .ana-table td {
   border: 1px solid black;
   border-collapse: collapse;
+}
+
+tr.ana-row-stats td {
+  padding: .5em;
+  background-color : white;
+}
+
+tr.ana-row-stats pre {
+  margin-bottom: 0;
 }
 
 tr.ana-row-href td {

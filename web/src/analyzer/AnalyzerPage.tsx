@@ -90,40 +90,51 @@ function AnalyzerPage() : ReactElement {
     function generateDataContainer() {
         if (status === LOADING_STR) {
             return <span className="ana-loading">Loading...</span>;
-        } else {
-            const img_patterns = new RegExp(ALT_FILTER.join("|"));
-            const col_spans = ALT_FILTER.length + 1;
-
-            return <table className="ana-table">
-                <thead>
-
-                </thead>
-                <tbody>
-                {
-                    analyzerData.images.map((item: AnalyzerItem) => <>
-                        <tr className="ana-row-href">
-                            <td colSpan={col_spans}>{item.href}</td>
-                        </tr>
-                        <tr className="ana-row-sig">
-                            <td colSpan={col_spans}>{item.sig}</td>
-                        </tr>
-                        <tr className="ana-row-img">
-                            <td>
-                                <Image src={`${ANALYZER_IMG_BASE_URL}/${item.src}`} />
-                            </td>
-                            {
-                                item.alt
-                                    .filter((s) => s.match(img_patterns))
-                                    .map((url) =>
-                                        <td><Image src={`${ANALYZER_IMG_BASE_URL}/${url}`} /></td>
-                                    )
-                            }
-                        </tr>
-                    </>)
-                }
-                </tbody>
-            </table>;
         }
+        const img_patterns = new RegExp(ALT_FILTER.join("|"));
+        const col_spans = ALT_FILTER.length + 1;
+
+        return <table className="ana-table">
+            <thead>
+            </thead>
+            <tbody>
+            <tr className="ana-row-stats">
+                <td colSpan={col_spans}><pre>
+                    Analyzer output...
+                    <p/>
+                    |  Number of images      : {analyzerData.stats.num_img} <br/>
+                    |  Processed successfully: {analyzerData.stats.num_sig} <br/>
+                    |  Failed to process     : {analyzerData.stats.num_img - analyzerData.stats.num_sig} <br/>
+                    |  Unique images         : {analyzerData.stats.num_unique} <br/>
+                    |  Duplicated images     : {analyzerData.stats.num_dups}
+                    <p/>
+                    Generated on {analyzerData.timestamp}.
+                </pre></td>
+            </tr>
+            {
+                analyzerData.images.map((item: AnalyzerItem) => <>
+                    <tr className="ana-row-href">
+                        <td colSpan={col_spans}>{item.href}</td>
+                    </tr>
+                    <tr className="ana-row-sig">
+                        <td colSpan={col_spans}>{item.sig}</td>
+                    </tr>
+                    <tr className="ana-row-img">
+                        <td>
+                            <Image src={`${ANALYZER_IMG_BASE_URL}/${item.src}`} />
+                        </td>
+                        {
+                            item.alt
+                                .filter((s) => s.match(img_patterns))
+                                .map((url) =>
+                                    <td><Image src={`${ANALYZER_IMG_BASE_URL}/${url}`} /></td>
+                                )
+                        }
+                    </tr>
+                </>)
+            }
+            </tbody>
+        </table>;
     }
 
     return (
