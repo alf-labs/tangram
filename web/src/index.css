@@ -184,8 +184,53 @@ body {
 }
 
 
-
 /* ----- ANALYZER PAGE ----- */
+
+.ana-status {
+  padding-left: .5em;
+}
+
+table.ana-table, .ana-table th, .ana-table td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+tr.ana-row-href td {
+  padding-left: .5em;
+  height: 2em;
+  font-weight: bold;
+  background-color: #CCC;
+}
+
+tr.ana-row-sig td {
+  padding-left: .5em;
+  height: 2em;
+  font-family: monospace;
+  background-color : #8C8;
+}
+
+tr.ana-row-err td {
+  height: 2em;
+  font-family: monospace;
+  background-color : #CC8;
+}
+
+tr.ana-row-dup td {
+  height: 2em;
+  font-family: monospace;
+  font-weight: bold;
+  background-color: #F00;
+}
+
+tr.ana-row-img td {
+  text-align: center;
+}
+
+.ana-row-img img {
+  max-width: 128px;
+  max-height: 128px;
+}
+
 
 /* ----- PIECES PAGE ----- */
 

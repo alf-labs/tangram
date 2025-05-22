@@ -24,3 +24,4 @@ dist-ssr
 *.sln
 *.sw?
 generator_full.txt
+public/data
