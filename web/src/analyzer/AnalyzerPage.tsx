@@ -1,4 +1,4 @@
-import {Fragment, type ReactElement, useEffect, useRef, useState} from "react";
+import {Fragment, type MouseEvent, type ReactElement, useEffect, useRef, useState} from "react";
 import {Image} from "react-bootstrap";
 
 const ANALYZER_JSON_URL = "analyzer.json"
@@ -35,10 +35,10 @@ const ALT_FILTER: string[] = [
     "_11_colors",
 ];
 
-function AnalyzerPage() : ReactElement {
+function AnalyzerPage(): ReactElement {
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState("--");
-    const [analyzerData, setAnalyzerData] = useState<AnalyzerData>( {
+    const [analyzerData, setAnalyzerData] = useState<AnalyzerData>({
         images: [],
         stats: {
             num_img: 0,
@@ -47,7 +47,7 @@ function AnalyzerPage() : ReactElement {
             num_dups: 0
         },
         timestamp: ""
-    } );
+    });
 
     useEffect(() => {
         fetchData();
@@ -57,7 +57,7 @@ function AnalyzerPage() : ReactElement {
         if (!loading) {
             const handler = setTimeout(() => {
                 jumpToAnchor();
-            }, 1000);
+            }, 250); // milliseconds
 
             return () => {
                 clearTimeout(handler);
@@ -72,7 +72,7 @@ function AnalyzerPage() : ReactElement {
             const anchor = match[1];
             const element = document.getElementById(anchor);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                element.scrollIntoView({behavior: 'smooth', block: 'start'});
             }
         }
 
@@ -100,7 +100,7 @@ function AnalyzerPage() : ReactElement {
             console.log("@@ Update state");
             setAnalyzerData(analyzerData);
             const numEntries = analyzerData.images.length;
-            setStatus(`${numEntries} ${ pluralize(numEntries, "entry", "entries") } loaded.`);
+            setStatus(`${numEntries} ${pluralize(numEntries, "entry", "entries")} loaded.`);
             setLoading(false);
         } catch (err) {
             setStatus(stringifyError(err));
@@ -114,6 +114,11 @@ function AnalyzerPage() : ReactElement {
 
     function generateStatusLine() {
         return <span className="ana-status"> {status} </span>;
+    }
+
+    function onImageClick(event: any) {
+        let img = event.target as HTMLImageElement;
+        return window.open(img.src, "_blank");
     }
 
     function generateDataContainer() {
@@ -150,13 +155,17 @@ function AnalyzerPage() : ReactElement {
                     </tr>
                     <tr className="ana-row-img">
                         <td>
-                            <Image src={`${ANALYZER_IMG_BASE_URL}/${item.src}`} />
+                            <Image src={`${ANALYZER_IMG_BASE_URL}/${item.src}`}
+                                   onClick={(event) => onImageClick(event)} />
                         </td>
                         {
                             item.alt
                                 .filter((s) => s.match(img_patterns))
                                 .map((url) =>
-                                    <td key={`${idx}-${url}`}><Image src={`${ANALYZER_IMG_BASE_URL}/${url}`} /></td>
+                                    <td key={`${idx}-${url}`}>
+                                        <Image src={`${ANALYZER_IMG_BASE_URL}/${url}`}
+                                               onClick={(event) => onImageClick(event)} />
+                                    </td>
                                 )
                         }
                     </tr>

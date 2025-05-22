@@ -183,14 +183,14 @@ class Main:
             rows += f"<tr class='sig {sig_class}'>\n"
             rows += f"  <td colspan={max_columns}>{sig} {sig_info}</td>\n"
             rows += "</tr>\n"
-            if sig_count == 1:
-                found_json.append( {
-                    "href": name,
-                    "index": n,
-                    "sig": sig,
-                    "src": info["src"],
-                    "alt": info["alt"]
-                } )
+            found_json.append( {
+                "href": name,
+                "index": n,
+                "sig": sig,
+                "state": sig_class,
+                "src": info["src"],
+                "alt": info["alt"]
+            } )
 
             rows += "<tr class='images'>\n"
             rows += f"  <td><img src='{info['src']}'></td>\n"
