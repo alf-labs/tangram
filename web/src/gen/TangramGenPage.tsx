@@ -10,8 +10,6 @@ const ANALYZER_JSON_URL = "analyzer.json"
 const ANALYZER_REL_URL = "#/an";
 const GENERATOR_REL_URL = "#/gn";
 
-const LOADING_STR = "--";
-
 interface TableData {
     index: number;
     perm: number;
@@ -32,7 +30,8 @@ interface AnalyzerItem {
 function TangramGenPage() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
-    const [status, setStatus] = useState(LOADING_STR);
+    const [loading, setLoading] = useState(true);
+    const [status, setStatus] = useState("--");
     const [numMatches, setNumMatches] = useState(-1);
     const [showMatchesOnly, setShowMatchesOnly] = useState(false);
     const gridDataRef = useRef<Grid>(null);
@@ -40,6 +39,30 @@ function TangramGenPage() : ReactElement {
     useEffect(() => {
         fetchData()
     }, [showMatchesOnly]);
+
+    useEffect(() => {
+        if (!loading) {
+            const handler = setTimeout(() => {
+                jumpToAnchor();
+            }, 250); // milliseconds
+
+            return () => {
+                clearTimeout(handler);
+            };
+        }
+    }, [loading]);
+
+    function jumpToAnchor() {
+        const match = window.location.hash.match(/#\/gn#[rf]([0-9]+)$/);
+
+        if (match) {
+            const anchor = match[1];
+            const index = parseInt(anchor, 10);
+            if (!isNaN(index)) {
+                jumpToDataRow(index);
+            }
+        }
+    }
 
     function stringifyError(error: unknown) {
         if (error instanceof Error) {
@@ -162,8 +185,10 @@ function TangramGenPage() : ReactElement {
             setTableAnalyzer(analyzerFound);
             setStatus(`${numEntries.toLocaleString()} unique ${ pluralize(numEntries, "solution", "solutions") } found in ${maxPerm.toLocaleString()} permutations.`);
             setNumMatches(analyzerFound.length);
+            setLoading(false);
         } catch (err) {
             setStatus(stringifyError(err));
+            setLoading(false);
         }
     }
 
@@ -256,7 +281,7 @@ function TangramGenPage() : ReactElement {
         if (col === 0) {
             colClass = "gen-col-index";
             content = <>
-                <a href={`${GENERATOR_REL_URL}#r${item.index}`}>{item.index}</a><br/>
+                <a id={`r${item.index}`} href={`${GENERATOR_REL_URL}#r${item.index}`}>{item.index}</a><br/>
                 {item.perm.toLocaleString()}
             </>;
         } else if (col === 1) {
@@ -323,7 +348,7 @@ function TangramGenPage() : ReactElement {
     }
 
     function generateGridDataContainer() {
-        if (status === LOADING_STR) {
+        if (loading) {
             return <span className="gen-loading">Loading...</span>;
         } else {
             return <div className="gen-grid-data-container">

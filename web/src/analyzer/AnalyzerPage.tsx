@@ -1,4 +1,4 @@
-import {Fragment, type MouseEvent, type ReactElement, useEffect, useRef, useState} from "react";
+import {Fragment, type ReactElement, useEffect, useState} from "react";
 import {Image} from "react-bootstrap";
 
 const ANALYZER_JSON_URL = "analyzer.json"
@@ -75,8 +75,6 @@ function AnalyzerPage(): ReactElement {
                 element.scrollIntoView({behavior: 'smooth', block: 'start'});
             }
         }
-
-        return undefined;
     }
 
     function stringifyError(error: unknown) {
