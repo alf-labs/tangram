@@ -126,6 +126,11 @@ body {
   padding: 1em;
 }
 
+.gen-status form {
+  padding-left: 1em;
+  display: inline-block;
+}
+
 .gen-col-index a, .gen-col-found a {
   text-decoration: none;
 }

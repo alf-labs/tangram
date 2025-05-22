@@ -2,6 +2,7 @@ import {type ReactElement, useEffect, useRef, useState} from "react";
 import {type GridChildComponentProps, VariableSizeGrid as Grid} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {BoardImageInView} from "./BoardImage.tsx";
+import {Form} from "react-bootstrap";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
 const GENERATOR_TXT_URL = "generator.txt"
@@ -32,11 +33,12 @@ function TangramGenPage() : ReactElement {
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
     const [status, setStatus] = useState(LOADING_STR);
     const [numMatches, setNumMatches] = useState(-1);
+    const [showMatchesOnly, setShowMatchesOnly] = useState(false);
     const gridDataRef = useRef<Grid>(null);
 
     useEffect(() => {
         fetchData()
-    }, []);
+    }, [showMatchesOnly]);
 
     function stringifyError(error: unknown) {
         if (error instanceof Error) {
@@ -80,7 +82,7 @@ function TangramGenPage() : ReactElement {
                 throw new Error(`Error reading data: ${generatorData.status}`);
             }
             const generatorContent = await generatorData.text();
-            const tableData: TableData[] = [];
+            let tableData: TableData[] = [];
 
             const piecesDuplicates = new Set<string>();
 
@@ -109,6 +111,15 @@ function TangramGenPage() : ReactElement {
                         tableData.push(entry);
                     }
                 }
+            }
+
+            // Get number of entries before filtering matches
+            const numEntries = tableData.length;
+
+            if (showMatchesOnly) {
+                tableData = tableData.filter((entry) => {
+                    return analyzerMap.get(entry.board) ?? -1 >= 0
+                })
             }
 
             console.log("@@ Sorting results");
@@ -146,7 +157,6 @@ function TangramGenPage() : ReactElement {
             console.log("@@ Update state");
             setTableData(tableData);
             setTableAnalyzer(analyzerFound);
-            const numEntries = tableData.length;
             setStatus(`${numEntries.toLocaleString()} unique ${ pluralize(numEntries, "solution", "solutions") } found in ${maxPerm.toLocaleString()} permutations.`);
             setNumMatches(analyzerFound.length);
         } catch (err) {
@@ -190,13 +200,25 @@ function TangramGenPage() : ReactElement {
             line2 = <span> <a
                 href={`${GENERATOR_REL_URL}#f${t_idx}`}
                 onClick={() => jumpToDataRow(t_idx)}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
-                href={ANALYZER_REL_URL}>analyzer</a> found.</span>;
+                href={ANALYZER_REL_URL}>analyzer</a> found.
+                <Form>
+                      <Form.Check // prettier-ignore
+                          type="switch"
+                          id="gen-show-matches"
+                          label="Show matches only"
+                          checked={showMatchesOnly}
+                          onChange={(event) => {
+                              setShowMatchesOnly(event.currentTarget.checked);
+                          }}
+                      />
+                </Form>
+            </span>;
         }
 
-        return <>
+        return <div className="gen-status">
             {line1}
             {line2}
-        </>;
+        </div>;
     }
 
     const columnsWidths = [100, 80, 150, 400, 100];
