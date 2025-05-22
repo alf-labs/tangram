@@ -66,7 +66,7 @@ function TangramGenPage() : ReactElement {
             if (!analyzerData.ok) {
                 throw new Error(`Error reading data: ${analyzerData.status}`);
             }
-            const analyzerList = await analyzerData.json();
+            const analyzerList = (await analyzerData.json()).images;
             const analyzerMap: Map<string, number> = new Map();
             for (const [index, item] of analyzerList.entries()) {
                 const a_item = item as AnalyzerItem;
