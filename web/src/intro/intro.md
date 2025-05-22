@@ -4,9 +4,8 @@ shape.
 
 <img width="128" src="https://raw.githubusercontent.com/alf-labs/tangram/refs/heads/main/analyzer/data/originals/sample/sample.jpg#left" alt="Tangram Puzzle Sample"> This
 project deals with a variant called **12 pieces hexagon tangram jigsaw**.  
-Whereas a traditional tangram seems to have only 7 pieces,  
-this variant of the puzzle, as the name indicates, uses 12 pieces which fit in an
-enclosing hexagon.  
+Whereas a traditional tangram has only 7 pieces, this variant of the puzzle,
+as the name indicates, uses 12 pieces which fit in an enclosing hexagon.  
 There are actually 8 shapes of pieces, and 5 different colors.
 
 Solving the puzzle is rather simple -- just place the pieces till they fit.
@@ -14,7 +13,7 @@ Solving the puzzle is rather simple -- just place the pieces till they fit.
 The complexity amount is fairly low. As a simple brain-teaser, or mental fidget,
 most solutions can often be found in a few seconds, although some initial pieces
 placements are dead ends which are not necessarily obvious at first and can result
-in a several minutes of attempts at solving the puzzle via trial and error.
+in several minutes of attempts at solving the puzzle via trial and error.
 In other words, it's a lot of fun.
 
 
@@ -38,11 +37,11 @@ The pieces have different colors:
 Some of the pieces have _chirality_, meaning that their mirror image is different.
 Such pieces can be "turned over" on the board and occupy a different space.
 
-As the pieces are placed on an hexagon board, they can be rotated by increments 60°.
+As the pieces are placed on an hexagon board, they can be rotated by increments of 60°.
 However, some pieces have radial symmetry, and has such only a subset of their
 rotation matters.
 
-Here is the list of pieces has handled by the generator below:
+Here is the list of pieces as handled by the generator below:
 
 |           Piece            | Name           | Colors                                                | Cells | Chiral | Rotations |
 |:--------------------------:|----------------|-------------------------------------------------------|-------|--------|-----------|
@@ -71,8 +70,11 @@ Notes:
 
 ### Tangram Puzzle Generator
 
-One of the early question I had about this puzzle is how many possible solution
-there are. 
+One of the early question I had about this puzzle is how many possible solutions
+there are.
+I do not know of a way to mathematically compute the number of valid solutions.
+This prompted the idea of writing a generator that would compute all the possible moves
+to find the number of possible board solutions.
 
 
 #### Board Orientation
@@ -87,6 +89,9 @@ with its largest side horizontal and at the bottom:
 ![Piece TW](piece_tw.png#center)
 
 That piece was chosen because it's easily distinguishable and unique on any given board.
+
+Thus for any given board, we rotate the hexagonal board in such a way that this unique piece
+is always in the same direction, no matter where it is on the board.  
 This gives us an easy way to orient any given board, allowing us to compare them more
 easily.
 
@@ -100,8 +105,8 @@ us _how_ we are going to arrange the pieces on the board, but not _where_.
 Here's an example of a "permutation" -- it describes each piece with its desired
 mirror image (e.g. "J1" instead of "J2" here) and each piece rotation angle:
 ```
-HR@0 i1@60 W1@0 P1@120 VB@240 J1@300
-L2@0 TO@60 TW@0 TY@0   TY@300
+HR@0   i1@60 W1@60  P2@240 VB@300 J1@120
+L1@300 TW@0  TO@240 TY@240 TY@120
 ```
 
 That's useful because the number of permutations is actually fairly easy to compute.
@@ -110,7 +115,7 @@ For example the TW is always represented in the same orientation and thus has no
 visible permutation. Same goes for the HR piece -- since it is an hexagon, it always
 looks the same when rotated and thus has essentially no visible rotational permutation.
 On the other hand, a piece like the W can be oriented in 6 different ways, and as
-such as 6 possible permutations for the W1 shape, and 6 more possible permutations for
+such has 6 possible permutations for the W1 shape, and 6 more possible permutations for
 its W2 counterpart once mirrored.
 
 The number of total permutations is simply the factor of all 12 pieces potential
@@ -139,14 +144,15 @@ The generator iterates through all the permutations.
 For each permutation, it tries to fill the board with that set of pieces in their
 specific order.
 
-A solution is found when all 12 pieces can be placed 
+A solution is found when all 12 pieces can be placed on the board side by side,
+with no overlap and no gaps.
 
 Here's an example of a "solution":
 ```
-HR@0:4x2x0   i1@60:5x5x1  W1@0:1x1x0
-P1@120:2x3x1 VB@240:0x3x0 
-J1@300:2x3x0 L2@0:4x1x1 TO@60:3x0x1 
-TW@0:2x1x0   TY@0:5x4x0 TY@300:1x1x1
+HR@0:1x1x0   i1@60:5x5x1  W1@60:3x4x1
+P2@240:3x1x1 VB@300:0x0x1 J1@120:4x1x1
+L1@300:0x2x1 TW@0:5x3x0   TO@240:3x3x0
+TY@240:0x0x0 TY@120:5x5x0
 ```
 
 The numbers indicate the location of each's piece _first cell_ on the board using the

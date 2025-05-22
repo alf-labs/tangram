@@ -229,6 +229,7 @@ tr.ana-row-dup td {
 
 tr.ana-row-img td {
   text-align: center;
+  background-color: white;
 }
 
 .ana-row-img img {
