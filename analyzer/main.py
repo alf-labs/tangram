@@ -4,6 +4,7 @@
 
 import argparse
 import glob
+import json
 import os
 import time
 import sys
@@ -155,6 +156,12 @@ class Main:
         Unique images: {stats['num_unique']} <br/>
         Duplicated images: {stats['num_dups']}
         """
+        stats_dict = {
+            "num_img": stats["num_img"],
+            "num_sig": stats["num_sig"],
+            "num_unique": stats["num_unique"],
+            "num_dups": stats["num_dups"]
+        }
 
         # Generate HTML table
         rows = ""
@@ -177,7 +184,13 @@ class Main:
             rows += f"  <td colspan={max_columns}>{sig} {sig_info}</td>\n"
             rows += "</tr>\n"
             if sig_count == 1:
-                found_json.append( f'{{ "href":"{name}", "index":{n}, "sig":"{sig}" }}' )
+                found_json.append( {
+                    "href": name,
+                    "index": n,
+                    "sig": sig,
+                    "src": info["src"],
+                    "alt": info["alt"]
+                } )
 
             rows += "<tr class='images'>\n"
             rows += f"  <td><img src='{info['src']}'></td>\n"
@@ -195,11 +208,14 @@ class Main:
         print(f"Generated index at {index_path}")
         print(stats_str.replace("<br/>", ""))
 
-        found_path = os.path.join(output_dir, "index.json")
+        found_path = os.path.join(output_dir, "analyzer.json")
         with open(found_path, "w") as f:
-            f.write("[\n")
-            f.write(",\n".join(found_json))
-            f.write("\n]\n")
+            f.write(json.dumps({
+                "images": found_json,
+                "timestamp": time.asctime(),
+                "stats": stats_dict
+            }, indent=2))
+        print(f"Generated JSON at {found_path}")
 
 
 
