@@ -120,72 +120,66 @@ body {
   font-size: small;
 }
 
-.viewerImg {
-  max-width: 512px;
-  height: auto;
-  margin: 1em;
+.gen-loading {
+  font-size: x-large;
+  font-weight: bold;
+  padding: 1em;
 }
 
-.previewImg {
-  max-width: 10vw;
-  height: auto;
-}
-
-.index a, .found a {
+.gen-col-index a, .gen-col-found a {
   text-decoration: none;
 }
 
-.prev, .next {
+.gen-found-prev, .gen-found-next {
   font-size: smaller;
 }
 
-.pieces {
+.gen-col-pieces {
   font-family: monospace;
   font-size: smaller;
 }
 
-.board {
+.gen-col-board {
   font-family: monospace;
   font-size: .7em;
 }
 
-.board span {
+.gen-col-board span {
   display: block;
 }
 
-.row-found {
+.gen-row-found {
   background-color: #88CC88 !important;
 }
 
-.gridHeaderContainer {
+.gen-grid-header-container {
 
 }
 
-.gridDataContainer {
+.gen-grid-data-container {
   flex-grow: 1;
 }
 
-.gridHead {
+.gen-grid-head {
   border: 1px solid #D0D0D0;
   font-weight: bold;
   padding: 5px;
 }
 
-.gridRow {
+.gen-grid-row {
   border: 1px solid #D0D0D0;
   padding: 5px;
 }
 
-.gridFound {
+.gen-grid-found {
   background-color: #88CC88 !important;
 }
 
-.gridItemEven,
-.gridItemOdd {
+.gen-grid-item-even, .gen-grid-item-odd {
   background-color: #FFFFFF;
 }
 
-.gridItemOdd {
+.gen-grid-item-odd {
   background-color: #E8E8E8;
 }
 

@@ -6,7 +6,10 @@ import {BoardImageInView} from "./BoardImage.tsx";
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
 const GENERATOR_TXT_URL = "generator.txt"
 const ANALYZER_JSON_URL = "analyzer.json"
-const TANGRAM_RELATIVE_URL = "../tangram/";
+const ANALYZER_REL_URL = "#/an";
+const GENERATOR_REL_URL = "#/gn";
+
+const LOADING_STR = "--";
 
 interface TableData {
     index: number;
@@ -27,7 +30,7 @@ interface AnalyzerItem {
 function TangramGenPage() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
-    const [status, setStatus] = useState("Loading...");
+    const [status, setStatus] = useState(LOADING_STR);
     const [numMatches, setNumMatches] = useState(-1);
     const gridDataRef = useRef<Grid>(null);
 
@@ -181,13 +184,13 @@ function TangramGenPage() : ReactElement {
         let line1 = <span> {status} </span>;
         let line2 = <></>;
         if (numMatches == 0) {
-            line2 = <span> 0 matches with <a href="../tangram/" target="_blank">analyzer</a> found.</span>;
+            line2 = <span> 0 matches with <a href={ANALYZER_REL_URL}>analyzer</a> found.</span>;
         } else if (numMatches > 0) {
             let t_idx = tableAnalyzer[0].table_index;
             line2 = <span> <a
-                href={`#f${t_idx}`}
+                href={`${GENERATOR_REL_URL}#f${t_idx}`}
                 onClick={() => jumpToDataRow(t_idx)}>{numMatches} { pluralize(numMatches, "match", "matches" ) }</a> with <a
-                href="../tangram/" target="_blank">analyzer</a> found.</span>;
+                href={ANALYZER_REL_URL}>analyzer</a> found.</span>;
         }
 
         return <>
@@ -206,7 +209,7 @@ function TangramGenPage() : ReactElement {
     function DynamicHeaderCell(cellProps: GridChildComponentProps) : ReactElement {
         const col = cellProps.columnIndex;
         return (
-            <div className={`gridHead gridItemEven ${columnCenter[col]}`} style={cellProps.style}>
+            <div className={`gen-grid-head gen-grid-item-even ${columnCenter[col]}`} style={cellProps.style}>
                 {columnNames[col]}
             </div>
         )
@@ -218,21 +221,21 @@ function TangramGenPage() : ReactElement {
         const item = tableData[row];
         let content = undefined;
         let colClass = "";
-        let bgColorClass = cellProps.rowIndex % 2 === 1 ? "gridItemOdd" : "gridItemEven";
+        let bgColorClass = cellProps.rowIndex % 2 === 1 ? "gen-grid-item-odd" : "gen-grid-item-even";
 
         let found = item.found_idx >= 0 ? tableAnalyzer[item.found_idx] : null;
         if (found) {
-            bgColorClass = "row-found";
+            bgColorClass = "gen-row-found";
         }
 
         if (col === 0) {
-            colClass = "index";
+            colClass = "gen-col-index";
             content = <>
-                <a href={`#r${item.index}`}>{item.index}</a><br/>
+                <a href={`${GENERATOR_REL_URL}#r${item.index}`}>{item.index}</a><br/>
                 {item.perm.toLocaleString()}
             </>;
         } else if (col === 1) {
-            colClass = "found";
+            colClass = "gen-col-found";
             let found_prev = <></>;
             let found_link = <>--</>;
             let found_next = <></>;
@@ -240,33 +243,34 @@ function TangramGenPage() : ReactElement {
             if (found) {
                 let found_idx = item.found_idx;
                 found_id = `f${found.table_index}`;
-                found_link = <a href={`${TANGRAM_RELATIVE_URL}#${found.href}`}
-                                target="_blank">{found_idx + 1}</a>;
+                found_link = <a
+                    href={`${ANALYZER_REL_URL}#${found.href}`}
+                    >{found_idx + 1}</a>;
 
                 if (found_idx > 0) {
                     let t_idx = tableAnalyzer[found_idx - 1].table_index;
                     found_prev = <><a
-                        href={`#f${t_idx}`}
+                        href={`${GENERATOR_REL_URL}#f${t_idx}`}
                         onClick={() => jumpToDataRow(t_idx)}
-                        className="prev">⇑ prev</a><br/></>;
+                        className="gen-found-prev">⇑ prev</a><br/></>;
                 }
                 if (found_idx < tableAnalyzer.length - 1) {
                     let t_idx = tableAnalyzer[found_idx + 1].table_index;
                     found_next = <><br/><a
-                        href={`#f${t_idx}`}
+                        href={`${GENERATOR_REL_URL}#f${t_idx}`}
                         onClick={() => jumpToDataRow(t_idx)}
-                        className="next">⇓ next</a></>;
+                        className="gen-found-next">⇓ next</a></>;
                 }
             }
             content = <div id={found_id}>{found_prev}{found_link}{found_next}</div>;
         } else if (col === 2) {
-            colClass = "preview d-flex justify-content-center";
+            colClass = "gen-col-preview d-flex justify-content-center";
             content = <BoardImageInView board={item.board}/>;
         } else if (col === 3) {
-            colClass = "pieces";
+            colClass = "gen-col-pieces";
             content = <>{item.pieces}</>;
         } else if (col === 4) {
-            colClass = "board";
+            colClass = "gen-col-board";
             content = <>{
                 item.boardLines.map((line, index) => (
                     <span key={`${item.index}-${index}"`}>{line}</span>
@@ -275,7 +279,7 @@ function TangramGenPage() : ReactElement {
         }
 
         return (
-            <div className={`gridRow ${colClass} ${bgColorClass} ${columnCenter[col]}`}
+            <div className={`gen-grid-row ${colClass} ${bgColorClass} ${columnCenter[col]}`}
                  style={cellProps.style}>
                 {content}
             </div>
@@ -288,31 +292,18 @@ function TangramGenPage() : ReactElement {
             gridDataRef.current.scrollToItem({
                 columnIndex: 0,
                 rowIndex: rowIndex,
-                align: "start",
+                align: "center",
             });
         }
     }
 
-    return (
-    <div className="d-flex flex-column flex-grow-1">
-        <div>
-            {generateStatusLine()}
-        </div>
-        <div className="gridHeaderContainer">
-            <Grid
-                width={fixedWidth}
-                height={headHeight}
-                columnCount={5}
-                rowCount={1}
-                columnWidth={index => columnsWidths[index]}
-                rowHeight={_index => headHeight}
-            >
-                {DynamicHeaderCell}
-            </Grid>
-        </div>
-        <div className="gridDataContainer">
-            <AutoSizer defaultWidth={fixedWidth}>
-                {({ height /*, width*/ }) => (
+    function generateGridDataContainer() {
+        if (status === LOADING_STR) {
+            return <span className="gen-loading">Loading...</span>;
+        } else {
+            return <div className="gen-grid-data-container">
+                <AutoSizer defaultWidth={fixedWidth}>
+                    {({height /*, width*/}) => (
                         <Grid
                             ref={gridDataRef}
                             width={fixedWidth}
@@ -325,8 +316,29 @@ function TangramGenPage() : ReactElement {
                             {DynamicDataCell}
                         </Grid>
                     )}
-            </AutoSizer>
+                </AutoSizer>
+            </div>;
+        }
+    }
+
+    return (
+    <div className="d-flex flex-column flex-grow-1">
+        <div>
+            {generateStatusLine()}
         </div>
+        <div className="gen-grid-header-container">
+            <Grid
+                width={fixedWidth}
+                height={headHeight}
+                columnCount={5}
+                rowCount={1}
+                columnWidth={index => columnsWidths[index]}
+                rowHeight={_index => headHeight}
+            >
+                {DynamicHeaderCell}
+            </Grid>
+        </div>
+        {generateGridDataContainer()}
     </div>
     );
 }
