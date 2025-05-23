@@ -70,9 +70,9 @@ Notes:
 
 ### Tangram Puzzle Generator
 
-One of the early question I had about this puzzle is how many possible solutions
+One of the early questions we had about this puzzle is how many possible solutions
 there are.
-I do not know of a way to mathematically compute the number of valid solutions.
+We do not know of a way to mathematically compute the number of valid solutions.
 This prompted the idea of writing a generator that would compute all the possible moves
 to find the number of possible board solutions.
 
@@ -125,14 +125,14 @@ permutations:
 |:-----:|----------------------:|-------------------:|
 | TW    |                    1	 |                  1 |
 | HR    |                    1	 |                  1 |         
-| TO	 |                    6	 |                  6 |
-| TY 1	 |                    6	 |                 36 |
-| TY 2	 |                    6	 |                216 |
-| i	 |                    6	 |              1,296 |
-| L	 |                   12	 |            186,624 |
-| P	 |                   12	 |          2,239,488 |
-| VB	 |                    6	 |         13,436,928 |  
-| W	 |                   12	 |        161,243,136 |
+| TO	  |                    6	 |                  6 |
+| TY 1  |                    6	 |                 36 |
+| TY 2  |                    6	 |                216 |
+| i	    |                    6	 |              1,296 |
+| L	    |                   12	 |            186,624 |
+| P	    |                   12	 |          2,239,488 |
+| VB	  |                    6	 |         13,436,928 |  
+| W	    |                   12	 |        161,243,136 |
 
 
 Thus, we have a total number of 161,243,136 permutations to try.

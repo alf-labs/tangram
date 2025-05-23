@@ -1,86 +1,68 @@
-# Tangram Puzzle Image Analyzer
+# Tangram Puzzle Image Analyzer & Generator
 
-This analyzer attempts to parse pictures of a
-[Tangram Puzzle](data/originals/sample/sample.jpg).
+A [Tangram](https://en.wikipedia.org/wiki/Tangram) is a "dissection puzzle"
+composed of a number of flat wooden pieces which are assembled to form a specific
+shape.
 
-<p align=center><img width="384" src="analyzer/data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
+<p align=center><img width="128" src="analyzer/data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
 
+This project deals with a variant called **12 pieces hexagon tangram jigsaw**.  
+Whereas a traditional tangram has only 7 pieces, this variant of the puzzle,
+as the name indicates, uses 12 pieces which fit in an enclosing hexagon.
+There are actually 8 shapes of pieces, and 5 different colors.
 
-## Usage
-
-1. Place all source pictures in `analyzer/data/originals`.
-2. Create the destination directory:
-```
-$ mkdir analyzer/data/output
-```
-3. Run the generator:
-```
-cd analyzer
-python main.py -d data/originals/
-```
-4. Open the generate index: \
-[analyzer/data/output/index.html](analyzer/data/output/index.html)
+This project contains 4 sub-projects:
+  * Board Image Analyzer
+  * Generator
+  * Web Viewer
+  * Pieces Statistics
 
 
-To run the generator on a different source and destination directories:
-```
-python main.py --input-dir path/to/sources/ --output-dir path/to/output/dir
-python main.py          -d path/to/sources/           -o path/to/output/dir
-```
-The command above scans the input directory _recursively_ for all files matching `*.jpg`.
-Once all the files have been processed, an `index.html` is generated listing all the results.
+## Board Image Analyzer
 
-Each parameter has a long and a short form (e.g. `-d` and `--input-dir`).
+The analyzer was built to determine whether our puzzle solutions were unique
+or contained duplicates.
 
-The default output directory, if not provided, is `analyzer/data/output`.
+To do so, the analyzer parses images of the real puzzle board using 
+[OpenCV-Python](https://docs.opencv.org/4.x/index.html) and
+it outputs a table that list all the pictures of the boards and their
+identified cells colors, listing duplicates when found.
 
-It's also possible to process a single image at a time:
-```
-python main.py --input-image path/to/image.jpg --output-dir path/to/output/dir
-python main.py            -i path/to/image.jpg           -o path/to/output/dir
-```
-
-Inputs are only processed once. To force inputs to be processed again, use the `-y`
-or `--overwrite` argument:
-
-```
-python main.py -d analyzer/data/originals/ --overwrite
-python main.py -d analyzer/data/originals/  -y
-```
+More information is available in the [analyzer](analyzer/) directory.
 
 
+## Generator
 
-## Build Requirements
+One of the early questions we had about this puzzle is how many possible solutions
+there are.
 
-This requires Python 3 with the
-[OpenCV-Python library](https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html).
+We do not know of a way to mathematically compute the number of valid solutions.
+This prompted the idea of writing a generator that would compute all the possible moves
+to find the number of possible board solutions.
+
+There are 2 versions of the generator in this project:
+* [analyzer/gen.py](analyzer/gen.py) is the
+  original version written in Python. It initially computed permutations at the speed of
+  one every 10 seconds, and was further optimized using various heuristics to compute
+  10 permutations per second.
+* [rgen](rgen/) is a rewrite of the generator
+  in Rust. It uses the same heuristics. This one computes about 500 permutations per second
+  on the laptop. Running it on 4 threads, it covered the 160 million permutations in
+  about 24 hours.
+
+More information on the generator is also available in [web/intro.md](web/src/intro/intro.md).
 
 
-Windows using Python for Windows (standalone or via Git Bash):
-```
-$ python -m venv .venv
-$ source .venv/Scripts/active
-$ python -m pip install --upgrade pip
-$ pip install -v opencv-python
-```
+## Web Viewer
 
-The method above is the official way to install OpenCV-Python on Windows.
-The methods explain below can be... tedious, at best.
+Web viewer is a React-TypeScript single page application that displays the result
+of the generator, the board analyzer, and the pieces statistics.
 
 
-Windows with Cygwin or MSYS have their own packages which may or may not build easily:
-```
-Cygwin Setup: requires make, cmake, gcc, python3-pkgconfig, python3-cv2, python3-devel
-$ pip install --verbose opencv-python
+## Pieces Statistics
 
-MSYS:
-$ pacman -S cmake gcc mingw-w64-x86_64-python-opencv
-```
+TBD
 
-Linux:
-```
-$ apt install python3-opencv
-```
 
 
 ## License
