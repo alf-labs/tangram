@@ -1,5 +1,6 @@
 import {Fragment, type ReactElement, useEffect, useState} from "react";
 import {Image} from "react-bootstrap";
+import {fetchJsonFromSimpleCache} from "../SimpleCache.ts";
 
 const ANALYZER_JSON_URL = "analyzer.json"
 const ANALYZER_IMG_BASE_URL = "data"
@@ -89,11 +90,7 @@ function AnalyzerPage(): ReactElement {
         try {
             // Parse the analyzer data
             console.log("@@ Fetching analyzer data");
-            const jsonData = await fetch(ANALYZER_JSON_URL);
-            if (!jsonData.ok) {
-                throw new Error(`Error reading data: ${jsonData.status}`);
-            }
-            const analyzerData = (await jsonData.json()) as AnalyzerData;
+            const analyzerData = await fetchJsonFromSimpleCache(ANALYZER_JSON_URL, ANALYZER_JSON_URL) as AnalyzerData;
 
             console.log("@@ Update state");
             setAnalyzerData(analyzerData);

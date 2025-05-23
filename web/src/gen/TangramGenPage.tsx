@@ -3,6 +3,7 @@ import {type GridChildComponentProps, VariableSizeGrid as Grid} from "react-wind
 import AutoSizer from "react-virtualized-auto-sizer";
 import {BoardImageInView} from "./BoardImage.tsx";
 import {Form} from "react-bootstrap";
+import {fetchJsonFromSimpleCache, fetchTextFromSimpleCache} from "../SimpleCache.ts";
 
 // Data URL is relative to the public/ folder (in npm dev) or index.html (in prod).
 const GENERATOR_TXT_URL = "generator.txt"
@@ -88,11 +89,8 @@ function TangramGenPage() : ReactElement {
         try {
             // Parse the analyzer data
             console.log("@@ Fetching analyzer data");
-            const analyzerData = await fetch(ANALYZER_JSON_URL);
-            if (!analyzerData.ok) {
-                throw new Error(`Error reading data: ${analyzerData.status}`);
-            }
-            const analyzerList = (await analyzerData.json()).images;
+            const analyzerList = (await fetchJsonFromSimpleCache(ANALYZER_JSON_URL, ANALYZER_JSON_URL)).images;
+
             const analyzerMap: Map<string, number> = new Map();
             for (const [index, item] of analyzerList.entries()) {
                 const a_item = item as AnalyzerItem;
@@ -103,11 +101,9 @@ function TangramGenPage() : ReactElement {
 
             // Parse the generator data
             console.log("@@ Fetching generator data");
-            const generatorData = await fetch(GENERATOR_TXT_URL);
-            if (!generatorData.ok) {
-                throw new Error(`Error reading data: ${generatorData.status}`);
-            }
-            const generatorContent = await generatorData.text();
+
+            const generatorContent = await fetchTextFromSimpleCache(GENERATOR_TXT_URL, GENERATOR_TXT_URL);
+
             let tableData: TableData[] = [];
 
             const piecesDuplicates = new Set<string>();
