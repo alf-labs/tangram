@@ -23,10 +23,13 @@ This project contains 4 sub-projects:
 The analyzer was built to determine whether our puzzle solutions were unique
 or contained duplicates.
 
-To do so, the analyzer parses images of the real puzzle board using
+The analyzer is a command-line Python program that processes
+images of the real puzzle board using
 [OpenCV-Python](https://docs.opencv.org/4.x/index.html) and
 outputs a table that lists all the pictures of the boards and their
 identified cells colors, listing duplicates when found.
+
+The image analyzer is experimental and has a few shortcomings.
 
 More information is available in the [analyzer](analyzer/) directory.
 
@@ -47,7 +50,7 @@ There are 2 versions of the generator in this project:
   10 permutations per second.
 * [rgen](rgen/) is a rewrite of the generator
   in Rust. It uses the same heuristics. This one computes about 500 permutations per second
-  on the laptop. Running it on 4 threads, it covered the 160 million permutations in
+  per thread on the laptop. Running it on 4 threads, it covered the 160 million permutations in
   about 24 hours.
 
 More information on the generator is also available in [web/intro.md](web/src/intro/intro.md).
@@ -55,7 +58,7 @@ More information on the generator is also available in [web/intro.md](web/src/in
 
 ## Web Viewer
 
-Web viewer is a React-TypeScript single page application that displays the result
+Web viewer is a React-TypeScript single page application that displays the results
 of the generator, the board analyzer, and the pieces statistics.
 
 The source is located in the [web](web/) directory.
