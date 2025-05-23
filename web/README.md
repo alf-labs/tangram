@@ -1,7 +1,9 @@
-# Tangram Web
+# Tangram Web Viewer
 
-This is part of the https://github.com/alf-labs/tangram
-project.
+This is part of the https://github.com/alf-labs/tangram project.
+
+Web viewer is a React-TypeScript single page application that displays the result
+of [the generator, the board analyzer, and the pieces statistics](../README.md).
 
 
 ## Requirements
@@ -31,13 +33,13 @@ The project should work fine out of the box with either VS Code
 or WebStorm.
 
 When using FNM, WebStorm may fail to find the proper Node.js
-binary to use. That's because it looks at it in the `PATH`,
+binary to use. That's because it looks for it in the `PATH`,
 yet FNM does not install any Node.js in the global `PATH`,
-only  in sub-shells. You can manually run `fnm env` to find
+only in sub-shells. You can manually run `fnm env` to find
 the current Node.js binary `PATH` and update WebStorm to use
 that, or you can start WebStorm from a shell where you already
 executed `fnm use`, thus ensuring the `PATH` is already set
-before  WebStorm inherits it.
+before WebStorm inherits it.
 
 
 ## Dev vs Deployment
@@ -47,7 +49,7 @@ or NVM, you can activate the proper version of Node.js first:
 
 ```shell
 $ fnm use
-or
+# or
 $ nvm use
 ```
 
@@ -69,7 +71,7 @@ In dev mode, this has hot reload, or use "r" to force reload.
 To build for the Prod profile:
 ```shell
 $ npm run build
-optional:
+# optional:
 $ npm run preview
 ```
 
@@ -79,8 +81,5 @@ $ npm run preview
 ## License
 
 [MIT license](../LICENSE).
-
-
-
 
 ~~

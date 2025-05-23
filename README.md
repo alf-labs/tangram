@@ -25,7 +25,7 @@ or contained duplicates.
 
 To do so, the analyzer parses images of the real puzzle board using 
 [OpenCV-Python](https://docs.opencv.org/4.x/index.html) and
-it outputs a table that list all the pictures of the boards and their
+outputs a table that lists all the pictures of the boards and their
 identified cells colors, listing duplicates when found.
 
 More information is available in the [analyzer](analyzer/) directory.
@@ -57,6 +57,8 @@ More information on the generator is also available in [web/intro.md](web/src/in
 
 Web viewer is a React-TypeScript single page application that displays the result
 of the generator, the board analyzer, and the pieces statistics.
+
+The source is located in the [web](web/) directory.
 
 
 ## Pieces Statistics
