@@ -23,7 +23,7 @@ This project contains 4 sub-projects:
 The analyzer was built to determine whether our puzzle solutions were unique
 or contained duplicates.
 
-To do so, the analyzer parses images of the real puzzle board using 
+To do so, the analyzer parses images of the real puzzle board using
 [OpenCV-Python](https://docs.opencv.org/4.x/index.html) and
 outputs a table that lists all the pictures of the boards and their
 identified cells colors, listing duplicates when found.

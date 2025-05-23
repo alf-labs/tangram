@@ -175,7 +175,20 @@ There are 2 versions of the generator in this project:
 
 ### Tangram Puzzle Image Analyzer
 
-Content TBD
+The analyzer was built to determine whether our puzzle solutions were unique
+or contained duplicates.
+
+To do so, the analyzer is a command-line Python program that processes
+a large number of images of the real puzzle board using
+[OpenCV-Python](https://docs.opencv.org/4.x/index.html), and then
+outputs a table that lists all the pictures of the boards and their
+identified cells colors, listing duplicates when found.
+
+The results of the analyzer can be seen in the [Analyzer tab](#/an).
+
+More information about the Python analyzer is available in the github
+[analyzer](https://github.com/alf-labs/tangram/tree/main/analyzer) directory.
+
 
 
 ### Code and License
