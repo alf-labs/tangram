@@ -11,6 +11,7 @@ import sys
 
 from gen import Generator
 from img_proc import ImageProcessor
+from pieces_stats import PiecesStats
 
 TABLE_PLACEHOLDER = "TABLE_PLACEHOLDER"
 SAMPLE = "sample"
@@ -36,7 +37,7 @@ class Main:
             help="Overwrite existing files")
         parser.add_argument("-g", "--generate",
             action="store_true",
-            help="Generate all possible solutions")
+            help="Action: Generate all possible solutions")
         parser.add_argument("--gen-output",
             default="render_IDX_CORES.txt",
             help="Generator output name in output dir")
@@ -47,11 +48,18 @@ class Main:
         parser.add_argument("--gen-index",
             type=int,
             default=1,
-            help="Generator core index from 0 to gen-cores-1.")
+            help="Generator core index from 0 to gen-cores-1")
         parser.add_argument("--gen-start",
             type=int,
             default=1,
-            help="Generator start permutation index.")
+            help="Generator start permutation index")
+        parser.add_argument("-p", "--pieces",
+            action="store_true",
+            help="Action: Compute pieces statistics")
+        parser.add_argument("--pieces-solutions",
+            default="data/generator.txt",
+            required=False,
+            help="Input solutions txt for pieces generation")
         self.args = parser.parse_args()
 
     def analyze_file(self, input_file_path:str, outout_dir_path:str) -> None:
@@ -65,6 +73,11 @@ class Main:
                 print(f"Error: --gen-index must be in range 0..{m.args.gen_cores-1}")
                 sys.exit(1)
         g.generate(gen_output_name, m.args.overwrite, m.args.gen_cores, m.args.gen_index, m.args.gen_start)
+        return g
+
+    def generate_pieces(self, outout_dir_path:str, output_prefix:str, solutions_file:str) -> None:
+        g = PiecesStats(outout_dir_path, output_prefix)
+        g.generate(solutions_file)
         return g
 
     def find_files(self, dir_input:str) -> list:
@@ -224,7 +237,9 @@ if __name__ == "__main__":
     m.parse_arguments()
     if m.args.overwrite:
         print("Will overwrite existing files")
-    if m.args.generate:
+    if m.args.pieces:
+        g = m.generate_pieces(m.args.output_dir, "pieces", m.args.pieces_solutions)
+    elif m.args.generate:
         g = m.generate_solutions(m.args.output_dir, m.args.gen_output)
         m.write_generator_index(m.args.output_dir, g)
     elif m.args.input_image:

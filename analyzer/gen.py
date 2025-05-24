@@ -14,7 +14,7 @@ import time
 
 from coord import Axis, XY, YRG, YRGCoord
 from img_proc import Cell
-from typing import Generator
+from typing import Generator as TGenerator
 from typing import Tuple
 
 N2 = coord.N2
@@ -152,7 +152,7 @@ class Cells:
         new_cells.perm_index = self.perm_index
         return new_cells
 
-    def _triangles(self, yrg_coords:YRGCoord) -> Generator:
+    def _triangles(self, yrg_coords:YRGCoord) -> TGenerator:
         # TBD: merge dup in ImageProcessor
         for (y, r, g) in coord.VALID_YRG:
             y_piece = y - N2
@@ -199,7 +199,7 @@ class Generator:
         print("------")
 
         with open(report_file_path, "a") as self.report_file:
-            self.size_px, self.yrg_coords, cells_empty = self.create_cells()
+            self.size_px, self.yrg_coords, cells_empty = self.create_cells(PX_CELL_SIZE)
             self.precompute_positions(cells_empty)
             for cells in self.gen_all_solutions(cells_empty, cores_num, core_index, perm_start):
                 img = self.draw_cells_into(cells, dest_img=None)
@@ -215,8 +215,8 @@ class Generator:
         print(f"Stats: permutations={self.perm_count}, gen calls={self.gen_count}, images={self.img_count}")
         print("")
 
-    def create_cells(self) -> Tuple[YRGCoord, Cells]:
-        center_px = int(PX_CELL_SIZE * N2)
+    def create_cells(self, cell_size: int) -> Tuple[YRGCoord, Cells]:
+        center_px = int(cell_size * N2)
 
         p = {}
         for angle_deg in range(0, 360, 60):
@@ -249,9 +249,10 @@ class Generator:
         for cell in cells.cells:
             poly = np.int32(cell.triangle.to_np_array())
             color = cells.get_color(*cell.triangle.yrg.to_abs())
+            # color can be a tuple (b, g, r) or a color str
             if color == EMPTY_CELL:
                 fg = bg
-            else:
+            elif not isinstance(color, tuple):
                 fg = colors.by_name(color)["bgr"]
             cv2.fillPoly(dest_img, [poly], fg)
             cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
@@ -267,7 +268,14 @@ class Generator:
             cv2.imwrite(path, in_img)
             print("@@ Saved", path)
 
-    def place_piece(self, dest_cells:Cells, piece_cells:list, piece_info:dict, y_offset:int=0, r_offset:int=0, angle_deg:int=0) -> Cells:
+    def _place_piece(self,
+                     dest_cells:Cells,
+                     piece_cells:list,
+                     piece_info:dict,
+                     y_offset:int=0,
+                     r_offset:int=0,
+                     angle_deg:int=0,
+                     validate:bool=True) -> Cells:
         """
         Fit the given piece if the cells ONLY if the cells are empty (color is None).
         Returns a new cell list if the piece can fit.
@@ -306,18 +314,19 @@ class Generator:
                 copy_on_write = False
             cells.set_color(y_abs, r_abs, g, color_name)
 
-        # The piece fits at the desired location.
-        # Now validate that we are not leaving 1-single empty cells around.
-        adjacents = self.adjacents_cells(rotated, piece_info, angle_deg)
-        for y, r, g in adjacents:
-            y_abs = y + y_offset + N2
-            r_abs = r + r_offset + N2
-            if not cells.occupied(y_abs, r_abs, g):
-                if cells.valid(y_abs, r_abs, g):
-                    if self.is_cell_surrounded(y_abs, r_abs, g, cells):
-                        # Skip this permutation.
-                        if __debug__: self.reject_adjacents += 1
-                        return None
+        if validate:
+            # The piece fits at the desired location.
+            # Now validate that we are not leaving 1-single empty cells around.
+            adjacents = self.adjacents_cells(rotated, piece_info, angle_deg)
+            for y, r, g in adjacents:
+                y_abs = y + y_offset + N2
+                r_abs = r + r_offset + N2
+                if not cells.occupied(y_abs, r_abs, g):
+                    if cells.valid(y_abs, r_abs, g):
+                        if self.is_cell_surrounded(y_abs, r_abs, g, cells):
+                            # Skip this permutation.
+                            if __debug__: self.reject_adjacents += 1
+                            return None
 
         return cells
 
@@ -326,17 +335,26 @@ class Generator:
         Rotate the (y,r,g) tuples for a given piece.
         Angle_deg must be a multiple of 60 in range [0, 360[.
         """
-
         cache_key = f"{piece_info['key']}@{angle_deg}"
         cached = self.rot_cache.get(cache_key)
         if cached is not None:
             return cached
 
+        # Apply an offset such that the first cell is always at (y=0, r=0). "g" does not change.
+        offset = False
+        y_offset = 0
+        r_offset = 0
         yrg_rot = []
         g_count = [0, 0]
         for y, r, g in yrg_list:
             for angle in range(60, angle_deg+1, 60): # no-op if angle_deg==0
                 y, r, g = self.yrg_coords.rot_60_ccw_yrg(y, r, g)
+            if not offset:
+                offset = True
+                y_offset = y
+                r_offset = r
+            y -= y_offset
+            r -= r_offset
             g_count[g] += 1
             yrg_rot.append( (y, r, g) )
 
@@ -378,7 +396,7 @@ class Generator:
                     num_occupied += 1
         return num_occupied == num_cells
 
-    def gen_pieces_list(self, select_piece:int=0) -> Generator:
+    def gen_pieces_list(self, select_piece:int=0) -> TGenerator:
         """
         Generate all the combinations of pieces we want to place, and their
         rotation, but without indicating where to place them.
@@ -426,7 +444,7 @@ class Generator:
 
         yield from _gen(pieces, [])
 
-    def gen_all_solutions(self, cells_empty:Cells, cores_num:int, core_index:int, perm_start:int) -> Generator:
+    def gen_all_solutions(self, cells_empty:Cells, cores_num:int, core_index:int, perm_start:int) -> TGenerator:
         print("@@ Generate All Solutions")
         ts = time.time()
         spd = 0
@@ -468,7 +486,15 @@ class Generator:
                         all_pos.append( (y_abs, r_abs, g) )
                 self.pos_cache[pos_key] = all_pos
 
-    def place_first_piece(self, cells:Cells, combos:list, placed:list) -> Generator:
+    def place_single_piece(self, cells:Cells, piece_info:dict, y_abs, r_abs, g) -> Cells:
+        key = piece_info["key"]
+        piece_cells = piece_info["cells"]
+        angle_deg = piece_info["angle"]
+        pos_key = f"{key}@{angle_deg}"
+
+        return self._place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg, validate=False)
+
+    def place_first_piece(self, cells:Cells, combos:list, placed:list) -> TGenerator:
         if len(combos) == 0:
             assert len(combos) > 0
             return # exit the generator without a result
@@ -483,7 +509,7 @@ class Generator:
         first_g = piece_cells[0][2]
 
         def _place_at(y_abs, r_abs, g):
-            new_cells = self.place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
+            new_cells = self._place_piece(cells, piece_cells, piece_info, y_abs - N2, r_abs - N2, angle_deg)
             if __debug__: self.gen_count += 1
             if new_cells is None:
                 # We were not able to place the piece on the board.
