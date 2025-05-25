@@ -1,0 +1,744 @@
+{
+  "counts": [
+    {
+      "p_key": "HR",
+      "f_key": "HR@000",
+      "key": "HR@0",
+      "name": "HR",
+      "angle": 0,
+      "count": 84696,
+      "img_path": "piece_HR@000.png",
+      "map_path": "piece_HR@000_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i1@000",
+      "key": "i1@0",
+      "name": "i1",
+      "angle": 0,
+      "count": 16734,
+      "img_path": "piece_i1@000.png",
+      "map_path": "piece_i1@000_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i1@060",
+      "key": "i1@60",
+      "name": "i1",
+      "angle": 60,
+      "count": 14112,
+      "img_path": "piece_i1@060.png",
+      "map_path": "piece_i1@060_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i1@120",
+      "key": "i1@120",
+      "name": "i1",
+      "angle": 120,
+      "count": 11502,
+      "img_path": "piece_i1@120.png",
+      "map_path": "piece_i1@120_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i2@000",
+      "key": "i2@0",
+      "name": "i2",
+      "angle": 0,
+      "count": 16734,
+      "img_path": "piece_i2@000.png",
+      "map_path": "piece_i2@000_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i2@060",
+      "key": "i2@60",
+      "name": "i2",
+      "angle": 60,
+      "count": 11502,
+      "img_path": "piece_i2@060.png",
+      "map_path": "piece_i2@060_map.png"
+    },
+    {
+      "p_key": "i",
+      "f_key": "i2@120",
+      "key": "i2@120",
+      "name": "i2",
+      "angle": 120,
+      "count": 14112,
+      "img_path": "piece_i2@120.png",
+      "map_path": "piece_i2@120_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@000",
+      "key": "W1@0",
+      "name": "W1",
+      "angle": 0,
+      "count": 6417,
+      "img_path": "piece_W1@000.png",
+      "map_path": "piece_W1@000_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@060",
+      "key": "W1@60",
+      "name": "W1",
+      "angle": 60,
+      "count": 7422,
+      "img_path": "piece_W1@060.png",
+      "map_path": "piece_W1@060_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@120",
+      "key": "W1@120",
+      "name": "W1",
+      "angle": 120,
+      "count": 5376,
+      "img_path": "piece_W1@120.png",
+      "map_path": "piece_W1@120_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@180",
+      "key": "W1@180",
+      "name": "W1",
+      "angle": 180,
+      "count": 11400,
+      "img_path": "piece_W1@180.png",
+      "map_path": "piece_W1@180_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@240",
+      "key": "W1@240",
+      "name": "W1",
+      "angle": 240,
+      "count": 5073,
+      "img_path": "piece_W1@240.png",
+      "map_path": "piece_W1@240_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W1@300",
+      "key": "W1@300",
+      "name": "W1",
+      "angle": 300,
+      "count": 6660,
+      "img_path": "piece_W1@300.png",
+      "map_path": "piece_W1@300_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@000",
+      "key": "W2@0",
+      "name": "W2",
+      "angle": 0,
+      "count": 6417,
+      "img_path": "piece_W2@000.png",
+      "map_path": "piece_W2@000_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@060",
+      "key": "W2@60",
+      "name": "W2",
+      "angle": 60,
+      "count": 6660,
+      "img_path": "piece_W2@060.png",
+      "map_path": "piece_W2@060_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@120",
+      "key": "W2@120",
+      "name": "W2",
+      "angle": 120,
+      "count": 5073,
+      "img_path": "piece_W2@120.png",
+      "map_path": "piece_W2@120_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@180",
+      "key": "W2@180",
+      "name": "W2",
+      "angle": 180,
+      "count": 11400,
+      "img_path": "piece_W2@180.png",
+      "map_path": "piece_W2@180_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@240",
+      "key": "W2@240",
+      "name": "W2",
+      "angle": 240,
+      "count": 5376,
+      "img_path": "piece_W2@240.png",
+      "map_path": "piece_W2@240_map.png"
+    },
+    {
+      "p_key": "W",
+      "f_key": "W2@300",
+      "key": "W2@300",
+      "name": "W2",
+      "angle": 300,
+      "count": 7422,
+      "img_path": "piece_W2@300.png",
+      "map_path": "piece_W2@300_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@000",
+      "key": "P1@0",
+      "name": "P1",
+      "angle": 0,
+      "count": 10023,
+      "img_path": "piece_P1@000.png",
+      "map_path": "piece_P1@000_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@060",
+      "key": "P1@60",
+      "name": "P1",
+      "angle": 60,
+      "count": 5835,
+      "img_path": "piece_P1@060.png",
+      "map_path": "piece_P1@060_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@120",
+      "key": "P1@120",
+      "name": "P1",
+      "angle": 120,
+      "count": 7623,
+      "img_path": "piece_P1@120.png",
+      "map_path": "piece_P1@120_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@180",
+      "key": "P1@180",
+      "name": "P1",
+      "angle": 180,
+      "count": 5922,
+      "img_path": "piece_P1@180.png",
+      "map_path": "piece_P1@180_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@240",
+      "key": "P1@240",
+      "name": "P1",
+      "angle": 240,
+      "count": 7836,
+      "img_path": "piece_P1@240.png",
+      "map_path": "piece_P1@240_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P1@300",
+      "key": "P1@300",
+      "name": "P1",
+      "angle": 300,
+      "count": 5109,
+      "img_path": "piece_P1@300.png",
+      "map_path": "piece_P1@300_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@000",
+      "key": "P2@0",
+      "name": "P2",
+      "angle": 0,
+      "count": 10023,
+      "img_path": "piece_P2@000.png",
+      "map_path": "piece_P2@000_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@060",
+      "key": "P2@60",
+      "name": "P2",
+      "angle": 60,
+      "count": 5109,
+      "img_path": "piece_P2@060.png",
+      "map_path": "piece_P2@060_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@120",
+      "key": "P2@120",
+      "name": "P2",
+      "angle": 120,
+      "count": 7836,
+      "img_path": "piece_P2@120.png",
+      "map_path": "piece_P2@120_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@180",
+      "key": "P2@180",
+      "name": "P2",
+      "angle": 180,
+      "count": 5922,
+      "img_path": "piece_P2@180.png",
+      "map_path": "piece_P2@180_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@240",
+      "key": "P2@240",
+      "name": "P2",
+      "angle": 240,
+      "count": 7623,
+      "img_path": "piece_P2@240.png",
+      "map_path": "piece_P2@240_map.png"
+    },
+    {
+      "p_key": "P",
+      "f_key": "P2@300",
+      "key": "P2@300",
+      "name": "P2",
+      "angle": 300,
+      "count": 5835,
+      "img_path": "piece_P2@300.png",
+      "map_path": "piece_P2@300_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@000",
+      "key": "VB@0",
+      "name": "VB",
+      "angle": 0,
+      "count": 18060,
+      "img_path": "piece_VB@000.png",
+      "map_path": "piece_VB@000_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@060",
+      "key": "VB@60",
+      "name": "VB",
+      "angle": 60,
+      "count": 13941,
+      "img_path": "piece_VB@060.png",
+      "map_path": "piece_VB@060_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@120",
+      "key": "VB@120",
+      "name": "VB",
+      "angle": 120,
+      "count": 10347,
+      "img_path": "piece_VB@120.png",
+      "map_path": "piece_VB@120_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@180",
+      "key": "VB@180",
+      "name": "VB",
+      "angle": 180,
+      "count": 10347,
+      "img_path": "piece_VB@180.png",
+      "map_path": "piece_VB@180_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@240",
+      "key": "VB@240",
+      "name": "VB",
+      "angle": 240,
+      "count": 13941,
+      "img_path": "piece_VB@240.png",
+      "map_path": "piece_VB@240_map.png"
+    },
+    {
+      "p_key": "VB",
+      "f_key": "VB@300",
+      "key": "VB@300",
+      "name": "VB",
+      "angle": 300,
+      "count": 18060,
+      "img_path": "piece_VB@300.png",
+      "map_path": "piece_VB@300_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@000",
+      "key": "J1@0",
+      "name": "J1",
+      "angle": 0,
+      "count": 8157,
+      "img_path": "piece_J1@000.png",
+      "map_path": "piece_J1@000_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@060",
+      "key": "J1@60",
+      "name": "J1",
+      "angle": 60,
+      "count": 5652,
+      "img_path": "piece_J1@060.png",
+      "map_path": "piece_J1@060_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@120",
+      "key": "J1@120",
+      "name": "J1",
+      "angle": 120,
+      "count": 6435,
+      "img_path": "piece_J1@120.png",
+      "map_path": "piece_J1@120_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@180",
+      "key": "J1@180",
+      "name": "J1",
+      "angle": 180,
+      "count": 6714,
+      "img_path": "piece_J1@180.png",
+      "map_path": "piece_J1@180_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@240",
+      "key": "J1@240",
+      "name": "J1",
+      "angle": 240,
+      "count": 7230,
+      "img_path": "piece_J1@240.png",
+      "map_path": "piece_J1@240_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J1@300",
+      "key": "J1@300",
+      "name": "J1",
+      "angle": 300,
+      "count": 8160,
+      "img_path": "piece_J1@300.png",
+      "map_path": "piece_J1@300_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@000",
+      "key": "J2@0",
+      "name": "J2",
+      "angle": 0,
+      "count": 8157,
+      "img_path": "piece_J2@000.png",
+      "map_path": "piece_J2@000_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@060",
+      "key": "J2@60",
+      "name": "J2",
+      "angle": 60,
+      "count": 8160,
+      "img_path": "piece_J2@060.png",
+      "map_path": "piece_J2@060_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@120",
+      "key": "J2@120",
+      "name": "J2",
+      "angle": 120,
+      "count": 7230,
+      "img_path": "piece_J2@120.png",
+      "map_path": "piece_J2@120_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@180",
+      "key": "J2@180",
+      "name": "J2",
+      "angle": 180,
+      "count": 6714,
+      "img_path": "piece_J2@180.png",
+      "map_path": "piece_J2@180_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@240",
+      "key": "J2@240",
+      "name": "J2",
+      "angle": 240,
+      "count": 6435,
+      "img_path": "piece_J2@240.png",
+      "map_path": "piece_J2@240_map.png"
+    },
+    {
+      "p_key": "J",
+      "f_key": "J2@300",
+      "key": "J2@300",
+      "name": "J2",
+      "angle": 300,
+      "count": 5652,
+      "img_path": "piece_J2@300.png",
+      "map_path": "piece_J2@300_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@000",
+      "key": "L1@0",
+      "name": "L1",
+      "angle": 0,
+      "count": 9660,
+      "img_path": "piece_L1@000.png",
+      "map_path": "piece_L1@000_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@060",
+      "key": "L1@60",
+      "name": "L1",
+      "angle": 60,
+      "count": 6249,
+      "img_path": "piece_L1@060.png",
+      "map_path": "piece_L1@060_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@120",
+      "key": "L1@120",
+      "name": "L1",
+      "angle": 120,
+      "count": 5946,
+      "img_path": "piece_L1@120.png",
+      "map_path": "piece_L1@120_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@180",
+      "key": "L1@180",
+      "name": "L1",
+      "angle": 180,
+      "count": 8328,
+      "img_path": "piece_L1@180.png",
+      "map_path": "piece_L1@180_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@240",
+      "key": "L1@240",
+      "name": "L1",
+      "angle": 240,
+      "count": 5676,
+      "img_path": "piece_L1@240.png",
+      "map_path": "piece_L1@240_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L1@300",
+      "key": "L1@300",
+      "name": "L1",
+      "angle": 300,
+      "count": 6489,
+      "img_path": "piece_L1@300.png",
+      "map_path": "piece_L1@300_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@000",
+      "key": "L2@0",
+      "name": "L2",
+      "angle": 0,
+      "count": 9660,
+      "img_path": "piece_L2@000.png",
+      "map_path": "piece_L2@000_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@060",
+      "key": "L2@60",
+      "name": "L2",
+      "angle": 60,
+      "count": 6489,
+      "img_path": "piece_L2@060.png",
+      "map_path": "piece_L2@060_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@120",
+      "key": "L2@120",
+      "name": "L2",
+      "angle": 120,
+      "count": 5676,
+      "img_path": "piece_L2@120.png",
+      "map_path": "piece_L2@120_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@180",
+      "key": "L2@180",
+      "name": "L2",
+      "angle": 180,
+      "count": 8328,
+      "img_path": "piece_L2@180.png",
+      "map_path": "piece_L2@180_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@240",
+      "key": "L2@240",
+      "name": "L2",
+      "angle": 240,
+      "count": 5946,
+      "img_path": "piece_L2@240.png",
+      "map_path": "piece_L2@240_map.png"
+    },
+    {
+      "p_key": "L",
+      "f_key": "L2@300",
+      "key": "L2@300",
+      "name": "L2",
+      "angle": 300,
+      "count": 6249,
+      "img_path": "piece_L2@300.png",
+      "map_path": "piece_L2@300_map.png"
+    },
+    {
+      "p_key": "TW",
+      "f_key": "TW@000",
+      "key": "TW@0",
+      "name": "TW",
+      "angle": 0,
+      "count": 84696,
+      "img_path": "piece_TW@000.png",
+      "map_path": "piece_TW@000_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@000",
+      "key": "TO@0",
+      "name": "TO",
+      "angle": 0,
+      "count": 14024,
+      "img_path": "piece_TO@000.png",
+      "map_path": "piece_TO@000_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@060",
+      "key": "TO@60",
+      "name": "TO",
+      "angle": 60,
+      "count": 13992,
+      "img_path": "piece_TO@060.png",
+      "map_path": "piece_TO@060_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@120",
+      "key": "TO@120",
+      "name": "TO",
+      "angle": 120,
+      "count": 12848,
+      "img_path": "piece_TO@120.png",
+      "map_path": "piece_TO@120_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@180",
+      "key": "TO@180",
+      "name": "TO",
+      "angle": 180,
+      "count": 16992,
+      "img_path": "piece_TO@180.png",
+      "map_path": "piece_TO@180_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@240",
+      "key": "TO@240",
+      "name": "TO",
+      "angle": 240,
+      "count": 12848,
+      "img_path": "piece_TO@240.png",
+      "map_path": "piece_TO@240_map.png"
+    },
+    {
+      "p_key": "TO",
+      "f_key": "TO@300",
+      "key": "TO@300",
+      "name": "TO",
+      "angle": 300,
+      "count": 13992,
+      "img_path": "piece_TO@300.png",
+      "map_path": "piece_TO@300_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@000",
+      "key": "TY@0",
+      "name": "TY",
+      "angle": 0,
+      "count": 28048,
+      "img_path": "piece_TY@000.png",
+      "map_path": "piece_TY@000_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@060",
+      "key": "TY@60",
+      "name": "TY",
+      "angle": 60,
+      "count": 27984,
+      "img_path": "piece_TY@060.png",
+      "map_path": "piece_TY@060_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@120",
+      "key": "TY@120",
+      "name": "TY",
+      "angle": 120,
+      "count": 25696,
+      "img_path": "piece_TY@120.png",
+      "map_path": "piece_TY@120_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@180",
+      "key": "TY@180",
+      "name": "TY",
+      "angle": 180,
+      "count": 33984,
+      "img_path": "piece_TY@180.png",
+      "map_path": "piece_TY@180_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@240",
+      "key": "TY@240",
+      "name": "TY",
+      "angle": 240,
+      "count": 25696,
+      "img_path": "piece_TY@240.png",
+      "map_path": "piece_TY@240_map.png"
+    },
+    {
+      "p_key": "TY",
+      "f_key": "TY@300",
+      "key": "TY@300",
+      "name": "TY",
+      "angle": 300,
+      "count": 27984,
+      "img_path": "piece_TY@300.png",
+      "map_path": "piece_TY@300_map.png"
+    }
+  ]
+}

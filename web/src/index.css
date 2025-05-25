@@ -254,3 +254,45 @@ tr.ana-row-img td {
 
 /* ----- PIECES PAGE ----- */
 
+
+.pcs-status {
+  padding-left: .5em;
+}
+
+.pcs-loading {
+  font-size: x-large;
+  font-weight: bold;
+  padding: 1em;
+}
+
+table.pcs-table, .pcs-table th, .pcs-table td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+table.pcs-table {
+  background-color: white;
+  margin-bottom: 1em;
+}
+
+.pcs-explanation {
+  margin-bottom: 1em;
+}
+
+.pcs-row-title td {
+  font-weight: bold;
+  padding-left: 0.5em;
+  height: 2em;
+}
+
+.pcs-row-pieces td {
+  width: 160px;
+  text-align: center;
+}
+
+.pcs-label {
+  font-size: smaller;
+}
+
+/* ~~ */
+
