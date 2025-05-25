@@ -252,8 +252,11 @@ class Generator:
             # color can be a tuple (b, g, r) or a color str
             if color == EMPTY_CELL:
                 fg = bg
-            elif not isinstance(color, tuple):
+            elif isinstance(color, tuple):
+                fg = color
+            else:
                 fg = colors.by_name(color)["bgr"]
+
             cv2.fillPoly(dest_img, [poly], fg)
             cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
 
@@ -285,13 +288,14 @@ class Generator:
 
         rotated, g_count = self.rotate_piece_cells(piece_cells, piece_info, angle_deg)
 
-        # Validate that the puzzle has enought empty cells to event fit the piece
-        # (we don't check whether they are adjacent here, just the global count)
-        # print("@@", piece_info["key"], color_name, "g_count", g_count, "cells", dest_cells.g_free, dest_cells.signature())
-        if g_count[0] > dest_cells.g_free[0] or g_count[1] > dest_cells.g_free[1]:
-            # The piece definitely will not fit here.
-            self.reject_g_count += 1
-            return None
+        if validate:
+            # Validate that the puzzle has enought empty cells to event fit the piece
+            # (we don't check whether they are adjacent here, just the global count)
+            # print("@@", piece_info["key"], color_name, "g_count", g_count, "cells", dest_cells.g_free, dest_cells.signature())
+            if g_count[0] > dest_cells.g_free[0] or g_count[1] > dest_cells.g_free[1]:
+                # The piece definitely will not fit here.
+                self.reject_g_count += 1
+                return None
 
         # Make a "deep" copy of cells only when needed
         copy_on_write = True

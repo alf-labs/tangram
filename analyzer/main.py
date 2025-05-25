@@ -66,7 +66,7 @@ class Main:
         p = ImageProcessor(input_file_path, outout_dir_path)
         p.process_image(m.args.overwrite)
 
-    def generate_solutions(self, outout_dir_path:str, gen_output_name:str) -> None:
+    def generate_solutions(self, outout_dir_path:str, gen_output_name:str) -> Generator:
         g = Generator(outout_dir_path)
         if m.args.gen_cores > 1:
             if m.args.gen_index < 0 or m.args.gen_index >= m.args.gen_cores:
@@ -75,10 +75,16 @@ class Main:
         g.generate(gen_output_name, m.args.overwrite, m.args.gen_cores, m.args.gen_index, m.args.gen_start)
         return g
 
-    def generate_pieces(self, outout_dir_path:str, output_prefix:str, solutions_file:str) -> None:
-        g = PiecesStats(outout_dir_path, output_prefix)
-        g.generate(solutions_file)
-        return g
+    def generate_pieces_stats(self, outout_dir_path:str, output_prefix:str, solutions_file:str) -> dict:
+        g = PiecesStats(outout_dir_path, output_prefix, m.args.overwrite)
+        stats = g.generate(solutions_file)
+        return stats
+
+    def write_stats_index(self, output_dir:str, stats:dict) -> None:
+        found_path = os.path.join(output_dir, "pieces_stats.json")
+        with open(found_path, "w") as f:
+            f.write(json.dumps(stats, indent=2))
+        print(f"Generated pieces stats at {found_path}")
 
     def find_files(self, dir_input:str) -> list:
         """Finds all files in the given directory."""
@@ -238,7 +244,8 @@ if __name__ == "__main__":
     if m.args.overwrite:
         print("Will overwrite existing files")
     if m.args.pieces:
-        g = m.generate_pieces(m.args.output_dir, "pieces", m.args.pieces_solutions)
+        s = m.generate_pieces_stats(m.args.output_dir, "pieces", m.args.pieces_solutions)
+        m.write_stats_index(m.args.output_dir, s)
     elif m.args.generate:
         g = m.generate_solutions(m.args.output_dir, m.args.gen_output)
         m.write_generator_index(m.args.output_dir, g)
