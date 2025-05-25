@@ -28,7 +28,7 @@ interface PiecesMapData {
 
 function PiecesPage() : ReactElement {
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState("--");
+    const [status, setStatus] = useState(" ");
     const [piecesMapData, setPiecesMapData] = useState<PiecesMapData>({
         pieces: new Map<string, PiecesCountItem[]>()
     });
@@ -74,7 +74,7 @@ function PiecesPage() : ReactElement {
     }
 
     function generateStatusLine() {
-        return <span className="pcs-status"> {status} </span>;
+        return <span className="pcs-status"> {status} &nbsp; </span>;
     }
 
     function generateDataContainer() {
@@ -117,14 +117,7 @@ function PiecesPage() : ReactElement {
                 </table>
             ) ) }
         </div>
-
         )
-            {/*{*/}
-            {/*    Array.from(piecesMapData.pieces.values()).map((pieces) => {*/}
-            {/*        <div>pieces[0].name</div>*/}
-            {/*    })*/}
-            {/*}*/}
-        ;
     }
 
     return (

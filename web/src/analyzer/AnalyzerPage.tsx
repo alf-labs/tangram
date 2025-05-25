@@ -38,7 +38,7 @@ const ALT_FILTER: string[] = [
 
 function AnalyzerPage(): ReactElement {
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState("--");
+    const [status, setStatus] = useState(" ");
     const [analyzerData, setAnalyzerData] = useState<AnalyzerData>({
         images: [],
         stats: {
@@ -57,6 +57,7 @@ function AnalyzerPage(): ReactElement {
     useEffect(() => {
         if (!loading) {
             const handler = setTimeout(() => {
+                setStatus(" ");
                 jumpToAnchor();
             }, 250); // milliseconds
 
@@ -108,7 +109,7 @@ function AnalyzerPage(): ReactElement {
     }
 
     function generateStatusLine() {
-        return <span className="ana-status"> {status} </span>;
+        return <span className="ana-status"> {status} &nbsp; </span>;
     }
 
     function onImageClick(event: any) {

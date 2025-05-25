@@ -32,7 +32,7 @@ function TangramGenPage() : ReactElement {
     const [tableData, setTableData] = useState<TableData[]>([]);
     const [tableAnalyzer, setTableAnalyzer] = useState<AnalyzerItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState("--");
+    const [status, setStatus] = useState(" ");
     const [numMatches, setNumMatches] = useState(-1);
     const [showMatchesOnly, setShowMatchesOnly] = useState(false);
     const gridDataRef = useRef<Grid>(null);
@@ -215,7 +215,7 @@ function TangramGenPage() : ReactElement {
     }
 
     function generateStatusLine() {
-        let line1 = <span> {status} </span>;
+        let line1 = <span> {status} &nbsp; </span>;
         let line2 = <></>;
         if (numMatches == 0) {
             line2 = <span> 0 matches with <a href={ANALYZER_REL_URL}>analyzer</a> found.</span>;
@@ -255,7 +255,7 @@ function TangramGenPage() : ReactElement {
     function DynamicHeaderCell(cellProps: GridChildComponentProps) : ReactElement {
         const col = cellProps.columnIndex;
         return (
-            <div className={`gen-grid-head gen-grid-item-even ${columnCenter[col]}`} style={cellProps.style}>
+            <div className={`gen-grid-head d-flex align-items-center ${columnCenter[col]}`} style={cellProps.style}>
                 {columnNames[col]}
             </div>
         )

@@ -17,6 +17,7 @@ in several minutes of attempts at solving the puzzle via trial and error.
 In other words, it's a lot of fun.
 
 
+---
 ### Analysis of the Puzzle
 
 The puzzle shape is an hexagon, with a dimension of 6 "lines" in any given direction.
@@ -68,6 +69,7 @@ Notes:
   * The "I beam" is encoded using the lower case "i" to easily differentiate it from "L".
 
 
+---
 ### Tangram Puzzle Generator
 
 One of the early questions we had about this puzzle is how many possible solutions
@@ -175,6 +177,16 @@ There are 2 versions of the generator in this project:
   about 24 hours.
 
 
+#### Pieces Heatmap
+
+Due to their shapes, pieces are more likely to be located in specific places of the board.
+
+The analyzer/generator uses all the solutions found above and counts the number of times
+each cell is used by a given piece accross all solutions. The result is a
+"piece heatmap" which can be seen in the [Pieces tab](#/pc).
+
+
+---
 ### Tangram Puzzle Image Analyzer
 
 The analyzer was built to determine whether our puzzle solutions were unique
@@ -194,7 +206,7 @@ More information about the Python analyzer is available in the github
 The results of the analyzer can be seen in the [Analyzer tab](#/an).
 
 
-
+---
 ### Code and License
 
 All the code is available at https://github.com/alf-labs/tangram

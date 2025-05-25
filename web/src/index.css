@@ -103,10 +103,10 @@ body {
   padding-right: 1em;
 }
 
-/*.markdown td:first-of-type {*/
-/*  width: 140px !important;*/
-/*}*/
-
+.markdown hr {
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
 
 /* ----- GENERATOR PAGE ----- */
 
@@ -124,6 +124,10 @@ body {
   font-size: x-large;
   font-weight: bold;
   padding: 1em;
+}
+
+.gen-status {
+  padding-left: .5em;
 }
 
 .gen-status form {
@@ -169,6 +173,7 @@ body {
   border: 1px solid #D0D0D0;
   font-weight: bold;
   padding: 5px;
+  background-color: #EAECA0;
 }
 
 .gen-grid-row {
@@ -219,7 +224,7 @@ tr.ana-row-href td {
   padding-left: .5em;
   height: 2em;
   font-weight: bold;
-  background-color: #CCC;
+  background-color: #EAECA0;
 }
 
 tr.ana-row-sig td {
@@ -283,11 +288,13 @@ table.pcs-table {
   font-weight: bold;
   padding-left: 0.5em;
   height: 2em;
+  background-color: #EAECA0;
 }
 
 .pcs-row-pieces td {
   width: 160px;
   text-align: center;
+  background-color: #D5D5BF;
 }
 
 .pcs-label {
