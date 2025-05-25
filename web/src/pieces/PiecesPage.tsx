@@ -99,14 +99,14 @@ function PiecesPage() : ReactElement {
             </div>
             {
             Array.from(piecesMapData.pieces.values()).map( (pieces) => (
-                <table className="pcs-table">
+                <table className="pcs-table" key={pieces[0].name}>
                 <tbody>
                     <tr className="pcs-row-title">
                         <td colSpan={pieces.length}>{pieces[0].name}</td>
                     </tr>
                     <tr className="pcs-row-pieces">
                         { pieces.map( (piece) => (
-                            <td>
+                            <td key={piece.f_key}>
                                 <Image src={`${PIECES_IMG_BASE_URL}/${piece.img_path}`}></Image>
                                 <div className="pcs-label">{`${piece.name}, ${piece.angle}°`}</div>
                                 <Image src={`${PIECES_IMG_BASE_URL}/${piece.map_path}`}></Image>
