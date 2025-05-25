@@ -258,7 +258,14 @@ class Generator:
                 fg = colors.by_name(color)["bgr"]
 
             cv2.fillPoly(dest_img, [poly], fg)
+            # This border will become transparent around every cell.
             cv2.polylines(dest_img, [poly], isClosed=True, color=(0, 0, 0), thickness=1)
+        for cell in cells.cells:
+            poly = np.int32(cell.triangle.to_np_array())
+            color = cells.get_color(*cell.triangle.yrg.to_abs())
+            if color != EMPTY_CELL:
+                # Redraw a darker but not transparent border around painted cells only.
+                cv2.polylines(dest_img, [poly], isClosed=True, color=(8, 8, 8), thickness=1)
 
         return dest_img
 

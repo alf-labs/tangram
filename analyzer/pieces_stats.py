@@ -220,7 +220,7 @@ class PiecesStats:
                 if sum_count == INVALID_CELL:
                     continue
                 if sum_count == EMPTY_CELL:
-                    merged_cells.colors[i] = (128, 0, 0)
+                    merged_cells.colors[i] = (255, 0, 0)
                 else:
                     ratio = sum_count / max_count
                     gray = int(255 * ratio)
@@ -252,7 +252,16 @@ class PiecesStats:
         # TBD: merge dup in Generator
         name = f"piece_{suffix}.png"
         path = os.path.join(self.output_dir_path, name)
-        cv2.imwrite(path, in_img)
+
+        # Make pure black pixels transparent for the PNG
+        img_bgra = cv2.cvtColor(in_img, cv2.COLOR_BGR2BGRA)
+        transparent_color = [0, 0, 0]
+        mask = (img_bgra[:, :, 0] == transparent_color[0]) & \
+               (img_bgra[:, :, 1] == transparent_color[1]) & \
+               (img_bgra[:, :, 2] == transparent_color[2])
+        img_bgra[mask, 3] = 0
+
+        cv2.imwrite(path, img_bgra)
         print("@@ Saved", path)
         return name
 
