@@ -74,7 +74,7 @@ function AnalyzerPage(): ReactElement {
             const anchor = match[1];
             const element = document.getElementById(anchor);
             if (element) {
-                element.scrollIntoView({behavior: 'smooth', block: 'start'});
+                element.scrollIntoView({behavior: "smooth", block: "start"});
             }
         }
     }

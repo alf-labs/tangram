@@ -1,3 +1,12 @@
+[Analysis of the Puzzle](#/#analysis-of-the-puzzle)
+|
+[Generator](#/#tangram-puzzle-generator)
+|
+[Heatmap](#/#pieces-heatmap)
+|
+[Image Analyzer](#/#tangram-puzzle-image-analyzer)
+
+---
 A [Tangram](https://en.wikipedia.org/wiki/Tangram) is a "dissection puzzle"
 composed of a number of flat wooden pieces which are assembled to form a specific
 shape.
