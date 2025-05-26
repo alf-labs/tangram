@@ -1,9 +1,10 @@
 import {type ReactElement, useEffect, useState} from "react";
 import {fetchJsonFromSimpleCache} from "../SimpleCache.ts";
-import {Image} from "react-bootstrap";
+import {LazyImage} from "../LazyImage.tsx";
 
 const PIECES_STATS_JSON_URL = "pieces_stats.json"
 const PIECES_IMG_BASE_URL = "data"
+const PIECES_IMG_PX = 120
 
 interface PiecesStatsData {
     counts: PiecesCountItem[]
@@ -107,9 +108,9 @@ function PiecesPage() : ReactElement {
                     <tr className="pcs-row-pieces">
                         { pieces.map( (piece) => (
                             <td key={piece.f_key}>
-                                <Image src={`${PIECES_IMG_BASE_URL}/${piece.img_path}`}></Image>
+                                <LazyImage src={`${PIECES_IMG_BASE_URL}/${piece.img_path}`} width={PIECES_IMG_PX} height={PIECES_IMG_PX}></LazyImage>
                                 <div className="pcs-label">{`${piece.name}, ${piece.angle}°`}</div>
-                                <Image src={`${PIECES_IMG_BASE_URL}/${piece.map_path}`}></Image>
+                                <LazyImage src={`${PIECES_IMG_BASE_URL}/${piece.map_path}`} width={PIECES_IMG_PX} height={PIECES_IMG_PX}></LazyImage>
                             </td>
                         ))}
                     </tr>

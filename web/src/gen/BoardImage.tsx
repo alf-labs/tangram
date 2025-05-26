@@ -1,4 +1,4 @@
-import {type ReactElement, useEffect, useRef} from "react";
+import {type ReactElement, useEffect, useRef, useState} from "react";
 import {useInView} from "react-intersection-observer";
 
 // Let's call X'Y' the pixel coordinate system.
@@ -138,11 +138,16 @@ export function BoardImage(props: BoardImageProps) : ReactElement {
 
 
 export function BoardImageInView(props: BoardImageProps) : ReactElement {
+    const [ loaded, setLoaded ] = useState(false);
     const { ref, inView, /*entry*/ } = useInView();
+
+    if (!loaded && inView) {
+        setLoaded(true);
+    }
 
     return (
         <div ref={ref} style={{ width: `${BOARD_IMG_WIDTH}px`, height: `${BOARD_IMG_HEIGHT}px`, }}>
-            { inView && <BoardImage board={props.board} /> }
+            { loaded && <BoardImage board={props.board} /> }
         </div>
     );
 }

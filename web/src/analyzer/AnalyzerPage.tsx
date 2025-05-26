@@ -1,6 +1,6 @@
 import {Fragment, type ReactElement, useEffect, useState} from "react";
-import {Image} from "react-bootstrap";
 import {fetchJsonFromSimpleCache} from "../SimpleCache.ts";
+import {LazyImage} from "../LazyImage.tsx";
 
 const ANALYZER_JSON_URL = "analyzer.json"
 const ANALYZER_IMG_BASE_URL = "data"
@@ -151,16 +151,18 @@ function AnalyzerPage(): ReactElement {
                     </tr>
                     <tr className="ana-row-img">
                         <td>
-                            <Image src={`${ANALYZER_IMG_BASE_URL}/${item.src}`}
-                                   onClick={(event) => onImageClick(event)} />
+                            <LazyImage
+                                src={`${ANALYZER_IMG_BASE_URL}/${item.src}`}
+                                onClick={(event) => onImageClick(event)} />
                         </td>
                         {
                             item.alt
                                 .filter((s) => s.match(img_patterns))
                                 .map((url) =>
                                     <td key={`${idx}-${url}`}>
-                                        <Image src={`${ANALYZER_IMG_BASE_URL}/${url}`}
-                                               onClick={(event) => onImageClick(event)} />
+                                        <LazyImage
+                                            src={`${ANALYZER_IMG_BASE_URL}/${url}`}
+                                            onClick={(event) => onImageClick(event)} />
                                     </td>
                                 )
                         }
