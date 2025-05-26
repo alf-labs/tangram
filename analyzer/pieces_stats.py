@@ -39,10 +39,12 @@ class PiecesStats:
         self.generator.size_px = self.size_px
         self.generator.yrg_coords = self.yrg_coords
 
-        solutions = self.read_solutions(solutions_file)
+        num_unique_solutions, solutions = self.read_solutions(solutions_file)
         print("@@ Found", len(solutions), "unique solutions")
 
-        stats = self.count_pieces_rotations(solutions)
+        stats = {}
+        self.count_pieces_statistics(stats, num_unique_solutions, solutions)
+        self.count_pieces_rotations(stats, solutions)
         self.create_rotations_images(stats, cells_empty)
         self.create_heatmap_images(solutions, stats, cells_empty)
 
@@ -83,9 +85,9 @@ class PiecesStats:
                                 r = int(match.group(4))
                                 g = int(match.group(5))
                                 entry = {
-                                    "key": f"{piece}@{angle}",
-                                    "piece": piece,
-                                    "angle": angle,
+                                    "key": f"{piece}@{angle}",  # e.g. "i1@0"
+                                    "piece": piece,             # e.g. "i1"
+                                    "angle": angle,             # e.g. 0  
                                     "y": y,
                                     "r": r,
                                     "g": g,
@@ -94,11 +96,41 @@ class PiecesStats:
                                 solutions[solution_str] = entry
 
         print("@@ Parsed", len(visited), "unique solutions with", len(solutions), "unique pieces")
-        return solutions
+        return len(visited), solutions
 
-    def count_pieces_rotations(self, solutions: dict) -> dict:
+    def count_pieces_statistics(self, stats: dict, num_unique_solutions: int, solutions: dict) -> None:
+        sums = {}
+        stats["sums"] = sums
+        # For each piece with rotation, sum the number of rotations.
+        sums["solutions"] = num_unique_solutions
+        for p_key in PIECES:
+            p = PIECES[p_key]
+            sums[p_key] = {}
+
+            # For each piece with a chiral variant, sum the number of variants.
+            info = {}
+            sums[p_key]["chi"] = info
+            names = p.get("name", [p_key])
+            for name in names:
+                info[name] = sum([ e["count"]
+                                      for e in solutions.values()
+                                        if e["piece"] == name ])
+
+            # For each piece with a rotation, sum the number of rotations.
+            info = {}
+            sums[p_key]["rot"] = info
+            for name in names:
+                for angle in range(0, p.get("rot", 300) + 1, 60):
+                    key = f"{name}@{angle}"
+                    f_key = "%s@%03d" % (name, angle)
+                    info[f_key] = sum([ e["count"]
+                                        for e in solutions.values()
+                                        if e["key"] == key ])
+
+        print("@@ Added", len(sums), "piece statistics")
+
+    def count_pieces_rotations(self, stats: dict, solutions: dict) -> None:
         counts = []
-        stats = {}
         stats["counts"] = counts
         for p_key in PIECES:
             p = PIECES[p_key]
@@ -108,17 +140,17 @@ class PiecesStats:
                     key = f"{name}@{angle}"
                     f_key = "%s@%03d" % (name, angle)
                     entry = {
-                        "p_key": p_key,
-                        "f_key": f_key,
-                        "key": key,
-                        "name": name,
-                        "angle": angle,
+                        "p_key": p_key,     # e.g. "i"
+                        "f_key": f_key,     # e.g. "i1@000"
+                        "key": key,         # e.g. "i1@0"
+                        "name": name,       # e.g. "i1"
+                        "angle": angle,     # e.g. 0
                         "count": sum([ e["count"]
                                        for e in solutions.values()
                                        if e["key"] == key ]),
                     }
                     counts.append(entry)
-        return stats
+        print("@@ Added", len(counts), "piece rotations")
 
     def create_rotations_images(self, stats: dict, cells_empty: Cells) -> None:
         counts = stats["counts"]
