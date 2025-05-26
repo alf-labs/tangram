@@ -30,6 +30,7 @@ const CustomAElement: React.FC = (props: AnchorHTMLAttributes<HTMLAnchorElement>
     }
     return (
         <a href={props.href}
+           id={props.id}
            onClick={handleClick}
            target={props.target}
         >

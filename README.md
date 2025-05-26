@@ -13,7 +13,7 @@ There are actually 8 shapes of pieces, and 5 different colors.
 
 This project contains 4 sub-projects:
   * Board Image Analyzer
-  * Generator
+  * Board Generator
   * Web Viewer
   * Pieces Statistics
 
@@ -34,7 +34,7 @@ The image analyzer is experimental and has a few shortcomings.
 More information is available in the [analyzer](analyzer/) directory.
 
 
-## Generator
+## Board Generator
 
 One of the early questions we had about this puzzle is how many possible solutions
 there are.
@@ -56,6 +56,19 @@ There are 2 versions of the generator in this project:
 More information on the generator is also available in [web/intro.md](web/src/intro/intro.md).
 
 
+## Pieces Statistics
+
+The [analyzer/pieces_stats.py](analyzer/pieces_stats.py) component of the analyzer
+takes the list of all board solutions computed by the [generator](#board-generator)
+and analyze how each piece is used:
+  * For pieces that have variants in chirality or rotation, we're interested in
+    computing if one variant is more prominent across all solutions. The expectation
+    is that they should have equal distribution.
+  * A "heat map" is computed for each piece by counting the number of times each cell
+    on the board is used across all solutions. This would tell us where a piece is
+    more likely to be placed on a given board.
+
+
 ## Web Viewer
 
 Web viewer is a React-TypeScript single page application that displays the results
@@ -63,11 +76,8 @@ of the generator, the board analyzer, and the pieces statistics.
 
 The source is located in the [web](web/) directory.
 
-
-## Pieces Statistics
-
-TBD
-
+**The web viewer is deployed at https://www.alfray.com/labs/apps/tangram/**  
+Just head over there to see the results of this project.
 
 
 ## License
