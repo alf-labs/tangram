@@ -103,13 +103,14 @@ class PiecesStats:
         stats["sums"] = sums
         # For each piece with rotation, sum the number of rotations.
         sums["solutions"] = num_unique_solutions
+        sums["pieces"] = {}
         for p_key in PIECES:
             p = PIECES[p_key]
-            sums[p_key] = {}
+            sums["pieces"][p_key] = {}
 
             # For each piece with a chiral variant, sum the number of variants.
             info = {}
-            sums[p_key]["chi"] = info
+            sums["pieces"][p_key]["chi"] = info
             names = p.get("name", [p_key])
             for name in names:
                 info[name] = sum([ e["count"]
@@ -118,7 +119,7 @@ class PiecesStats:
 
             # For each piece with a rotation, sum the number of rotations.
             info = {}
-            sums[p_key]["rot"] = info
+            sums["pieces"][p_key]["rot"] = info
             for name in names:
                 for angle in range(0, p.get("rot", 300) + 1, 60):
                     key = f"{name}@{angle}"

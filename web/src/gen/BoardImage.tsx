@@ -17,7 +17,18 @@ const VALID_YRG = [
 ];
 
 type StringToStringMap = { [key: string]: string };
-const COLORS : StringToStringMap = {
+// These are the colors originally used by the Python analyzer.
+// @ts-ignore
+const COLORS_ANALYZER : StringToStringMap = {
+    "Y": "#c0c000",
+    "R": "#c00000",
+    "O": "#c85000",
+    "B": "#404040",
+    "W": "#c0c0c0",
+    "U": "#00FF00",  // unknown color
+}
+// New colors used by the Generator. They look somewhat better.
+const COLORS_GENERATOR : StringToStringMap = {
     "Y": "#DDA044",
     "R": "#CC0000",
     "O": "#EE6600",
@@ -25,6 +36,8 @@ const COLORS : StringToStringMap = {
     "W": "#EEDDCC",
     "U": "#00FF00",  // unknown color
 }
+
+const COLORS = COLORS_GENERATOR;
 
 const STROKE_COLOR = "#404040";
 

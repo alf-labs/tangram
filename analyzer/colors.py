@@ -5,49 +5,25 @@
 import math
 
 COLORS_REDS = [
-    # {
-    #     "name": "White",
-    #     "rgb": (192, 192, 192),
-    #     "bgr": (192, 192, 192),
-    #     "h": { "min": 10, "max": 20 },
-    #     "s": { "min": 0, "max": 128 },
-    #     "l": { "min": 164, "max": 255 },
-    # },
-    # {
-    #     "name": "Black",
-    #     "rgb": (64, 64, 64),
-    #     "bgr": (64, 64, 64),
-    #     "s": { "min": 0, "max": 128 },
-    #     "l": { "min": 0, "max": 170 },
-    # },
-    # {
-    #     "name": "Orange",
-    #     "rgb": (192, 128, 0),
-    #     "bgr": (0, 128, 192),
-    #     "h": { "min": 10, "max": 15 },
-    #     "s": { "min": 190, "max": 210 },
-    #     "v": { "min": 190, "max": 210 },
-    # },
     {
         "name": "Yellow",
         "rgb": (192, 192, 0),
-        "bgr": (0, 192, 192),
+        # "bgr": (0, 192, 192),     # old analyzer colors
+        "bgr": (68, 160, 221),      # new generator colors
         "h": { "min": 10, "max": 20 },
         "s": { "min": 170, "max": 255 },
     },
     {
         "name": "Red",
         "rgb": (192, 0, 0),
-        "bgr": (0, 0, 192),
-        # "h": { "min": 0, "max": 7 },
-        # "ab": { "min": 0, "max": 43 },
-        # "s": { "min": 128, "max": 255 },
-        # "v": { "min": 0, "max": 180 },
+        # "bgr": (0, 0, 192),       # old analyzer colors
+        "bgr": (0, 0, 204),         # new generator colors
     },
     {
         "name": "Orange",
         "rgb": (200, 80, 0),
-        "bgr": (0, 80, 200),
+        # "bgr": (0, 80, 200),      # old analyzer colors
+        "bgr": (0, 102, 238),       # new generator colors
     },
 ]
 
@@ -55,12 +31,14 @@ COLORS_BW = [
     {
         "name": "White",
         "rgb": (192, 192, 192),
-        "bgr": (192, 192, 192),
+        # "bgr": (192, 192, 192),   # old analyzer colors
+        "bgr": (204, 221, 238),     # new generator colors
     },
     {
         "name": "Black",
         "rgb": (64, 64, 64),
-        "bgr": (64, 64, 64),
+        # "bgr": (64, 64, 64),      # old analyzer colors
+        "bgr": (128, 128, 128),     # new generator colors
     },
 ]
 

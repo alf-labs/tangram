@@ -285,7 +285,6 @@ table.pcs-table {
 }
 
 .pcs-row-title td {
-  font-weight: bold;
   padding-left: 0.5em;
   height: 2em;
   background-color: #EAECA0;
@@ -295,6 +294,11 @@ table.pcs-table {
   width: 160px;
   text-align: center;
   background-color: #D5D5BF;
+}
+
+.pcs-name {
+  font-weight: bold;
+  margin-right: 1em;
 }
 
 .pcs-label {
