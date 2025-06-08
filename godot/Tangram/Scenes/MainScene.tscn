@@ -1,0 +1,32 @@
+[gd_scene load_steps=6 format=3 uid="uid://c2sb4s4xgpcpl"]
+
+[ext_resource type="PackedScene" uid="uid://bavwlsqxoqas0" path="res://Assets/Board.tscn" id="1_hpc76"]
+[ext_resource type="Script" uid="uid://c3vhlanrsnkm2" path="res://Scenes/MainScene.gd" id="1_tr2i4"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hpc76"]
+sky_top_color = Color(0.256152, 0.549319, 0.902965, 1)
+ground_bottom_color = Color(0.193223, 0.255122, 0.374107, 1)
+
+[sub_resource type="Sky" id="Sky_tr2i4"]
+sky_material = SubResource("ProceduralSkyMaterial_hpc76")
+
+[sub_resource type="Environment" id="Environment_tr2i4"]
+background_mode = 2
+sky = SubResource("Sky_tr2i4")
+ambient_light_color = Color(1, 1, 1, 1)
+
+[node name="MainScene" type="Node3D"]
+script = ExtResource("1_tr2i4")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_tr2i4")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.999962, -0.00605695, 0.00628217, 0, 0.719893, 0.694085, -0.00872653, -0.694058, 0.719866, 0.193075, 6.46987, 7.10167)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.759271, 0.256367, -0.59815, 0, 0.919135, 0.393942, 0.650774, 0.299109, -0.697873, 0, 0, 0)
+
+[node name="Board" parent="." instance=ExtResource("1_hpc76")]
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
