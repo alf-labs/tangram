@@ -22,7 +22,7 @@ script = ExtResource("1_tr2i4")
 environment = SubResource("Environment_tr2i4")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.999962, -0.00605695, 0.00628217, 0, 0.719893, 0.694085, -0.00872653, -0.694058, 0.719866, 0.193075, 6.46987, 7.10167)
+transform = Transform3D(0.999962, -0.00605695, 0.00628217, 0, 0.719893, 0.694085, -0.00872653, -0.694058, 0.719866, 0, 6.47, 7.102)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.759271, 0.256367, -0.59815, 0, 0.919135, 0.393942, 0.650774, 0.299109, -0.697873, 0, 0, 0)
