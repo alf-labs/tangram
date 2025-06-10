@@ -5,6 +5,7 @@ extends Node3D
 const NUM_PIECES = 12
 const RADIUS_PIECES = 5.5
 const MIN_DRAG_DELAY_MS = 250
+const RAY_LENGTH = 1000.0
 const PI_2 = PI / 2   # 90 degrees in radians
 var staticCamDistance := 0.0
 var camAngleX := 0.0
@@ -56,10 +57,12 @@ func _input(event: InputEvent) -> void:
             mouseRayResult = null
             mousePendingEvent = event
             mousePressedMS = Time.get_ticks_msec()
-            # TBD raycast for selection in _physics_process
+            print("@@ INPUT PENDING: ", mousePendingEvent)
+            # NExt: Process raycast for selection in _physics_process
         elif mouseRayResult and not mouseMotion:
             # TBD process result of raycast for selection
-            pass
+            print("@@ RAY RESULT: ", mouseRayResult)
+            mouseRayResult = null
     elif event is InputEventScreenDrag:
         #print("DRAG: ", event)
         var delayMS = Time.get_ticks_msec() - mousePressedMS
@@ -73,9 +76,14 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
     if mousePendingEvent:
-        pass
-        # TBD raycast for selection in _physics_process
-        # and store result in mouseRayResult
+        var event = mousePendingEvent
+        mousePendingEvent = null
+        var space_state = get_world_3d().direct_space_state
+        var from = cam3d.project_ray_origin(event.position)
+        var to = from + cam3d.project_ray_normal(event.position) * RAY_LENGTH
+        var query = PhysicsRayQueryParameters3D.create(from, to)
+        mouseRayResult = space_state.intersect_ray(query)
+        print("@@ PHYSICS RAY RESULT: ", mouseRayResult)
 
 func _clearSelection():
     # TBD
