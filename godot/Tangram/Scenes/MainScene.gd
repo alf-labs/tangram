@@ -13,6 +13,8 @@ var staticCamDistance := 0.0
 var camAngleX := 0.0
 var camAngleY := 0.0
 var pieces = {}
+var selectedPiece : PieceBase3D = null
+
 
 func _ready() -> void:
     # Grab the initial camera setup in the scene to reuse it later.
@@ -99,11 +101,12 @@ func _input(event: InputEvent) -> void:
             mouseRayResult = null
             mousePendingEvent = event
             mousePressedMS = Time.get_ticks_msec()
-            print("@@ INPUT PENDING: ", mousePendingEvent)
+            # print("@@ INPUT PENDING: ", mousePendingEvent)
             # NExt: Process raycast for selection in _physics_process
         elif mouseRayResult and not mouseMotion:
-            # TBD process result of raycast for selection
+            # This ensure we only select on mouse/touch-up IIF there's no drag motion
             print("@@ RAY RESULT: ", mouseRayResult)
+            _maybeSelect(mouseRayResult)
             mouseRayResult = null
     elif event is InputEventScreenDrag:
         #print("DRAG: ", event)
@@ -125,11 +128,33 @@ func _physics_process(_delta: float) -> void:
         var to = from + cam3d.project_ray_normal(event.position) * RAY_LENGTH
         var query = PhysicsRayQueryParameters3D.create(from, to)
         mouseRayResult = space_state.intersect_ray(query)
-        print("@@ PHYSICS RAY RESULT: ", mouseRayResult)
+        # Next: process the ray result in _input instead of in physics_process.
+        # print("@@ PHYSICS RAY RESULT: ", mouseRayResult)
+
+func _maybeSelect(rayResult: Dictionary) -> void:
+    if rayResult and "collider" in rayResult:
+        var obj = rayResult["collider"]
+        # The collider should be a StaticBody3D inside a parent PieceBase3D.
+        if obj is StaticBody3D:
+            var parent = obj
+            while parent != null and not parent is PieceBase3D:
+                parent = obj.get_parent()
+            if parent is PieceBase3D:
+                _select(parent)
+
+func _select(piece: PieceBase3D) -> void:
+    if piece == selectedPiece:
+        _clearSelection()
+        return
+    _clearSelection()
+    selectedPiece = piece
+    piece.setSelected(true)
 
 func _clearSelection():
-    # TBD
-    pass
+    if selectedPiece == null:
+        return
+    selectedPiece.setSelected(false)
+    selectedPiece = null
 
 func _updateCamera():
     var vec = Vector3(staticCamDistance, 0, 0)
