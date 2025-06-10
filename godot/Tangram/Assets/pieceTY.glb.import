@@ -13,8 +13,8 @@ dest_files=["res://.godot/imported/pieceTY.glb-faf6da058456a90e1dcdfe6029938423.
 
 [params]
 
-nodes/root_type=""
-nodes/root_name=""
+nodes/root_type="PieceBase3D"
+nodes/root_name="PieceTY"
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
 nodes/import_as_skeleton_bones=false

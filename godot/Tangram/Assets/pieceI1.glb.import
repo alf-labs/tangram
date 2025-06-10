@@ -13,8 +13,8 @@ dest_files=["res://.godot/imported/pieceI1.glb-9f9e1a5855613b56ac3dcd834fcdc35f.
 
 [params]
 
-nodes/root_type=""
-nodes/root_name=""
+nodes/root_type="PieceBase3D"
+nodes/root_name="PieceI1"
 nodes/apply_root_scale=true
 nodes/root_scale=1.0
 nodes/import_as_skeleton_bones=false
