@@ -4,7 +4,7 @@ extends Node3D
 
 const PI_2 = PI / 2
 const RAD_90_DEG = PI_2   # 90 degrees in radians
-const NUM_PIECES = 12
+const NUM_PIECES = 11
 const RADIUS_PIECES = 5.5
 const MIN_DRAG_DELAY_MS = 250
 const RAY_LENGTH = 1000.0
@@ -18,37 +18,74 @@ func _ready() -> void:
     # Grab the initial camera setup in the scene to reuse it later.
     staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
     # Option 1: Start with the camera matching the Godot scene
-    # camAngleX = atan2(cam3d.position.z, cam3d.position.x)
-    # camAngleY = atan2(cam3d.position.y, cam3d.position.z)
+    camAngleX = atan2(cam3d.position.z, cam3d.position.x)
+    camAngleY = atan2(cam3d.position.y, cam3d.position.z)
     # Option 2: Start with a top-view camera
-    camAngleX = RAD_90_DEG
-    camAngleY = RAD_90_DEG
+    # camAngleX = RAD_90_DEG
+    # camAngleY = RAD_90_DEG
     print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
     _updateCamera()
     _initPieces()
+    _tweenCamera()
 
 func _initPieces() -> void:
-    var vec = Vector3(RADIUS_PIECES, 0, 0)
+    var vec := Vector3(RADIUS_PIECES, 0, 0)
     vec = vec.rotated(Vector3.UP, RAD_90_DEG)
-    var angleInc = -PI * 2 / NUM_PIECES
+    const angleInc = -PI * 2 / NUM_PIECES
+    const delay_dur = 0.10
+    const tween_dur = 0.50
+    const y_offset = 10.0
+    var delay := 0.0
 
-    var _add_piece = func(name_: String, vec_: Vector3) -> Vector3:
+    var _add_piece = func(name_: String, vec_: Vector3, delay_: float) -> Vector3:
         var p = get_node(name_) as PieceBase3D
         pieces[name_] = p
         p.center_on(vec_)
         print("@@ name_ ", name_, ", vec_ ", vec_)
+        # Tween Y to create a drop effect
+        var tw = p.create_tween()
+        tw.tween_interval(delay_)
+        var y_end = p.position.y
+        var y_start = y_end + y_offset
+        p.position.y = y_start
+        tw.tween_property(p, "position:y", y_end, tween_dur)
+        # Optional: we could interpolate the alpha of the material w/ something like this:
+        # tw.tween_property(p, "mesh.material.albedo_color.a", 1, tween_dur)
         return vec_.rotated(Vector3.UP, angleInc)
-    vec = _add_piece.call("PieceHR", vec)
-    vec = _add_piece.call("PieceVB", vec)
-    vec = _add_piece.call("PieceTY1", vec)
-    vec = _add_piece.call("PieceJ1", vec)
-    vec = _add_piece.call("PieceTY2", vec)
-    vec = _add_piece.call("PieceL1", vec)
-    vec = _add_piece.call("PieceTW", vec)
-    vec = _add_piece.call("PieceP1", vec)
-    vec = _add_piece.call("PieceTO", vec)
-    vec = _add_piece.call("PieceW1", vec)
-    vec = _add_piece.call("PieceI1", vec)
+
+    vec = _add_piece.call("PieceHR", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceVB", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceTY1", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceJ1", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceTY2", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceL1", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceTW", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceP1", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceTO", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceI1", vec, delay)
+    delay += delay_dur
+    vec = _add_piece.call("PieceW1", vec, delay)
+
+func _tweenCamera():
+    # Twin the camera from current angle Y to max Y after all pieces drop.
+    const tween_dur = 0.50
+    const delay = NUM_PIECES * 0.10
+    var tc = create_tween()
+    tc.tween_interval(delay)
+    var _cam_tween = func(y):
+        camAngleY = y
+        _updateCamera()
+    tc.tween_method(_cam_tween, camAngleY, MAX_ANGLE_Y, tween_dur)
+
 
 var mousePendingEvent = null
 var mouseRayResult = null
