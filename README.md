@@ -6,9 +6,9 @@ shape.
 
 <p align=center><img width="128" src="analyzer/data/originals/sample/sample.jpg" alt="Tangram Puzzle Sample"></p>
 
-This project deals with a variant called **12 pieces hexagon tangram jigsaw**.  
+This project deals with a variant called **11 pieces hexagon tangram jigsaw**.  
 Whereas a traditional tangram has only 7 pieces, this variant of the puzzle,
-as the name indicates, uses 12 pieces which fit in an enclosing hexagon.
+as the name indicates, uses 11 pieces which fit in an enclosing hexagon.
 There are actually 8 shapes of pieces, and 5 different colors.
 
 This project contains 4 sub-projects:

@@ -12,9 +12,9 @@ composed of a number of flat wooden pieces which are assembled to form a specifi
 shape.
 
 <img width="128" src="https://raw.githubusercontent.com/alf-labs/tangram/refs/heads/main/analyzer/data/originals/sample/sample.jpg#left" alt="Tangram Puzzle Sample"> This
-project deals with a variant called **12 pieces hexagon tangram jigsaw**.  
+project deals with a variant called **11 pieces hexagon tangram jigsaw**.  
 Whereas a traditional tangram has only 7 pieces, this variant of the puzzle,
-as the name indicates, uses 12 pieces which fit in an enclosing hexagon.  
+as the name indicates, uses 11 pieces which fit in an enclosing hexagon.  
 There are actually 8 shapes of pieces, and 5 different colors.
 
 Solving the puzzle is rather simple -- just place the pieces till they fit.
@@ -110,7 +110,7 @@ easily.
 #### Permutations
 
 We define the concept of a "permutation". A permutation is an arrangement of
-all the 12 puzzle pieces in a specific chirality and rotation. This basically tells
+all the 11 puzzle pieces in a specific chirality and rotation. This basically tells
 us _how_ we are going to arrange the pieces on the board, but not _where_.
 
 Here's an example of a "permutation" -- it describes each piece with its desired
@@ -129,21 +129,22 @@ On the other hand, a piece like the W can be oriented in 6 different ways, and a
 such has 6 possible permutations for the W1 shape, and 6 more possible permutations for
 its W2 counterpart once mirrored.
 
-The number of total permutations is simply the factor of all 12 pieces potential
+The number of total permutations is simply the factor of all 11 pieces potential
 permutations:
 
-| Piece | Permutation per piece | Permutations total |
-|:-----:|----------------------:|-------------------:|
-| TW    |                    1	 |                  1 |
-| HR    |                    1	 |                  1 |         
-| TO	  |                    6	 |                  6 |
-| TY 1  |                    6	 |                 36 |
-| TY 2  |                    6	 |                216 |
-| i	    |                    6	 |              1,296 |
-| L	    |                   12	 |            186,624 |
-| P	    |                   12	 |          2,239,488 |
-| VB	  |                    6	 |         13,436,928 |  
-| W	    |                   12	 |        161,243,136 |
+| Piece | Permutation per piece  | Permutations total |
+|:-----:|-----------------------:|-------------------:|
+| TW    |                    1   |                  1 |
+| HR    |                    1   |                  1 |
+| TO    |                    6   |                  6 |
+| TY 1  |                    6   |                 36 |
+| TY 2  |                    6   |                216 |
+| i     |                    6   |              1,296 |
+| J     |                   12   |             15,552 |
+| L     |                   12   |            186,624 |
+| P     |                   12   |          2,239,488 |
+| VB    |                    6   |         13,436,928 |
+| W     |                   12   |        161,243,136 |
 
 
 Thus, we have a total number of 161,243,136 permutations to try.
@@ -155,7 +156,7 @@ The generator iterates through all the permutations.
 For each permutation, it tries to fill the board with that set of pieces in their
 specific order.
 
-A solution is found when all 12 pieces can be placed on the board side by side,
+A solution is found when all 11 pieces can be placed on the board side by side,
 with no overlap and no gaps.
 
 Here's an example of a "solution":
