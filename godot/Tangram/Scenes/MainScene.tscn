@@ -1,7 +1,8 @@
-[gd_scene load_steps=16 format=3 uid="uid://c2sb4s4xgpcpl"]
+[gd_scene load_steps=17 format=3 uid="uid://c2sb4s4xgpcpl"]
 
 [ext_resource type="PackedScene" uid="uid://bavwlsqxoqas0" path="res://Assets/Board.tscn" id="1_hpc76"]
 [ext_resource type="Script" uid="uid://c3vhlanrsnkm2" path="res://Scenes/MainScene.gd" id="1_tr2i4"]
+[ext_resource type="PackedScene" uid="uid://da1bl30b1wgic" path="res://Assets/table.glb" id="2_6t1o7"]
 [ext_resource type="PackedScene" uid="uid://djc08q5dpu1ri" path="res://Assets/pieceI1.glb" id="3_nhkr4"]
 [ext_resource type="PackedScene" uid="uid://dsj0nanjuvhrm" path="res://Assets/pieceHR.glb" id="3_qxria"]
 [ext_resource type="PackedScene" uid="uid://bgkwlxx8tksff" path="res://Assets/pieceJ1.glb" id="5_y4jh7"]
@@ -32,10 +33,14 @@ script = ExtResource("1_tr2i4")
 environment = SubResource("Environment_tr2i4")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.999962, -0.00605695, 0.00628217, 0, 0.719893, 0.694085, -0.00872653, -0.694058, 0.719866, 0, 6.47, 7.102)
+transform = Transform3D(0.999962, -0.00726851, 0.00482919, 0, 0.553391, 0.832921, -0.00872654, -0.832889, 0.553371, 0, 10, 10)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.939693, -0.134736, 0.314363, 0, 0.919135, 0.393942, -0.34202, -0.370184, 0.863705, 0, 0, 0)
+transform = Transform3D(0.996195, -0.075479, 0.0435779, 0, 0.5, 0.866026, -0.0871558, -0.86273, 0.498098, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Table" parent="." instance=ExtResource("2_6t1o7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 
 [node name="Board" parent="." instance=ExtResource("1_hpc76")]
 
