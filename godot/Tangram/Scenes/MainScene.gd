@@ -9,6 +9,9 @@ const RADIUS_PIECES = 5.5
 const MIN_DRAG_DELAY_MS = 250
 const RAY_LENGTH = 1000.0
 const MAX_ANGLE_Y = RAD_90_DEG - 0.01
+const START_ANGLE_Y = RAD_90_DEG / 2
+const CAM_LOOK_AT = Vector3.ZERO
+const EVENT_DRAG_FACTOR = 1/200.0
 var staticCamDistance := 0.0
 var camAngleX := 0.0
 var camAngleY := 0.0
@@ -20,15 +23,15 @@ func _ready() -> void:
     # Grab the initial camera setup in the scene to reuse it later.
     staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
     # Option 1: Start with the camera matching the Godot scene
-    camAngleX = atan2(cam3d.position.z, cam3d.position.x)
-    camAngleY = atan2(cam3d.position.y, cam3d.position.z)
+    # camAngleX = atan2(cam3d.position.z, cam3d.position.x)
+    # camAngleY = atan2(cam3d.position.y, cam3d.position.z)
     # Option 2: Start with a top-view camera
-    # camAngleX = RAD_90_DEG
-    # camAngleY = RAD_90_DEG
+    camAngleX = RAD_90_DEG
+    camAngleY = RAD_90_DEG
     print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
     _updateCamera()
+    _tweenCamera(START_ANGLE_Y)
     _initPieces()
-    _tweenCamera()
 
 func _initPieces() -> void:
     var vec := Vector3(RADIUS_PIECES, 0, 0)
@@ -43,7 +46,7 @@ func _initPieces() -> void:
         var p = get_node(name_) as PieceBase3D
         pieces[name_] = p
         p.center_on(vec_)
-        print("@@ name_ ", name_, ", vec_ ", vec_)
+        # print("@@ name_ ", name_, ", vec_ ", vec_)
         # Tween Y to create a drop effect
         var tw = p.create_tween()
         tw.tween_interval(delay_)
@@ -77,74 +80,81 @@ func _initPieces() -> void:
     delay += delay_dur
     vec = _add_piece.call("PieceW1", vec, delay)
 
-func _tweenCamera():
+func _tweenCamera(target_angle_y: float):
     # Twin the camera from current angle Y to max Y after all pieces drop.
     const tween_dur = 0.50
-    const delay = NUM_PIECES * 0.10
+    const delay = 0 # NUM_PIECES * 0.10
     var tc = create_tween()
     tc.tween_interval(delay)
     var _cam_tween = func(y):
         camAngleY = y
         _updateCamera()
-    tc.tween_method(_cam_tween, camAngleY, MAX_ANGLE_Y, tween_dur)
+    tc.tween_method(_cam_tween, camAngleY, target_angle_y, tween_dur)
 
 
 var mousePendingEvent = null
-var mouseRayResult = null
-var mouseMotion = false
-var mousePressedMS = 0
+var mouseDragging := false
+var mouseRaySelected : PieceBase3D = null
+var mousePressedMS := 0
 func _input(event: InputEvent) -> void:
     #print("TOUCH: ", event)
     if event is InputEventScreenTouch:
         if event.pressed:
-            mouseMotion = false
-            mouseRayResult = null
+            mouseDragging = false
+            mouseRaySelected = null
             mousePendingEvent = event
             mousePressedMS = Time.get_ticks_msec()
             # print("@@ INPUT PENDING: ", mousePendingEvent)
             # NExt: Process raycast for selection in _physics_process
-        elif mouseRayResult and not mouseMotion:
-            # This ensure we only select on mouse/touch-up IIF there's no drag motion
-            print("@@ RAY RESULT: ", mouseRayResult)
-            _maybeSelect(mouseRayResult)
-            mouseRayResult = null
+        elif mouseRaySelected and not mouseDragging:
+            # This ensure we only select on mouse/touch-up IIF there's no drag motion.
+            # This gets called at the end of a piece being dragged too.
+            # print("@@ RAY RESULT: ", mouseRaySelected)
+            mouseRaySelected.onDragEnded()
+            _select(mouseRaySelected)
+            mouseRaySelected = null
     elif event is InputEventScreenDrag:
         #print("DRAG: ", event)
         var delayMS = Time.get_ticks_msec() - mousePressedMS
         if delayMS > MIN_DRAG_DELAY_MS: # prevent very short click mvt from being a drag
-            mouseMotion = true
-            _clearSelection()
-            camAngleX -= event.relative.x / 200
-            camAngleY += event.relative.y / 200
-            _updateCamera()
-            #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
+            if mouseRaySelected:
+                # We're dragging that piece
+                # print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
+                mouseRaySelected.onDragging(event.relative.x, event.relative.y)
+            else:
+                # We're dragging the main camera
+                mouseDragging = true
+                camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
+                camAngleY += event.relative.y * EVENT_DRAG_FACTOR
+                _updateCamera()
+                #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
 
 func _physics_process(_delta: float) -> void:
-    if mousePendingEvent:
-        var event = mousePendingEvent
-        mousePendingEvent = null
-        var space_state = get_world_3d().direct_space_state
-        var from = cam3d.project_ray_origin(event.position)
-        var to = from + cam3d.project_ray_normal(event.position) * RAY_LENGTH
-        var query = PhysicsRayQueryParameters3D.create(from, to)
-        mouseRayResult = space_state.intersect_ray(query)
+    if not mousePendingEvent:
+        return
+    var event = mousePendingEvent
+    mousePendingEvent = null
+    var space_state = get_world_3d().direct_space_state
+    var from = cam3d.project_ray_origin(event.position)
+    var to = from + cam3d.project_ray_normal(event.position) * RAY_LENGTH
+    var query = PhysicsRayQueryParameters3D.create(from, to)
+    var rayResult = space_state.intersect_ray(query)
+    if not rayResult or not "collider" in rayResult:
+        return
+    mouseRaySelected = null
+    var collider = rayResult["collider"]
+    # The collider should be a StaticBody3D inside a parent PieceBase3D.
+    if not collider is StaticBody3D:
+        return
+    var parent = collider
+    while parent != null and not parent is PieceBase3D:
+        parent = parent.get_parent()
+    if parent is PieceBase3D:
+        mouseRaySelected = parent
         # Next: process the ray result in _input instead of in physics_process.
-        # print("@@ PHYSICS RAY RESULT: ", mouseRayResult)
-
-func _maybeSelect(rayResult: Dictionary) -> void:
-    if rayResult and "collider" in rayResult:
-        var obj = rayResult["collider"]
-        # The collider should be a StaticBody3D inside a parent PieceBase3D.
-        if obj is StaticBody3D:
-            var parent = obj
-            while parent != null and not parent is PieceBase3D:
-                parent = obj.get_parent()
-            if parent is PieceBase3D:
-                _select(parent)
 
 func _select(piece: PieceBase3D) -> void:
     if piece == selectedPiece:
-        _clearSelection()
         return
     _clearSelection()
     selectedPiece = piece
@@ -162,4 +172,4 @@ func _updateCamera():
     vec = vec.rotated(Vector3.BACK, camAngleY)
     vec = vec.rotated(Vector3.UP, camAngleX)
     cam3d.position = vec
-    cam3d.look_at(Vector3.ZERO)
+    cam3d.look_at(CAM_LOOK_AT)
