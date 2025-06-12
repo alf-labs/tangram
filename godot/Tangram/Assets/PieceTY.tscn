@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://4ss6433ui6l"]
+
+[ext_resource type="PackedScene" uid="uid://xq3clhfteugo" path="res://Assets/pieceTY.glb" id="1_7bdu1"]
+[ext_resource type="Material" uid="uid://csr087mvnccy" path="res://Assets/ColorY.tres" id="2_kfmmw"]
+
+[node name="PieceTY" instance=ExtResource("1_7bdu1")]
+
+[node name="CubeTY" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_kfmmw")

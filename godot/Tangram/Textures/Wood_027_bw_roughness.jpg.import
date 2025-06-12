@@ -2,20 +2,17 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dq8uphixqa2q2"
-path.s3tc="res://.godot/imported/table_Wood_027_roughness.png-5529f7c29fb255381526d70da54daade.s3tc.ctex"
+uid="uid://cekpfc3tglmwv"
+path.s3tc="res://.godot/imported/Wood_027_bw_roughness.jpg-8f76b32ca4f17c0e96ea7a67ca9c1093.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
-generator_parameters={
-"md5": "6515829e1b8b80d8923a73150a42785b"
-}
 
 [deps]
 
-source_file="res://Assets/table_Wood_027_roughness.png"
-dest_files=["res://.godot/imported/table_Wood_027_roughness.png-5529f7c29fb255381526d70da54daade.s3tc.ctex"]
+source_file="res://Textures/Wood_027_bw_roughness.jpg"
+dest_files=["res://.godot/imported/Wood_027_bw_roughness.jpg-8f76b32ca4f17c0e96ea7a67ca9c1093.s3tc.ctex"]
 
 [params]
 

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bxolbpnmv1jd5"]
+
+[ext_resource type="PackedScene" uid="uid://ccu8i4lxk8fbx" path="res://Assets/pieceP1.glb" id="1_8dati"]
+[ext_resource type="Material" uid="uid://fodoiw6vkxmy" path="res://Assets/ColorR.tres" id="2_cvtis"]
+
+[node name="PieceP1" instance=ExtResource("1_8dati")]
+
+[node name="CubeP1-1" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_cvtis")

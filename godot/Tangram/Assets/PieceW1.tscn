@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://blxg1vakwn8t3"]
+
+[ext_resource type="PackedScene" uid="uid://4pujvkvc2f8k" path="res://Assets/pieceW1.glb" id="1_focuy"]
+[ext_resource type="Material" uid="uid://blachkjw2kb7w" path="res://Assets/ColorB.tres" id="2_o14uj"]
+
+[node name="PieceW1" instance=ExtResource("1_focuy")]
+
+[node name="CubeW1" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_o14uj")

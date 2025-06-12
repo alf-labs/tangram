@@ -2,17 +2,17 @@
 
 [ext_resource type="PackedScene" uid="uid://bavwlsqxoqas0" path="res://Assets/Board.tscn" id="1_hpc76"]
 [ext_resource type="Script" uid="uid://c3vhlanrsnkm2" path="res://Scenes/MainScene.gd" id="1_tr2i4"]
-[ext_resource type="PackedScene" uid="uid://da1bl30b1wgic" path="res://Assets/table.glb" id="2_6t1o7"]
-[ext_resource type="PackedScene" uid="uid://djc08q5dpu1ri" path="res://Assets/pieceI1.glb" id="3_nhkr4"]
-[ext_resource type="PackedScene" uid="uid://dsj0nanjuvhrm" path="res://Assets/pieceHR.glb" id="3_qxria"]
-[ext_resource type="PackedScene" uid="uid://bgkwlxx8tksff" path="res://Assets/pieceJ1.glb" id="5_y4jh7"]
-[ext_resource type="PackedScene" uid="uid://dl4x6yqxim6pp" path="res://Assets/pieceL1.glb" id="6_xb4mg"]
-[ext_resource type="PackedScene" uid="uid://ccu8i4lxk8fbx" path="res://Assets/pieceP1.glb" id="7_6t1o7"]
-[ext_resource type="PackedScene" uid="uid://4pujvkvc2f8k" path="res://Assets/pieceW1.glb" id="8_5qxwa"]
-[ext_resource type="PackedScene" uid="uid://b3fv715kjapa4" path="res://Assets/pieceVB.glb" id="9_xc4hf"]
-[ext_resource type="PackedScene" uid="uid://cnpqhwdn8lkp5" path="res://Assets/pieceTO.glb" id="10_6rnll"]
-[ext_resource type="PackedScene" uid="uid://xq3clhfteugo" path="res://Assets/pieceTY.glb" id="11_enc0b"]
-[ext_resource type="PackedScene" uid="uid://b55sd141p4cxg" path="res://Assets/pieceTW.glb" id="12_hx8n4"]
+[ext_resource type="PackedScene" uid="uid://bqeag3e57tx8q" path="res://Assets/Table.tscn" id="2_6t1o7"]
+[ext_resource type="PackedScene" uid="uid://byq8qg4wtgxhd" path="res://Assets/PieceHR.tscn" id="5_5qxwa"]
+[ext_resource type="PackedScene" uid="uid://b4sevry2v0t1v" path="res://Assets/PieceI1.tscn" id="5_p5ymy"]
+[ext_resource type="PackedScene" uid="uid://bg5cshxq25ov6" path="res://Assets/PieceJ1.tscn" id="6_3va76"]
+[ext_resource type="PackedScene" uid="uid://bwd6lfc0a3cvi" path="res://Assets/PieceL1.tscn" id="7_wmecs"]
+[ext_resource type="PackedScene" uid="uid://bxolbpnmv1jd5" path="res://Assets/PieceP1.tscn" id="8_mymud"]
+[ext_resource type="PackedScene" uid="uid://b1xd4dq30d8id" path="res://Assets/PieceTO.tscn" id="9_4sso6"]
+[ext_resource type="PackedScene" uid="uid://dptgkbeb2xt2s" path="res://Assets/PieceTW.tscn" id="10_r0vnq"]
+[ext_resource type="PackedScene" uid="uid://4ss6433ui6l" path="res://Assets/PieceTY.tscn" id="11_c3pre"]
+[ext_resource type="PackedScene" uid="uid://dx0slmh8676tj" path="res://Assets/PieceVB.tscn" id="12_u5v48"]
+[ext_resource type="PackedScene" uid="uid://blxg1vakwn8t3" path="res://Assets/PieceW1.tscn" id="13_s1acj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hpc76"]
 sky_top_color = Color(0.256152, 0.549319, 0.902965, 1)
@@ -24,7 +24,9 @@ sky_material = SubResource("ProceduralSkyMaterial_hpc76")
 [sub_resource type="Environment" id="Environment_tr2i4"]
 background_mode = 2
 sky = SubResource("Sky_tr2i4")
-ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_color = Color(0.752254, 0.649053, 0.364162, 1)
+ambient_light_sky_contribution = 0.0
+ambient_light_energy = 0.3
 
 [node name="MainScene" type="Node3D"]
 script = ExtResource("1_tr2i4")
@@ -46,68 +48,68 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 
-[node name="PieceHR" parent="." instance=ExtResource("3_qxria")]
+[node name="PieceHR" parent="." instance=ExtResource("5_5qxwa")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)
 key = "HR"
 cell_width = 2.0
 cell_height = 2.0
 
-[node name="PieceI1" parent="." instance=ExtResource("3_nhkr4")]
+[node name="PieceI1" parent="." instance=ExtResource("5_p5ymy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 2)
 key = "I"
 variants = 2
 cell_width = 4.0
 
-[node name="PieceJ1" parent="." instance=ExtResource("5_y4jh7")]
+[node name="PieceJ1" parent="." instance=ExtResource("6_3va76")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -2)
 key = "J"
 variants = 2
 cell_width = 3.0
 cell_height = 2.0
 
-[node name="PieceL1" parent="." instance=ExtResource("6_xb4mg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.94911, 0, -4.74544)
+[node name="PieceL1" parent="." instance=ExtResource("7_wmecs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4.75)
 key = "L"
 variants = 2
 cell_width = 3.0
 cell_height = 2.0
 
-[node name="PieceP1" parent="." instance=ExtResource("7_6t1o7")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.97997, 0, -4.98467)
+[node name="PieceP1" parent="." instance=ExtResource("8_mymud")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -5)
 key = "P"
 variants = 2
 cell_width = 3.0
 cell_height = 2.0
 
-[node name="PieceW1" parent="." instance=ExtResource("8_5qxwa")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.12182, 0, -3.56489)
-key = "W"
-variants = 2
-cell_width = 3.0
-cell_height = 2.0
+[node name="PieceTO" parent="." instance=ExtResource("9_4sso6")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 2.5)
+key = "TO"
+cell_width = 2.0
 
-[node name="PieceVB" parent="." instance=ExtResource("9_xc4hf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.26529, 0, 0)
+[node name="PieceTW" parent="." instance=ExtResource("10_r0vnq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, 3)
+key = "TW"
+cell_width = 2.0
+
+[node name="PieceTY1" parent="." instance=ExtResource("11_c3pre")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 3)
+key = "TY"
+cell_width = 2.0
+
+[node name="PieceTY2" parent="." instance=ExtResource("11_c3pre")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.3)
+key = "TY"
+cell_width = 2.0
+
+[node name="PieceVB" parent="." instance=ExtResource("12_u5v48")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 key = "VB"
 cell_width = 3.0
 cell_height = 2.0
 
-[node name="PieceTO" parent="." instance=ExtResource("10_6rnll")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.96821, 0, 2.57242)
-key = "TO"
-cell_width = 2.0
-
-[node name="PieceTY1" parent="." instance=ExtResource("11_enc0b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.78639, 0, 3.12733)
-key = "TY"
-cell_width = 2.0
-
-[node name="PieceTY2" parent="." instance=ExtResource("11_enc0b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.2923)
-key = "TY"
-cell_width = 2.0
-
-[node name="PieceTW" parent="." instance=ExtResource("12_hx8n4")]
-transform = Transform3D(0.998358, 0, 0.0572852, 0, 1, 0, -0.0572852, 0, 0.998358, 2.353, 0, 3.15273)
-key = "TW"
-cell_width = 2.0
+[node name="PieceW1" parent="." instance=ExtResource("13_s1acj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -3.5)
+key = "W"
+variants = 2
+cell_width = 3.0
+cell_height = 2.0

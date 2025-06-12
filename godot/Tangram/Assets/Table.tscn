@@ -1,0 +1,21 @@
+[gd_scene load_steps=6 format=3 uid="uid://bqeag3e57tx8q"]
+
+[ext_resource type="PackedScene" uid="uid://da1bl30b1wgic" path="res://Assets/table.glb" id="1_7pu5k"]
+[ext_resource type="Texture2D" uid="uid://df5ukbptjnn24" path="res://Textures/Wood_025_basecolor.jpg" id="2_37qo1"]
+[ext_resource type="Texture2D" uid="uid://dnwo043k7b8nr" path="res://Textures/Wood_025_normal.jpg" id="3_7dwqd"]
+[ext_resource type="Texture2D" uid="uid://bbtrk0fn0tlni" path="res://Textures/Wood_025_roughness.jpg" id="4_w1ebb"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_30ae3"]
+albedo_color = Color(0.988235, 1, 1, 1)
+albedo_texture = ExtResource("2_37qo1")
+roughness_texture = ExtResource("4_w1ebb")
+roughness_texture_channel = 4
+normal_enabled = true
+normal_scale = 0.5
+normal_texture = ExtResource("3_7dwqd")
+uv1_scale = Vector3(2.38, 2.38, 2.38)
+
+[node name="Table" instance=ExtResource("1_7pu5k")]
+
+[node name="TableBase" parent="." index="0"]
+surface_material_override/0 = SubResource("StandardMaterial3D_30ae3")

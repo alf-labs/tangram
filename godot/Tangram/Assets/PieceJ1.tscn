@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bg5cshxq25ov6"]
+
+[ext_resource type="PackedScene" uid="uid://bgkwlxx8tksff" path="res://Assets/pieceJ1.glb" id="1_vgir6"]
+[ext_resource type="Material" uid="uid://csr087mvnccy" path="res://Assets/ColorY.tres" id="2_17dej"]
+
+[node name="PieceJ1" instance=ExtResource("1_vgir6")]
+
+[node name="CubeJ1-1" parent="." index="0"]
+surface_material_override/0 = ExtResource("2_17dej")

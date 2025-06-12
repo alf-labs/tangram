@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3 uid="uid://blachkjw2kb7w"]
+
+[ext_resource type="Texture2D" uid="uid://bail3cxspuaeq" path="res://Textures/Wood_022_bw_basecolor.jpg" id="1_8fsca"]
+[ext_resource type="Texture2D" uid="uid://c35t57dc5jqcd" path="res://Textures/Wood_022_normal.jpg" id="2_ai7x8"]
+[ext_resource type="Texture2D" uid="uid://bqyq77uf5utnb" path="res://Textures/Wood_022_roughness.jpg" id="3_26lmt"]
+
+[resource]
+albedo_color = Color(0.0833087, 0.0449981, 0.0428127, 1)
+albedo_texture = ExtResource("1_8fsca")
+roughness = 0.0
+roughness_texture = ExtResource("3_26lmt")
+roughness_texture_channel = 4
+normal_enabled = true
+normal_texture = ExtResource("2_ai7x8")
