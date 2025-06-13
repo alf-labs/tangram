@@ -6,7 +6,7 @@ const PI_2 = PI / 2
 const RAD_90_DEG = PI_2   # 90 degrees in radians
 const NUM_PIECES = 11
 const RADIUS_PIECES = 5.5
-const MIN_DRAG_DELAY_MS = 250
+const MIN_DRAG_DELAY_MS = 125
 const RAY_LENGTH = 1000.0
 const MAX_ANGLE_Y = RAD_90_DEG - 0.01
 const START_ANGLE_Y = RAD_90_DEG / 2
@@ -150,7 +150,9 @@ func _input(event: InputEvent) -> void:
                     if mouseRaySelected:
                         # We're dragging that piece
                         print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
-                        mouseRaySelected.onDragging(event.relative.x, event.relative.y)
+                        var intercept := _projectScreenToPlane(event.position, mouseRaySelected.position.y)
+                        if intercept != Vector3.ZERO:
+                            mouseRaySelected.onDragging(intercept.x, intercept.z)
                     else:
                         # We're dragging the camera while in the "piece selected" mode.
                         # We can rotate but not change the Y angle.
@@ -181,6 +183,31 @@ func _physics_process(_delta: float) -> void:
     if parent is PieceBase3D:
         mouseRaySelected = parent
         # Next: process the ray result in _input instead of in physics_process.
+
+func _projectScreenToPlane(screenPos: Vector2, planeY: float) -> Vector3:
+    # Ray from camera at screen position
+    var rayOrigin : Vector3 = cam3d.project_ray_origin(screenPos)
+    var rayNormal : Vector3= cam3d.project_ray_normal(screenPos)
+
+    # Horizontal plane at y=1
+    var planeOrigin := Vector3(0, planeY, 0)
+    var planeNormal := Vector3.UP
+
+    # Plane intersection on the ray line
+    # https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection
+    var denominator : float = planeNormal.dot(rayNormal)
+    # No solution if ray is parallel to the plane
+    if abs(denominator) < 0.0001:
+        return Vector3.ZERO
+    var t : float = (planeOrigin  - rayOrigin).dot(planeNormal) / denominator
+
+    # If t is negative, the intersection point is behind the ray origin
+    if t < 0:
+        return Vector3.ZERO
+
+    # Calculate the intersection point
+    var intersect : Vector3 = rayOrigin + rayNormal * t
+    return intersect
 
 func _select(piece: PieceBase3D) -> void:
     if selectionMode == SelectionMode.Board:

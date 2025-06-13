@@ -13,7 +13,6 @@ const ANGLE = 60
 const UNIT_HEIGHT = 0.8660
 const Y_SELECTED = 1.0
 const Y_DEFAULT  = 0.0
-const EVENT_DRAG_FACTOR = 1/50.0
 
 var center := Vector2.ZERO
 var default_pos := Vector3.ZERO
@@ -53,12 +52,12 @@ func setSelected(selected_: bool, endFunc: Callable) -> void:
     if endFunc != null:
         tw.tween_callback(endFunc)
 
-func onDragging(event_x: float, event_y: float) -> void:
+func onDragging(target_x: float, target_z: float) -> void:
     if not isSelected:
         return
     isDragging = true
-    position.x -= event_x * EVENT_DRAG_FACTOR
-    position.z -= event_y * EVENT_DRAG_FACTOR
+    position.x = target_x - center.x
+    position.z = target_z - center.y
 
 func onDragEnded() -> void:
     isDragging = false
