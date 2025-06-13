@@ -11,10 +11,17 @@ const RAY_LENGTH = 1000.0
 const MAX_ANGLE_Y = RAD_90_DEG - 0.01
 const START_ANGLE_Y = RAD_90_DEG / 2
 const CAM_LOOK_AT = Vector3.ZERO
+const CAM_SELECTED_FOV = 35.0
 const EVENT_DRAG_FACTOR = 1/200.0
+
+enum SelectionMode { Board, PieceIn, Piece, PieceOut }
+var selectionMode : SelectionMode = SelectionMode.Board
+
 var staticCamDistance := 0.0
+var staticCamFov := 0.0
 var camAngleX := 0.0
 var camAngleY := 0.0
+var camAngleYBoardMode := 0.0
 var pieces = {}
 var selectedPiece : PieceBase3D = null
 
@@ -22,15 +29,16 @@ var selectedPiece : PieceBase3D = null
 func _ready() -> void:
     # Grab the initial camera setup in the scene to reuse it later.
     staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
+    staticCamFov = cam3d.fov
     # Option 1: Start with the camera matching the Godot scene
     # camAngleX = atan2(cam3d.position.z, cam3d.position.x)
     # camAngleY = atan2(cam3d.position.y, cam3d.position.z)
     # Option 2: Start with a top-view camera
     camAngleX = RAD_90_DEG
     camAngleY = RAD_90_DEG
-    print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
+    print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY), " fov ", cam3d.fov)
     _updateCamera()
-    _tweenCamera(START_ANGLE_Y)
+    _tweenCamera(START_ANGLE_Y, staticCamFov)
     _initPieces()
 
 func _initPieces() -> void:
@@ -80,7 +88,7 @@ func _initPieces() -> void:
     delay += delay_dur
     vec = _add_piece.call("PieceW1", vec, delay)
 
-func _tweenCamera(target_angle_y: float):
+func _tweenCamera(target_angle_y: float, target_fov: float) -> void:
     # Twin the camera from current angle Y to max Y after all pieces drop.
     const tween_dur = 0.50
     const delay = 0 # NUM_PIECES * 0.10
@@ -90,6 +98,7 @@ func _tweenCamera(target_angle_y: float):
         camAngleY = y
         _updateCamera()
     tc.tween_method(_cam_tween, camAngleY, target_angle_y, tween_dur)
+    tc.parallel().tween_property(cam3d, "fov", target_fov, tween_dur)
 
 
 var mousePendingEvent = null
@@ -104,30 +113,50 @@ func _input(event: InputEvent) -> void:
             mouseRaySelected = null
             mousePendingEvent = event
             mousePressedMS = Time.get_ticks_msec()
-            # print("@@ INPUT PENDING: ", mousePendingEvent)
-            # NExt: Process raycast for selection in _physics_process
+            # Next: Process raycast for selection in _physics_process
+            # then follow up bellow with mouseRaySelected != null
         elif mouseRaySelected and not mouseDragging:
             # This ensure we only select on mouse/touch-up IIF there's no drag motion.
             # This gets called at the end of a piece being dragged too.
+            match selectionMode:
+                SelectionMode.Board:
+                    _select(mouseRaySelected)
+                SelectionMode.Piece:
+                    if mouseRaySelected.isDragging:
+                        # This was a drag, not a click.
+                        mouseRaySelected.onDragEnded()
+                    else:
+                        # This was a click on the selected piece.
+                        # print("TOUCH PIECE: ", event)
+                        if selectedPiece == mouseRaySelected:
+                            _deselect()
+                        else:
+                            _select(mouseRaySelected)
             # print("@@ RAY RESULT: ", mouseRaySelected)
-            mouseRaySelected.onDragEnded()
-            _select(mouseRaySelected)
             mouseRaySelected = null
     elif event is InputEventScreenDrag:
         #print("DRAG: ", event)
         var delayMS = Time.get_ticks_msec() - mousePressedMS
         if delayMS > MIN_DRAG_DELAY_MS: # prevent very short click mvt from being a drag
-            if mouseRaySelected:
-                # We're dragging that piece
-                # print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
-                mouseRaySelected.onDragging(event.relative.x, event.relative.y)
-            else:
-                # We're dragging the main camera
-                mouseDragging = true
-                camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
-                camAngleY += event.relative.y * EVENT_DRAG_FACTOR
-                _updateCamera()
-                #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
+            match selectionMode:
+                SelectionMode.Board:
+                    # We're dragging the main camera
+                    mouseDragging = true
+                    camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
+                    camAngleY += event.relative.y * EVENT_DRAG_FACTOR
+                    _updateCamera()
+                    #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
+                SelectionMode.Piece:
+                    if mouseRaySelected:
+                        # We're dragging that piece
+                        print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
+                        mouseRaySelected.onDragging(event.relative.x, event.relative.y)
+                    else:
+                        # We're dragging the camera while in the "piece selected" mode.
+                        # We can rotate but not change the Y angle.
+                        mouseDragging = true
+                        camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
+                        _updateCamera()
 
 func _physics_process(_delta: float) -> void:
     if not mousePendingEvent:
@@ -154,17 +183,33 @@ func _physics_process(_delta: float) -> void:
         # Next: process the ray result in _input instead of in physics_process.
 
 func _select(piece: PieceBase3D) -> void:
-    if piece == selectedPiece:
-        return
-    _clearSelection()
-    selectedPiece = piece
-    piece.setSelected(true)
+    if selectionMode == SelectionMode.Board:
+        camAngleYBoardMode = camAngleY
+    selectionMode = SelectionMode.PieceIn
+    _clearSelection(func() -> void:
+        selectedPiece = piece
+        piece.setSelected(true, func() -> void:
+            selectionMode = SelectionMode.Piece
+            # Move camera to top view
+            _tweenCamera(RAD_90_DEG, CAM_SELECTED_FOV)
+        )
+    )
 
-func _clearSelection():
+func _deselect() -> void:
+    selectionMode = SelectionMode.PieceOut
+    _clearSelection(func() -> void:
+        selectionMode = SelectionMode.Board
+        # Move camera back to previous angle
+        _tweenCamera(camAngleYBoardMode, staticCamFov)
+    )
+
+func _clearSelection(endFunc: Callable):
     if selectedPiece == null:
+        endFunc.call()
         return
-    selectedPiece.setSelected(false)
+    var p = selectedPiece
     selectedPiece = null
+    p.setSelected(false, endFunc)
 
 func _updateCamera():
     var vec = Vector3(staticCamDistance, 0, 0)
