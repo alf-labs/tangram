@@ -10,7 +10,8 @@ const MIN_DRAG_DELAY_MS = 125
 const RAY_LENGTH = 1000.0
 const MAX_ANGLE_Y = RAD_90_DEG - 0.01
 const START_ANGLE_Y = RAD_90_DEG / 2
-const CAM_LOOK_AT = Vector3.ZERO
+const CAM_LOOK_AT = Vector3(0, -5, 0)
+const CAM_LOOK_AT_ZERO_ANGLE_Y = (PI_2 / 90 * 20)
 const CAM_SELECTED_FOV = 35.0
 const EVENT_DRAG_FACTOR = 1/200.0
 
@@ -244,4 +245,12 @@ func _updateCamera():
     vec = vec.rotated(Vector3.BACK, camAngleY)
     vec = vec.rotated(Vector3.UP, camAngleX)
     cam3d.position = vec
-    cam3d.look_at(CAM_LOOK_AT)
+    var target = CAM_LOOK_AT
+    # When the camera gets close to the ground, we look at the origin.
+    # Otherwise we look at CAM_LOOK_AT which is offset such that the overall
+    # board appears centered in the view.
+    if abs(camAngleY) < CAM_LOOK_AT_ZERO_ANGLE_Y:
+        target.y *= (camAngleY / CAM_LOOK_AT_ZERO_ANGLE_Y)
+    elif camAngleY < 0:
+        target.y = -target.y
+    cam3d.look_at(target)
