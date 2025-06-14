@@ -1,6 +1,7 @@
 extends Node3D
 
 @onready var cam3d = $Camera3D
+@onready var rootControl = $RootControl
 
 const PI_2 = PI / 2
 const RAD_90_DEG = PI_2   # 90 degrees in radians
@@ -28,6 +29,7 @@ var selectedPiece : PieceBase3D = null
 
 
 func _ready() -> void:
+    rootControl.visible = false
     # Grab the initial camera setup in the scene to reuse it later.
     staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
     staticCamFov = cam3d.fov
@@ -214,6 +216,7 @@ func _select(piece: PieceBase3D) -> void:
     if selectionMode == SelectionMode.Board:
         camAngleYBoardMode = camAngleY
     selectionMode = SelectionMode.PieceIn
+    _showRootControl(true)
     _clearSelection(func() -> void:
         selectedPiece = piece
         piece.setSelected(true, func() -> void:
@@ -225,6 +228,7 @@ func _select(piece: PieceBase3D) -> void:
 
 func _deselect() -> void:
     selectionMode = SelectionMode.PieceOut
+    _showRootControl(false)
     _clearSelection(func() -> void:
         selectionMode = SelectionMode.Board
         # Move camera back to previous angle
@@ -254,3 +258,15 @@ func _updateCamera():
     elif camAngleY < 0:
         target.y = -target.y
     cam3d.look_at(target)
+
+func _showRootControl(show: bool) -> void:
+    if rootControl.visible == show:
+        return
+    const tween_dur = 0.25
+    var tw = rootControl.create_tween()
+    tw.tween_property(rootControl, "modulate:a", 1.0 if show else 0.0, tween_dur)
+    tw.tween_callback(func() -> void:
+        rootControl.visible = show
+    )
+
+# ~~
