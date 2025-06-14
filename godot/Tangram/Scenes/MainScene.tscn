@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://c2sb4s4xgpcpl"]
+[gd_scene load_steps=22 format=3 uid="uid://c2sb4s4xgpcpl"]
 
 [ext_resource type="PackedScene" uid="uid://bavwlsqxoqas0" path="res://Assets/Board.tscn" id="1_hpc76"]
 [ext_resource type="Script" uid="uid://c3vhlanrsnkm2" path="res://Scenes/MainScene.gd" id="1_tr2i4"]
@@ -16,6 +16,7 @@
 [ext_resource type="Theme" uid="uid://drca08ab0t224" path="res://Scenes/ui_theme.tres" id="14_5qxwa"]
 [ext_resource type="Texture2D" uid="uid://cv2nmbfffrk2i" path="res://Assets/material icon rotate_left_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="15_enc0b"]
 [ext_resource type="Texture2D" uid="uid://dlf124ia0qorf" path="res://Assets/material icon rotate_right_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="16_hx8n4"]
+[ext_resource type="Script" uid="uid://di7ouu50r2r6x" path="res://Scenes/ActionButton.gd" id="16_i0j58"]
 [ext_resource type="Texture2D" uid="uid://bgx8308muap47" path="res://Assets/material icon sync_alt_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="17_i0j58"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_hpc76"]
@@ -161,14 +162,20 @@ size_flags_horizontal = 8
 size_flags_vertical = 4
 theme_override_constants/separation = 32
 
-[node name="TextureButton1" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
+[node name="RotLeftButton1" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
 layout_mode = 2
 texture_normal = ExtResource("15_enc0b")
+script = ExtResource("16_i0j58")
+metadata/_custom_type_script = "uid://di7ouu50r2r6x"
 
-[node name="TextureButton2" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
+[node name="RotRightButton2" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
 layout_mode = 2
 texture_normal = ExtResource("16_hx8n4")
+script = ExtResource("16_i0j58")
+metadata/_custom_type_script = "uid://di7ouu50r2r6x"
 
-[node name="TextureButton3" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
+[node name="SwapButton" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
 layout_mode = 2
 texture_normal = ExtResource("17_i0j58")
+script = ExtResource("16_i0j58")
+metadata/_custom_type_script = "uid://di7ouu50r2r6x"

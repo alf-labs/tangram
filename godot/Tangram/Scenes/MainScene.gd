@@ -2,6 +2,7 @@ extends Node3D
 
 @onready var cam3d = $Camera3D
 @onready var rootControl = $RootControl
+@onready var swapButton = $RootControl/PanelContainer/MarginContainer/HBoxContainer2/SwapButton
 
 const PI_2 = PI / 2
 const RAD_90_DEG = PI_2   # 90 degrees in radians
@@ -216,7 +217,7 @@ func _select(piece: PieceBase3D) -> void:
     if selectionMode == SelectionMode.Board:
         camAngleYBoardMode = camAngleY
     selectionMode = SelectionMode.PieceIn
-    _showRootControl(true)
+    _showRootControl(piece)
     _clearSelection(func() -> void:
         selectedPiece = piece
         piece.setSelected(true, func() -> void:
@@ -228,7 +229,7 @@ func _select(piece: PieceBase3D) -> void:
 
 func _deselect() -> void:
     selectionMode = SelectionMode.PieceOut
-    _showRootControl(false)
+    _showRootControl(null)
     _clearSelection(func() -> void:
         selectionMode = SelectionMode.Board
         # Move camera back to previous angle
@@ -259,14 +260,17 @@ func _updateCamera():
         target.y = -target.y
     cam3d.look_at(target)
 
-func _showRootControl(show: bool) -> void:
-    if rootControl.visible == show:
+func _showRootControl(piece: PieceBase3D) -> void:
+    if piece != null:
+        swapButton.disabled = piece.variants <= 1
+    var show_ = piece != null
+    if rootControl.visible == show_:
         return
     const tween_dur = 0.25
     var tw = rootControl.create_tween()
-    tw.tween_property(rootControl, "modulate:a", 1.0 if show else 0.0, tween_dur)
+    tw.tween_property(rootControl, "modulate:a", 1.0 if show_ else 0.0, tween_dur)
     tw.tween_callback(func() -> void:
-        rootControl.visible = show
+        rootControl.visible = show_
     )
 
 # ~~
