@@ -110,10 +110,11 @@ var mousePendingEvent = null
 var mouseDragging := false
 var mouseRaySelected : PieceBase3D = null
 var mousePressedMS := 0
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
     #print("TOUCH: ", event)
     if event is InputEventScreenTouch:
         if event.pressed:
+            # print("TOUCH PRESS: ", event)
             mouseDragging = false
             mouseRaySelected = null
             mousePendingEvent = event
@@ -154,7 +155,7 @@ func _input(event: InputEvent) -> void:
                 SelectionMode.Piece:
                     if mouseRaySelected:
                         # We're dragging that piece
-                        print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
+                        # print("DRAG PIECE: ", mouseRaySelected, " --> ", event)
                         var intercept := _projectScreenToPlane(event.position, mouseRaySelected.position.y)
                         if intercept != Vector3.ZERO:
                             mouseRaySelected.onDragging(intercept.x, intercept.z)
@@ -275,19 +276,18 @@ func _showRootControl(piece: PieceBase3D) -> void:
         rootControl.visible = show_
     )
 
-
 func _on_swap_button_pressed() -> void:
     if selectedPiece != null:
         selectedPiece.swapVariant()
         if piecePreview != null:
             piecePreview.selectVariant(selectedPiece.currentVariant)
 
-
 func _on_rot_right_button_pressed() -> void:
-    pass # Replace with function body.
-
+    if selectedPiece != null:
+        selectedPiece.rotateBy(-60)
 
 func _on_rot_left_button_pressed() -> void:
-    pass # Replace with function body.
+    if selectedPiece != null:
+        selectedPiece.rotateBy(60)
 
 # ~~

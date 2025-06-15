@@ -19,6 +19,7 @@ var default_pos := Vector3.ZERO
 var isSelected := false
 var isDragging := false
 var currentVariant := 0
+var currentRotationDeg := 0     # must be multiples of 60 degrees
 
 func _ready() -> void:
     var mesh = _findMesh()
@@ -63,6 +64,14 @@ func setSelected(selected_: bool, endFunc: Callable) -> void:
     tw.parallel().tween_property(self, "position:z", target_z, tween_dur)
     if endFunc != null:
         tw.tween_callback(endFunc)
+
+func rotateBy(angle60degrees: int) -> void:
+    # Rotate the piece by the given angle in 60 degree increments
+    currentRotationDeg = (currentRotationDeg + angle60degrees) % 360
+    const tween_dur = 0.25
+    var tw = create_tween()
+    var target_rot_y = deg_to_rad(currentRotationDeg)
+    tw.tween_property(self, "rotation:y", target_rot_y, tween_dur)
 
 func onDragging(target_x: float, target_z: float) -> void:
     if not isSelected:
