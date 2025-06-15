@@ -2,7 +2,8 @@ extends Node3D
 
 @onready var cam3d = $Camera3D
 @onready var rootControl = $RootControl
-@onready var swapButton = $RootControl/PanelContainer/MarginContainer/HBoxContainer2/SwapButton
+@onready var swapButton : ActionButton = $RootControl/PanelContainer/MarginContainer/HBoxContainer2/SwapButton
+@onready var piecePreview : PiecePreview = $RootControl/PanelContainer/MarginContainer/HBoxContainer/PiecePreview
 
 const PI_2 = PI / 2
 const RAD_90_DEG = PI_2   # 90 degrees in radians
@@ -57,7 +58,7 @@ func _initPieces() -> void:
     var _add_piece = func(name_: String, vec_: Vector3, delay_: float) -> Vector3:
         var p = get_node(name_) as PieceBase3D
         pieces[name_] = p
-        p.center_on(vec_)
+        p.centerOn(vec_)
         # print("@@ name_ ", name_, ", vec_ ", vec_)
         # Tween Y to create a drop effect
         var tw = p.create_tween()
@@ -263,6 +264,7 @@ func _updateCamera():
 func _showRootControl(piece: PieceBase3D) -> void:
     if piece != null:
         swapButton.disabled = piece.variants <= 1
+    piecePreview.setPiece(piece)
     var show_ = piece != null
     if rootControl.visible == show_:
         return

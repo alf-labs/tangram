@@ -1,0 +1,54 @@
+[gd_scene load_steps=6 format=3 uid="uid://dn5ro2sxg3ayf"]
+
+[ext_resource type="Script" uid="uid://k5g15sr7vn4m" path="res://Scenes/PiecePreview.gd" id="1_lga5w"]
+
+[sub_resource type="World3D" id="World3D_e283x"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lga5w"]
+sky_top_color = Color(0.256152, 0.549319, 0.902965, 1)
+ground_bottom_color = Color(0.193223, 0.255122, 0.374107, 1)
+
+[sub_resource type="Sky" id="Sky_tr2i4"]
+sky_material = SubResource("ProceduralSkyMaterial_lga5w")
+
+[sub_resource type="Environment" id="Environment_ay2i6"]
+sky = SubResource("Sky_tr2i4")
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_sky_contribution = 0.0
+ambient_light_energy = 0.3
+
+[node name="PiecePreview" type="SubViewportContainer"]
+custom_minimum_size = Vector2(256, 128)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -48.0
+offset_top = -48.0
+offset_right = 48.0
+offset_bottom = 48.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lga5w")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+own_world_3d = true
+world_3d = SubResource("World3D_e283x")
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(256, 128)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="SubViewport"]
+environment = SubResource("Environment_ay2i6")
+
+[node name="Camera3D" type="Camera3D" parent="SubViewport"]
+transform = Transform3D(0.999962, -0.00726852, 0.00482919, 0, 0.553391, 0.832921, -0.00872654, -0.83289, 0.55337, 0, 4, 2)
+current = true
+fov = 25.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="SubViewport"]
+transform = Transform3D(0.642788, -0.663414, 0.383022, 0, 0.5, 0.866025, -0.766044, -0.55667, 0.321394, 0, 0, 0)
+shadow_enabled = true
+sky_mode = 1

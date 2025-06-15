@@ -20,14 +20,25 @@ var isSelected := false
 var isDragging := false
 
 func _ready() -> void:
-    print("@@ Ready ", self.get_class(), " ", key, " ", variants)
-    center = Vector2(cell_width / 2, cell_height * UNIT_HEIGHT / 2)
+    var mesh = _findMesh()
+    if mesh != null:
+        var meshPos = mesh.position if mesh != null else Vector3.ZERO
+        var meshCenter = _getMeshCenter(mesh)
+        center = Vector2(meshPos.x, meshPos.z)
+        center += Vector2(meshCenter.x, meshCenter.z)
+        var center3 = Vector3(center.x, 0, center.y)
+        print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", offset by center=", center)
+        for child in get_children():
+            if child is Node3D:
+                child.position -= center3
+        center = Vector2.ZERO
+    print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center)
 
-func center_on(pos: Vector3) -> void:
-    var p = Vector3(pos)
-    p += Vector3(-center.x, Y_DEFAULT, -center.y)
+func centerOn(pos: Vector3) -> void:
+    var p = pos + Vector3(-center.x, Y_DEFAULT, -center.y)
     default_pos = p
     position = p
+    print("@@ Center ", self.get_class(),  " ", key, "x", variants, ", to=", p)
 
 func setSelected(selected_: bool, endFunc: Callable) -> void:
     if isSelected == selected_:
@@ -61,3 +72,21 @@ func onDragging(target_x: float, target_z: float) -> void:
 
 func onDragEnded() -> void:
     isDragging = false
+
+func _findMesh() -> MeshInstance3D:
+    for child in get_children():
+        if child is MeshInstance3D:
+            return child
+    return null
+
+func _getMeshCenter(mesh: MeshInstance3D) -> Vector3:
+    if mesh == null:
+        return Vector3.ZERO
+    print("@@ Mesh: ", mesh, " at ", mesh.position)
+    var aabb = mesh.get_aabb()
+    print("@@ Mesh AABB: ", aabb)
+    print("@@ Mesh AABB pos: ", aabb.position)
+    print("@@ Mesh AABB size: ", aabb.size)
+    return aabb.position + aabb.size / 2
+
+# ~~

@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://c2sb4s4xgpcpl"]
+[gd_scene load_steps=23 format=3 uid="uid://c2sb4s4xgpcpl"]
 
 [ext_resource type="PackedScene" uid="uid://bavwlsqxoqas0" path="res://Assets/Board.tscn" id="1_hpc76"]
 [ext_resource type="Script" uid="uid://c3vhlanrsnkm2" path="res://Scenes/MainScene.gd" id="1_tr2i4"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://blxg1vakwn8t3" path="res://Assets/PieceW1.tscn" id="13_s1acj"]
 [ext_resource type="Theme" uid="uid://drca08ab0t224" path="res://Scenes/ui_theme.tres" id="14_5qxwa"]
 [ext_resource type="Texture2D" uid="uid://cv2nmbfffrk2i" path="res://Assets/material icon rotate_left_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="15_enc0b"]
+[ext_resource type="PackedScene" uid="uid://dn5ro2sxg3ayf" path="res://Scenes/PiecePreview.tscn" id="15_i0j58"]
 [ext_resource type="Texture2D" uid="uid://dlf124ia0qorf" path="res://Assets/material icon rotate_right_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="16_hx8n4"]
 [ext_resource type="Script" uid="uid://di7ouu50r2r6x" path="res://Scenes/ActionButton.gd" id="16_i0j58"]
 [ext_resource type="Texture2D" uid="uid://bgx8308muap47" path="res://Assets/material icon sync_alt_96dp_FFFFFF_FILL0_wght700_GRAD0_opsz48.png" id="17_i0j58"]
@@ -23,12 +24,12 @@
 sky_top_color = Color(0.256152, 0.549319, 0.902965, 1)
 ground_bottom_color = Color(0.193223, 0.255122, 0.374107, 1)
 
-[sub_resource type="Sky" id="Sky_tr2i4"]
+[sub_resource type="Sky" id="Sky_c1ier"]
 sky_material = SubResource("ProceduralSkyMaterial_hpc76")
 
 [sub_resource type="Environment" id="Environment_tr2i4"]
 background_mode = 2
-sky = SubResource("Sky_tr2i4")
+sky = SubResource("Sky_c1ier")
 ambient_light_color = Color(0.752254, 0.649053, 0.364162, 1)
 ambient_light_sky_contribution = 0.0
 ambient_light_energy = 0.3
@@ -150,10 +151,8 @@ layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4
 
-[node name="Control1" type="ColorRect" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(96, 96)
+[node name="PiecePreview" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource("15_i0j58")]
 layout_mode = 2
-color = Color(1, 1, 0, 0.588235)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="RootControl/PanelContainer/MarginContainer"]
 layout_direction = 2
