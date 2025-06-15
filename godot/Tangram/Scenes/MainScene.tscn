@@ -161,13 +161,13 @@ size_flags_horizontal = 8
 size_flags_vertical = 4
 theme_override_constants/separation = 32
 
-[node name="RotLeftButton1" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
+[node name="RotLeftButton" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
 layout_mode = 2
 texture_normal = ExtResource("15_enc0b")
 script = ExtResource("16_i0j58")
 metadata/_custom_type_script = "uid://di7ouu50r2r6x"
 
-[node name="RotRightButton2" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
+[node name="RotRightButton" type="TextureButton" parent="RootControl/PanelContainer/MarginContainer/HBoxContainer2"]
 layout_mode = 2
 texture_normal = ExtResource("16_hx8n4")
 script = ExtResource("16_i0j58")
@@ -178,3 +178,7 @@ layout_mode = 2
 texture_normal = ExtResource("17_i0j58")
 script = ExtResource("16_i0j58")
 metadata/_custom_type_script = "uid://di7ouu50r2r6x"
+
+[connection signal="pressed" from="RootControl/PanelContainer/MarginContainer/HBoxContainer2/RotLeftButton" to="." method="_on_rot_left_button_pressed"]
+[connection signal="pressed" from="RootControl/PanelContainer/MarginContainer/HBoxContainer2/RotRightButton" to="." method="_on_rot_right_button_pressed"]
+[connection signal="pressed" from="RootControl/PanelContainer/MarginContainer/HBoxContainer2/SwapButton" to="." method="_on_swap_button_pressed"]

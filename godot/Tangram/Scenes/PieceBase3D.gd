@@ -18,6 +18,7 @@ var center := Vector2.ZERO
 var default_pos := Vector3.ZERO
 var isSelected := false
 var isDragging := false
+var currentVariant := 0
 
 func _ready() -> void:
     var mesh = _findMesh()
@@ -32,7 +33,7 @@ func _ready() -> void:
             if child is Node3D:
                 child.position -= center3
         center = Vector2.ZERO
-    print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center)
+    print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center, ", currentVariant=", currentVariant)
 
 func centerOn(pos: Vector3) -> void:
     var p = pos + Vector3(-center.x, Y_DEFAULT, -center.y)
@@ -72,6 +73,21 @@ func onDragging(target_x: float, target_z: float) -> void:
 
 func onDragEnded() -> void:
     isDragging = false
+
+func swapVariant() -> void:
+    if variants > 1:
+        # print("@@ Swap variant ", self.get_class(), " ", key, "x", variants, ", current ", currentVariant)
+        selectVariant(1 - currentVariant)
+
+func selectVariant(variant: int) -> void:
+    if currentVariant == variant:
+        return
+    currentVariant = variant
+    const tween_dur = 0.25
+    var tw = create_tween()
+    var target_rot_x := PI  * currentVariant
+    # print("@@ Set variant ", self.get_class(), " ", key, "x", variants, ", new current ", currentVariant, ", target_rot_x=", rotation.x, " to ", target_rot_x)
+    tw.tween_property(self, "rotation:x", target_rot_x, tween_dur)
 
 func _findMesh() -> MeshInstance3D:
     for child in get_children():

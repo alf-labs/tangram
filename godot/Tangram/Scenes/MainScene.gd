@@ -275,4 +275,19 @@ func _showRootControl(piece: PieceBase3D) -> void:
         rootControl.visible = show_
     )
 
+
+func _on_swap_button_pressed() -> void:
+    if selectedPiece != null:
+        selectedPiece.swapVariant()
+        if piecePreview != null:
+            piecePreview.selectVariant(selectedPiece.currentVariant)
+
+
+func _on_rot_right_button_pressed() -> void:
+    pass # Replace with function body.
+
+
+func _on_rot_left_button_pressed() -> void:
+    pass # Replace with function body.
+
 # ~~
