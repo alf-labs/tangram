@@ -1,9 +1,5 @@
-[gd_scene load_steps=3 format=3 uid="uid://dptgkbeb2xt2s"]
+[gd_scene load_steps=2 format=3 uid="uid://dptgkbeb2xt2s"]
 
 [ext_resource type="PackedScene" uid="uid://b55sd141p4cxg" path="res://Assets/pieceTW.glb" id="1_j4h4t"]
-[ext_resource type="Material" uid="uid://cr43tbdh6666q" path="res://Assets/ColorW.tres" id="2_j2f7b"]
 
 [node name="PieceTW" instance=ExtResource("1_j4h4t")]
-
-[node name="CubeTW" parent="." index="0"]
-surface_material_override/0 = ExtResource("2_j2f7b")

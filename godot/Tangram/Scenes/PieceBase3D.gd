@@ -14,6 +14,8 @@ const UNIT_HEIGHT = 0.8660
 const Y_SELECTED = 1.0
 const Y_DEFAULT  = 0.0
 
+var _shapeMesh : MeshInstance3D = null
+var _outlineMesh : MeshInstance3D = null
 var center := Vector2.ZERO
 var default_pos := Vector3.ZERO
 var isSelected := false
@@ -22,10 +24,13 @@ var currentVariant := 0
 var currentRotationDeg := 0     # must be multiples of 60 degrees
 
 func _ready() -> void:
-    var mesh = _findMesh()
-    if mesh != null:
-        var meshPos = mesh.position if mesh != null else Vector3.ZERO
-        var meshCenter = _getMeshCenter(mesh)
+    _outlineMesh = _findOutlineMesh()
+    if _outlineMesh != null:
+        _outlineMesh.position.y -= Y_SELECTED
+    _shapeMesh = _findShapeMesh()
+    if _shapeMesh != null:
+        var meshPos = _shapeMesh.position if _shapeMesh != null else Vector3.ZERO        
+        var meshCenter = _getMeshCenter(_shapeMesh)
         center = Vector2(meshPos.x, meshPos.z)
         center += Vector2(meshCenter.x, meshCenter.z)
         var center3 = Vector3(center.x, 0, center.y)
@@ -98,11 +103,20 @@ func selectVariant(variant: int) -> void:
     # print("@@ Set variant ", self.get_class(), " ", key, "x", variants, ", new current ", currentVariant, ", target_rot_x=", rotation.x, " to ", target_rot_x)
     tw.tween_property(self, "rotation:x", target_rot_x, tween_dur)
 
-func _findMesh() -> MeshInstance3D:
+func _findShapeMesh() -> MeshInstance3D:
     for child in get_children():
         if child is MeshInstance3D:
-            return child
+            if child.name.begins_with("Cube") or child.name.begins_with("Mesh"):
+                return child
     return null
+
+func _findOutlineMesh() -> MeshInstance3D:
+    for child in get_children():
+        if child is MeshInstance3D:
+            if child.name.begins_with("Outline"):
+                return child
+    return null
+
 
 func _getMeshCenter(mesh: MeshInstance3D) -> Vector3:
     if mesh == null:
