@@ -11,8 +11,8 @@ extends Node3D
 
 const ANGLE = 60
 const UNIT_HEIGHT = 0.8660
-const Y_SELECTED = 1.0
-const Y_DEFAULT  = 0.0
+const Y_SELECTED = 0.25
+const Y_DEFAULT  = -0.25
 
 var _shapeMesh : MeshInstance3D = null
 var _outlineMesh : MeshInstance3D = null
@@ -67,9 +67,12 @@ func setSelected(selected_: bool, endFunc: Callable) -> void:
     # Tween the movement
     const tween_dur = 0.25
     var tw = create_tween()
-    tw.tween_property(self, "position:y", target_y, tween_dur)
-    tw.parallel().tween_property(self, "position:x", target_x, tween_dur)
+    if isSelected:
+        tw.tween_property(self, "position:y", target_y, tween_dur)
+    tw.tween_property(self, "position:x", target_x, tween_dur)
     tw.parallel().tween_property(self, "position:z", target_z, tween_dur)
+    if not isSelected:
+        tw.tween_property(self, "position:y", target_y, tween_dur)
     if endFunc != null:
         tw.tween_callback(endFunc)
 
