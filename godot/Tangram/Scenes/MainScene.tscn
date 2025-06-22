@@ -44,7 +44,7 @@ environment = SubResource("Environment_tr2i4")
 transform = Transform3D(0.999962, -0.00726851, 0.00482919, 0, 0.553391, 0.832921, -0.00872654, -0.832889, 0.553371, 0, 10, 10)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.996195, -0.075479, 0.0435779, 0, 0.5, 0.866026, -0.0871558, -0.86273, 0.498098, 0, 0, 0)
+transform = Transform3D(-0.996195, 0.0754792, -0.0435779, 0, 0.5, 0.866026, 0.0871558, 0.86273, -0.498098, 0, 0, 0)
 shadow_enabled = true
 
 [node name="Table" parent="." instance=ExtResource("2_6t1o7")]

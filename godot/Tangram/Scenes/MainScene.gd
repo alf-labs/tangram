@@ -35,11 +35,8 @@ func _ready() -> void:
     # Grab the initial camera setup in the scene to reuse it later.
     staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
     staticCamFov = cam3d.fov
-    # Option 1: Start with the camera matching the Godot scene
-    # camAngleX = atan2(cam3d.position.z, cam3d.position.x)
-    # camAngleY = atan2(cam3d.position.y, cam3d.position.z)
-    # Option 2: Start with a top-view camera
-    camAngleX = RAD_90_DEG
+    # Start with a top-view camera that tweens to a half-height front view.
+    camAngleX = 0
     camAngleY = RAD_90_DEG
     print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY), " fov ", cam3d.fov)
     _updateCamera()
@@ -47,7 +44,7 @@ func _ready() -> void:
     _initPieces()
 
 func _initPieces() -> void:
-    var vec := Vector3(RADIUS_PIECES, 0, 0)
+    var vec := Vector3(-RADIUS_PIECES, 0, 0)
     vec = vec.rotated(Vector3.UP, RAD_90_DEG)
     const angleInc = -PI * 2 / NUM_PIECES
     const delay_dur = 0.10
@@ -247,9 +244,9 @@ func _clearSelection(endFunc: Callable):
     p.setSelected(false, endFunc)
 
 func _updateCamera():
-    var vec = Vector3(staticCamDistance, 0, 0)
+    var vec = Vector3(0, 0, staticCamDistance)
     camAngleY = max(-MAX_ANGLE_Y, min(MAX_ANGLE_Y, camAngleY))
-    vec = vec.rotated(Vector3.BACK, camAngleY)
+    vec = vec.rotated(Vector3.RIGHT, -camAngleY)
     vec = vec.rotated(Vector3.UP, camAngleX)
     cam3d.position = vec
     var target = CAM_LOOK_AT
@@ -261,6 +258,8 @@ func _updateCamera():
     elif camAngleY < 0:
         target.y = -target.y
     cam3d.look_at(target)
+    print("@@ Camera pos:", cam3d.position)
+    print("@@ Camera rot:", cam3d.rotation_degrees)
 
 func _showRootControl(piece: PieceBase3D) -> void:
     if piece != null:

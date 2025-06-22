@@ -25,10 +25,11 @@ var currentRotationDeg := 0     # must be multiples of 60 degrees
 
 func _ready() -> void:
     _outlineMesh = _findOutlineMesh()
-    if _outlineMesh != null:
+    if _outlineMesh:
         _outlineMesh.position.y -= Y_SELECTED
+        _outlineMesh.visible = false
     _shapeMesh = _findShapeMesh()
-    if _shapeMesh != null:
+    if _shapeMesh:
         var meshPos = _shapeMesh.position if _shapeMesh != null else Vector3.ZERO        
         var meshCenter = _getMeshCenter(_shapeMesh)
         center = Vector2(meshPos.x, meshPos.z)
@@ -39,13 +40,13 @@ func _ready() -> void:
             if child is Node3D:
                 child.position -= center3
         center = Vector2.ZERO
-    print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center, ", currentVariant=", currentVariant)
+    # print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center, ", currentVariant=", currentVariant)
 
 func centerOn(pos: Vector3) -> void:
     var p = pos + Vector3(-center.x, Y_DEFAULT, -center.y)
     default_pos = p
     position = p
-    print("@@ Center ", self.get_class(),  " ", key, "x", variants, ", to=", p)
+    # print("@@ Center ", self.get_class(),  " ", key, "x", variants, ", to=", p)
 
 func setSelected(selected_: bool, endFunc: Callable) -> void:
     if isSelected == selected_:
@@ -61,6 +62,8 @@ func setSelected(selected_: bool, endFunc: Callable) -> void:
         if target_x * target_x + target_z * target_z > 3.5 * 3.5:
             target_x = -center.x
             target_z = -center.y
+    if _outlineMesh:
+        _outlineMesh.visible = selected_
     # Tween the movement
     const tween_dur = 0.25
     var tw = create_tween()
@@ -84,6 +87,9 @@ func onDragging(target_x: float, target_z: float) -> void:
     isDragging = true
     position.x = target_x - center.x
     position.z = target_z - center.y
+    if _outlineMesh:
+        _outlineMesh.position.x = -position.x
+        _outlineMesh.position.z = -position.z
 
 func onDragEnded() -> void:
     isDragging = false
@@ -117,15 +123,14 @@ func _findOutlineMesh() -> MeshInstance3D:
                 return child
     return null
 
-
 func _getMeshCenter(mesh: MeshInstance3D) -> Vector3:
     if mesh == null:
         return Vector3.ZERO
-    print("@@ Mesh: ", mesh, " at ", mesh.position)
+    # print("@@ Mesh: ", mesh, " at ", mesh.position)
     var aabb = mesh.get_aabb()
-    print("@@ Mesh AABB: ", aabb)
-    print("@@ Mesh AABB pos: ", aabb.position)
-    print("@@ Mesh AABB size: ", aabb.size)
+    # print("@@ Mesh AABB: ", aabb)
+    # print("@@ Mesh AABB pos: ", aabb.position)
+    # print("@@ Mesh AABB size: ", aabb.size)
     return aabb.position + aabb.size / 2
 
 # ~~
