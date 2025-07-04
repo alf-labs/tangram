@@ -19,28 +19,30 @@ const CAM_SELECTED_FOV = 35.0
 const EVENT_DRAG_FACTOR = 1/200.0
 
 enum SelectionMode { Board, PieceIn, Piece, PieceOut }
-var selectionMode : SelectionMode = SelectionMode.Board
+var _selectionMode : SelectionMode = SelectionMode.Board
 
-var staticCamDistance := 0.0
-var staticCamFov := 0.0
-var camAngleX := 0.0
-var camAngleY := 0.0
-var camAngleYBoardMode := 0.0
-var pieces = {}
-var selectedPiece : PieceBase3D = null
+var _staticCamDistance := 0.0
+var _staticCamFov := 0.0
+var _camAngleX := 0.0
+var _camAngleY := 0.0
+var _camAngleYBoardMode := 0.0
+var _pieces = {}
+var _selectedPiece : PieceBase3D = null
+var _boardData : BoardData = null
 
 
 func _ready() -> void:
+    _boardData = BoardData.new()
     rootControl.visible = false
     # Grab the initial camera setup in the scene to reuse it later.
-    staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
-    staticCamFov = cam3d.fov
+    _staticCamDistance = cam3d.position.distance_to(Vector3(0, 0, 0))
+    _staticCamFov = cam3d.fov
     # Start with a top-view camera that tweens to a half-height front view.
-    camAngleX = 0
-    camAngleY = RAD_90_DEG
-    print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY), " fov ", cam3d.fov)
+    _camAngleX = 0
+    _camAngleY = RAD_90_DEG
+    print("@@ START Camera: ", cam3d.position, " > ", rad_to_deg(_camAngleX), " x ", rad_to_deg(_camAngleY), " fov ", cam3d.fov)
     _updateCamera()
-    _tweenCamera(START_ANGLE_Y, staticCamFov)
+    _tweenCamera(START_ANGLE_Y, _staticCamFov)
     _initPieces()
 
 func _initPieces() -> void:
@@ -54,7 +56,8 @@ func _initPieces() -> void:
 
     var _add_piece = func(name_: String, vec_: Vector3, delay_: float) -> Vector3:
         var p = get_node(name_) as PieceBase3D
-        pieces[name_] = p
+        _pieces[name_] = p
+        p.initPieceCells(_boardData.getPieceCells(p.key))
         p.centerOn(vec_)
         # print("@@ name_ ", name_, ", vec_ ", vec_)
         # Tween Y to create a drop effect
@@ -91,15 +94,15 @@ func _initPieces() -> void:
     vec = _add_piece.call("PieceW1", vec, delay)
 
 func _tweenCamera(target_angle_y: float, target_fov: float) -> void:
-    # Twin the camera from current angle Y to max Y after all pieces drop.
+    # Twin the camera from current angle Y to max Y after all _pieces drop.
     const tween_dur = 0.50
     const delay = 0 # NUM_PIECES * 0.10
     var tc = create_tween()
     tc.tween_interval(delay)
     var _cam_tween = func(y):
-        camAngleY = y
+        _camAngleY = y
         _updateCamera()
-    tc.tween_method(_cam_tween, camAngleY, target_angle_y, tween_dur)
+    tc.tween_method(_cam_tween, _camAngleY, target_angle_y, tween_dur)
     tc.parallel().tween_property(cam3d, "fov", target_fov, tween_dur)
 
 
@@ -121,7 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
         elif mouseRaySelected and not mouseDragging:
             # This ensure we only select on mouse/touch-up IIF there's no drag motion.
             # This gets called at the end of a piece being dragged too.
-            match selectionMode:
+            match _selectionMode:
                 SelectionMode.Board:
                     _select(mouseRaySelected)
                 SelectionMode.Piece:
@@ -131,7 +134,7 @@ func _unhandled_input(event: InputEvent) -> void:
                     else:
                         # This was a click on the selected piece.
                         # print("TOUCH PIECE: ", event)
-                        if selectedPiece == mouseRaySelected:
+                        if _selectedPiece == mouseRaySelected:
                             _deselect()
                         else:
                             _select(mouseRaySelected)
@@ -141,14 +144,14 @@ func _unhandled_input(event: InputEvent) -> void:
         #print("DRAG: ", event)
         var delayMS = Time.get_ticks_msec() - mousePressedMS
         if delayMS > MIN_DRAG_DELAY_MS: # prevent very short click mvt from being a drag
-            match selectionMode:
+            match _selectionMode:
                 SelectionMode.Board:
                     # We're dragging the main camera
                     mouseDragging = true
-                    camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
-                    camAngleY += event.relative.y * EVENT_DRAG_FACTOR
+                    _camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
+                    _camAngleY += event.relative.y * EVENT_DRAG_FACTOR
                     _updateCamera()
-                    #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(camAngleX), " x ", rad_to_deg(camAngleY))
+                    #print("@@ MOVED Camera: ", cam3d.position, " > ", rad_to_deg(_camAngleX), " x ", rad_to_deg(_camAngleY))
                 SelectionMode.Piece:
                     if mouseRaySelected:
                         # We're dragging that piece
@@ -160,7 +163,7 @@ func _unhandled_input(event: InputEvent) -> void:
                         # We're dragging the camera while in the "piece selected" mode.
                         # We can rotate but not change the Y angle.
                         mouseDragging = true
-                        camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
+                        _camAngleX -= event.relative.x * EVENT_DRAG_FACTOR
                         _updateCamera()
 
 func _physics_process(_delta: float) -> void:
@@ -213,49 +216,49 @@ func _projectScreenToPlane(screenPos: Vector2, planeY: float) -> Vector3:
     return intersect
 
 func _select(piece: PieceBase3D) -> void:
-    if selectionMode == SelectionMode.Board:
-        camAngleYBoardMode = camAngleY
-    selectionMode = SelectionMode.PieceIn
+    if _selectionMode == SelectionMode.Board:
+        _camAngleYBoardMode = _camAngleY
+    _selectionMode = SelectionMode.PieceIn
     _showRootControl(piece)
     _clearSelection(func() -> void:
-        selectedPiece = piece
+        _selectedPiece = piece
         piece.setSelected(true, func() -> void:
-            selectionMode = SelectionMode.Piece
+            _selectionMode = SelectionMode.Piece
             # Move camera to top view
             _tweenCamera(RAD_90_DEG, CAM_SELECTED_FOV)
         )
     )
 
 func _deselect() -> void:
-    selectionMode = SelectionMode.PieceOut
+    _selectionMode = SelectionMode.PieceOut
     _showRootControl(null)
     _clearSelection(func() -> void:
-        selectionMode = SelectionMode.Board
+        _selectionMode = SelectionMode.Board
         # Move camera back to previous angle
-        _tweenCamera(camAngleYBoardMode, staticCamFov)
+        _tweenCamera(_camAngleYBoardMode, _staticCamFov)
     )
 
 func _clearSelection(endFunc: Callable):
-    if selectedPiece == null:
+    if _selectedPiece == null:
         endFunc.call()
         return
-    var p = selectedPiece
-    selectedPiece = null
+    var p = _selectedPiece
+    _selectedPiece = null
     p.setSelected(false, endFunc)
 
 func _updateCamera():
-    var vec = Vector3(0, 0, staticCamDistance)
-    camAngleY = max(-MAX_ANGLE_Y, min(MAX_ANGLE_Y, camAngleY))
-    vec = vec.rotated(Vector3.RIGHT, -camAngleY)
-    vec = vec.rotated(Vector3.UP, camAngleX)
+    var vec = Vector3(0, 0, _staticCamDistance)
+    _camAngleY = max(-MAX_ANGLE_Y, min(MAX_ANGLE_Y, _camAngleY))
+    vec = vec.rotated(Vector3.RIGHT, -_camAngleY)
+    vec = vec.rotated(Vector3.UP, _camAngleX)
     cam3d.position = vec
     var target = CAM_LOOK_AT
     # When the camera gets close to the ground, we look at the origin.
     # Otherwise we look at CAM_LOOK_AT which is offset such that the overall
     # board appears centered in the view.
-    if abs(camAngleY) < CAM_LOOK_AT_ZERO_ANGLE_Y:
-        target.y *= (camAngleY / CAM_LOOK_AT_ZERO_ANGLE_Y)
-    elif camAngleY < 0:
+    if abs(_camAngleY) < CAM_LOOK_AT_ZERO_ANGLE_Y:
+        target.y *= (_camAngleY / CAM_LOOK_AT_ZERO_ANGLE_Y)
+    elif _camAngleY < 0:
         target.y = -target.y
     cam3d.look_at(target)
     print("@@ Camera pos:", cam3d.position)
@@ -276,17 +279,17 @@ func _showRootControl(piece: PieceBase3D) -> void:
     )
 
 func _on_swap_button_pressed() -> void:
-    if selectedPiece != null:
-        selectedPiece.swapVariant()
+    if _selectedPiece != null:
+        _selectedPiece.swapVariant()
         if piecePreview != null:
-            piecePreview.selectVariant(selectedPiece.currentVariant)
+            piecePreview.selectVariant(_selectedPiece.currentVariant)
 
 func _on_rot_right_button_pressed() -> void:
-    if selectedPiece != null:
-        selectedPiece.rotateBy(-60)
+    if _selectedPiece != null:
+        _selectedPiece.rotateBy(-60)
 
 func _on_rot_left_button_pressed() -> void:
-    if selectedPiece != null:
-        selectedPiece.rotateBy(60)
+    if _selectedPiece != null:
+        _selectedPiece.rotateBy(60)
 
 # ~~

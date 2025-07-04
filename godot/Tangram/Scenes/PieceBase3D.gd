@@ -16,12 +16,13 @@ const Y_DEFAULT  = -0.25
 
 var _shapeMesh : MeshInstance3D = null
 var _outlineMesh : MeshInstance3D = null
-var center := Vector2.ZERO
-var default_pos := Vector3.ZERO
-var isSelected := false
+var _pieceCells = {}
+var _center := Vector2.ZERO
+var _defaultPos := Vector3.ZERO
+var _isSelected := false
 var isDragging := false
 var currentVariant := 0
-var currentRotationDeg := 0     # must be multiples of 60 degrees
+var _currentRotationDeg := 0     # must be multiples of 60 degrees
 
 func _ready() -> void:
     _outlineMesh = _findOutlineMesh()
@@ -32,64 +33,67 @@ func _ready() -> void:
     if _shapeMesh:
         var meshPos = _shapeMesh.position if _shapeMesh != null else Vector3.ZERO        
         var meshCenter = _getMeshCenter(_shapeMesh)
-        center = Vector2(meshPos.x, meshPos.z)
-        center += Vector2(meshCenter.x, meshCenter.z)
-        var center3 = Vector3(center.x, 0, center.y)
-        print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", offset by center=", center)
+        _center = Vector2(meshPos.x, meshPos.z)
+        _center += Vector2(meshCenter.x, meshCenter.z)
+        var center3 = Vector3(_center.x, 0, _center.y)
+        print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", offset by _center=", _center)
         for child in get_children():
             if child is Node3D:
                 child.position -= center3
-        center = Vector2.ZERO
-    # print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", center=", center, ", currentVariant=", currentVariant)
+        _center = Vector2.ZERO
+    # print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", _center=", _center, ", currentVariant=", currentVariant)
+
+func initPieceCells(pieceCells_: Dictionary) -> void:
+    _pieceCells = pieceCells_
 
 func centerOn(pos: Vector3) -> void:
-    var p = pos + Vector3(-center.x, Y_DEFAULT, -center.y)
-    default_pos = p
+    var p = pos + Vector3(-_center.x, Y_DEFAULT, -_center.y)
+    _defaultPos = p
     position = p
     # print("@@ Center ", self.get_class(),  " ", key, "x", variants, ", to=", p)
 
 func setSelected(selected_: bool, endFunc: Callable) -> void:
-    if isSelected == selected_:
+    if _isSelected == selected_:
         endFunc.call()
         return
-    isSelected = selected_
-    var target_y = Y_SELECTED if isSelected else Y_DEFAULT
-    var target_x = default_pos.x
-    var target_z = default_pos.z
+    _isSelected = selected_
+    var target_y = Y_SELECTED if _isSelected else Y_DEFAULT
+    var target_x = _defaultPos.x
+    var target_z = _defaultPos.z
     if selected_:
-        # If the piece is outside of the board, we tween into the center
+        # If the piece is outside of the board, we tween into the _center
         # otherwise we leave it where it is.
         if target_x * target_x + target_z * target_z > 3.5 * 3.5:
-            target_x = -center.x
-            target_z = -center.y
+            target_x = -_center.x
+            target_z = -_center.y
     if _outlineMesh:
         _outlineMesh.visible = selected_
     # Tween the movement
     const tween_dur = 0.25
     var tw = create_tween()
-    if isSelected:
+    if _isSelected:
         tw.tween_property(self, "position:y", target_y, tween_dur)
     tw.tween_property(self, "position:x", target_x, tween_dur)
     tw.parallel().tween_property(self, "position:z", target_z, tween_dur)
-    if not isSelected:
+    if not _isSelected:
         tw.tween_property(self, "position:y", target_y, tween_dur)
     if endFunc != null:
         tw.tween_callback(endFunc)
 
 func rotateBy(angle60degrees: int) -> void:
     # Rotate the piece by the given angle in 60 degree increments
-    currentRotationDeg = (currentRotationDeg + angle60degrees) % 360
+    _currentRotationDeg = (_currentRotationDeg + angle60degrees) % 360
     const tween_dur = 0.25
     var tw = create_tween()
-    var target_rot_y = deg_to_rad(currentRotationDeg)
+    var target_rot_y = deg_to_rad(_currentRotationDeg)
     tw.tween_property(self, "rotation:y", target_rot_y, tween_dur)
 
 func onDragging(target_x: float, target_z: float) -> void:
-    if not isSelected:
+    if not _isSelected:
         return
     isDragging = true
-    position.x = target_x - center.x
-    position.z = target_z - center.y
+    position.x = target_x - _center.x
+    position.z = target_z - _center.y
     if _outlineMesh:
         _outlineMesh.position.x = -position.x
         _outlineMesh.position.z = -position.z
