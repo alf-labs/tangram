@@ -3,32 +3,32 @@ extends SubViewportContainer
 
 @onready var viewport: SubViewport = $SubViewport
 @onready var camera: Camera3D = $SubViewport/Camera3D
-var piece: PieceBase3D
+var _piece: PieceBase3D
 
-func setPiece(piece_: PieceBase3D) -> void:
-    if piece_ == piece:
+func setPiece(piece: PieceBase3D) -> void:
+    if piece == _piece:
         return
-    if piece != null:
-        piece.queue_free()
-        piece = null
+    if _piece != null:
+        _piece.queue_free()
+        _piece = null
 
-    if piece_ == null:
-        return
-    piece = piece_.duplicate() as PieceBase3D
-    piece.currentVariant = piece_.currentVariant
-    viewport.add_child(piece)
-    piece.centerOn(Vector3.ZERO)
-    camera.look_at(piece.position, Vector3.UP)
-
-func selectVariant(variant: int) -> void:
-    if piece != null:
-        piece.selectVariant(variant)
-
-func _process(delta: float) -> void:
     if piece == null:
         return
-    piece.rotation.y += 0.5 * delta
-    if piece.rotation.y > TAU:
-        piece.rotation.y -= TAU
+    _piece = piece.duplicate() as PieceBase3D
+    _piece.currentVariant = piece.currentVariant
+    viewport.add_child(_piece)
+    _piece.centerOn(Vector3.ZERO)
+    camera.look_at(_piece.position, Vector3.UP)
+
+func selectVariant(variant: int) -> void:
+    if _piece != null:
+        _piece.selectVariant(variant)
+
+func _process(delta: float) -> void:
+    if _piece == null:
+        return
+    _piece.rotation.y += 0.5 * delta
+    if _piece.rotation.y > TAU:
+        _piece.rotation.y -= TAU
 
 # ~~

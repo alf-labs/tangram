@@ -1,8 +1,8 @@
 class_name AbsYRG
 
-var y : int
-var r : int
-var g : int
+var y: int
+var r: int
+var g: int
 
 func _init(y_: int, r_: int, g_: int) -> void:
     y = y_

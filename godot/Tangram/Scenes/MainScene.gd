@@ -19,7 +19,7 @@ const CAM_SELECTED_FOV = 35.0
 const EVENT_DRAG_FACTOR = 1/200.0
 
 enum SelectionMode { Board, PieceIn, Piece, PieceOut }
-var _selectionMode : SelectionMode = SelectionMode.Board
+var _selectionMode: SelectionMode = SelectionMode.Board
 
 var _staticCamDistance := 0.0
 var _staticCamFov := 0.0
@@ -27,8 +27,8 @@ var _camAngleX := 0.0
 var _camAngleY := 0.0
 var _camAngleYBoardMode := 0.0
 var _pieces = {}
-var _selectedPiece : PieceBase3D = null
-var _boardData : BoardData = null
+var _selectedPiece: PieceBase3D = null
+var _boardData: BoardData = null
 
 
 func _ready() -> void:

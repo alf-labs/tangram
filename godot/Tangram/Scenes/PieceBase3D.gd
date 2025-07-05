@@ -14,9 +14,9 @@ const UNIT_HEIGHT = 0.8660
 const Y_SELECTED = 0.25
 const Y_DEFAULT  = -0.25
 
-var _shapeMesh : MeshInstance3D = null
-var _outlineMesh : MeshInstance3D = null
-var _pieceCells = {}
+var _shapeMesh: MeshInstance3D = null
+var _outlineMesh: MeshInstance3D = null
+var _pieceCells := {}
 var _center := Vector2.ZERO
 var _defaultPos := Vector3.ZERO
 var _isSelected := false
@@ -43,8 +43,8 @@ func _ready() -> void:
         _center = Vector2.ZERO
     # print("@@ Ready ", self.get_class(), " ", key, "x", variants, ", _center=", _center, ", currentVariant=", currentVariant)
 
-func initPieceCells(pieceCells_: Dictionary) -> void:
-    _pieceCells = pieceCells_
+func initPieceCells(pieceCells: Dictionary) -> void:
+    _pieceCells = pieceCells
 
 func centerOn(pos: Vector3) -> void:
     var p = pos + Vector3(-_center.x, Y_DEFAULT, -_center.y)
